@@ -1,0 +1,155 @@
+/** 80**************************************************************************
+ * @module lib/util/Unre
+ * @license BSD-3-Clause
+ ******************************************************************************/
+
+import { INOUT } from "../../global.ts";
+import type { id_t, uint } from "../alias.ts";
+import { assert } from "./trace.ts";
+/*80--------------------------------------------------------------------------*/
+
+export const enum LastUR {
+  forw,
+  bakw,
+}
+
+export class Unre<T extends {} | null> {
+  static #ID = 0 as id_t;
+  readonly id = ++Unre.#ID as id_t;
+  /** @final */
+  get _type_id() {
+    return `${this.constructor.name}_${this.id}`;
+  }
+
+  readonly #Len: uint;
+  get LenMax() {
+    return this.#Len - 1;
+  }
+
+  protected readonly ary$: Array<T>;
+
+  protected i_0$: uint = 0;
+  protected i$: uint = 0;
+  protected i_1$: uint = 0;
+  get len() {
+    return this.i_0$ <= this.i_1$
+      ? this.i_1$ - this.i_0$
+      : this.#Len - (this.i_0$ - this.i_1$);
+  }
+
+  protected lastUR$ = LastUR.bakw;
+  get lastUR() {
+    return this.lastUR$;
+  }
+  get lastGot(): T | undefined {
+    return this.lastUR$ === LastUR.bakw
+      ? this.ary$.at(this.i$)
+      : this.ary$.at(this.#loopMinusOne(this.i$));
+  }
+
+  /** @const */
+  get _repr(): Record<string, any> {
+    return {
+      ary: this.ary$,
+      ran: `[${this.i_0$}, ${this.i_1$})`,
+      i$: this.i$,
+    };
+  }
+
+  /**
+   * @const @param len_x
+   */
+  constructor(len_x: uint) {
+    /*#static*/ if (INOUT) {
+      assert(1 <= len_x);
+    }
+    this.#Len = len_x + 1; // to prevent `i_0$` === `i_1$`
+    this.ary$ = new Array<T>(this.#Len);
+  }
+
+  reset() {
+    this.i$ = this.i_1$ = this.i_0$;
+    this.lastUR$ = LastUR.bakw;
+  }
+
+  /** @const */
+  protected dupEmpty$() {
+    return new Unre<T>(this.LenMax);
+  }
+  /** @const */
+  dup(n_x?: uint) {
+    const ret = this.dupEmpty$();
+    if (n_x === undefined) {
+      for (let i = 0, LEN = this.ary$.length; i < LEN; ++i) {
+        if (this.ary$[i] === undefined) break;
+        ret.ary$[i] = this.ary$[i];
+      }
+    } else {
+      //jjjj
+    }
+    ret.i_0$ = this.i_0$;
+    ret.i$ = this.i$;
+    ret.i_1$ = this.i_1$;
+    ret.lastUR$ = this.lastUR$;
+    return ret;
+  }
+
+  /** @const */
+  #loopPlusOne(j_x: uint): uint {
+    return (++j_x) >= this.#Len ? 0 : j_x;
+  }
+  /** @const */
+  #loopMinusOne(j_x: uint): uint {
+    return j_x <= 0 ? this.#Len - 1 : (--j_x);
+  }
+
+  /** @const */
+  #forw = (): uint => {
+    return this.i$ === this.i_1$ ? this.i$ : this.#loopPlusOne(this.i$);
+  };
+  /** @const */
+  #bakw = (): uint => {
+    return this.i$ === this.i_0$ ? this.i$ : this.#loopMinusOne(this.i$);
+  };
+
+  add(rhs_x: T): void {
+    this.ary$[this.i$] = rhs_x;
+    this.i$ = this.#loopPlusOne(this.i$);
+    this.i_1$ = this.i$;
+    if (this.i_1$ === this.i_0$) this.i_0$ = this.#loopPlusOne(this.i_0$);
+    this.lastUR$ = LastUR.forw;
+  }
+
+  /** @const */
+  canGetUn(): boolean {
+    return this.i$ !== this.i_0$;
+  }
+  canGetRe(): boolean {
+    return this.i$ !== this.i_1$;
+  }
+  canGetUnUn(): boolean {
+    return this.i$ !== this.i_0$ && this.#bakw() !== this.i_0$;
+  }
+  canGetReRe(): boolean {
+    return this.i$ !== this.i_1$ && this.#forw() !== this.i_1$;
+  }
+
+  getUn(): T {
+    this.i$ = this.#bakw();
+    this.lastUR$ = LastUR.bakw;
+    return this.ary$[this.i$];
+  }
+  getRe(): T {
+    const i_ = this.i$;
+    this.i$ = this.#forw();
+    this.lastUR$ = LastUR.forw;
+    return this.ary$[i_];
+  }
+
+  peekUn() {
+    return this.canGetUn() ? this.getUn() : undefined;
+  }
+  peekRe() {
+    return this.canGetRe() ? this.getRe() : undefined;
+  }
+}

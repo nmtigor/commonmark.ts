@@ -1,0 +1,52 @@
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@b-fuze/deno-dom@^0.1.48": "jsr:@b-fuze/deno-dom@0.1.48",
+      "jsr:@std/assert@^1.0.2": "jsr:@std/assert@1.0.2",
+      "jsr:@std/internal@^1.0.1": "jsr:@std/internal@1.0.1",
+      "jsr:@std/testing@^1.0.0": "jsr:@std/testing@1.0.0",
+      "npm:xstate@^5.17.1": "npm:xstate@5.17.1"
+    },
+    "jsr": {
+      "@b-fuze/deno-dom@0.1.48": {
+        "integrity": "bf5b591aef2e9e9c59adfcbb93a9ecd45bab5b7c8263625beafa5c8f1662e7da"
+      },
+      "@std/assert@1.0.2": {
+        "integrity": "ccacec332958126deaceb5c63ff8b4eaf9f5ed0eac9feccf124110435e59e49c",
+        "dependencies": [
+          "jsr:@std/internal@^1.0.1"
+        ]
+      },
+      "@std/internal@1.0.1": {
+        "integrity": "6f8c7544d06a11dd256c8d6ba54b11ed870aac6c5aeafff499892662c57673e6"
+      },
+      "@std/testing@1.0.0": {
+        "integrity": "27cfc06392c69c2acffe54e6d0bcb5f961cf193f519255372bd4fff1481bfef8"
+      }
+    },
+    "npm": {
+      "xstate@5.17.1": {
+        "integrity": "sha512-RNwcXdth+kboWZg+Zhf6f6iNP6CtAAiS4z4qwyTd/fWBH9PHXRqko6OdW3xOTwP62f0mVD+jsPOSqY4Ar8nZKQ==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {},
+  "workspace": {
+    "dependencies": [
+      "jsr:@b-fuze/deno-dom@^0.1.48",
+      "jsr:@denosaurs/argontwo@^0.2.0",
+      "jsr:@hono/hono@^4.5.8",
+      "jsr:@std/assert@^1.0.2",
+      "jsr:@std/cli@^1.0.3",
+      "jsr:@std/encoding@^1.0.1",
+      "jsr:@std/fs@^1.0.1",
+      "jsr:@std/http@^1.0.3",
+      "jsr:@std/log@^0.224.5",
+      "jsr:@std/path@^1.0.2",
+      "jsr:@std/testing@^1.0.0",
+      "npm:xstate@^5.17.1"
+    ]
+  }
+}

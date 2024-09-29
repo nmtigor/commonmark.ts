@@ -1,0 +1,48 @@
+# Leaf blocks
+
+## Link reference definitions
+
+```````````````````````````````` example
+[foo]: /url
+===
+[bar]: /url
+[foo]
+[bar]
+.
+<p>===
+[bar]: /url
+<a href="/url">foo</a>
+[bar]</p>
+````````````````````````````````
+
+```````````````````````````````` example
+[foo]: /url
+---
+[bar]: /url
+[foo]
+[bar]
+.
+<hr />
+<p><a href="/url">foo</a>
+<a href="/url">bar</a></p>
+````````````````````````````````
+
+## Paragraphs
+
+```````````````````````````````` example
+aaa  →   
+bbb  →   
+.
+<p>aaa  	<br />
+bbb</p>
+````````````````````````````````
+
+```````````````````````````````` example
+aaa  →
+bbb  →
+.
+<p>aaa  	
+bbb</p>
+````````````````````````````````
+
+<!-- END TESTS -->

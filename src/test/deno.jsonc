@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "deno.ns",
+      "deno.unstable",
+      // "deno.worker",
+      "ESNext",
+      "DOM",
+      "DOM.Iterable"
+      // "WebWorker"
+    ],
+
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true
+  },
+  "test": {
+    "include": [
+      "../lib/compiling/mdext/MdextLexr_test.ts"
+    ]
+    // "exclude": [""]
+  },
+  "imports": {
+    "@b-fuze/deno-dom": "jsr:@b-fuze/deno-dom@^0.1.48",
+    "@denosaurs/argontwo": "jsr:@denosaurs/argontwo@^0.2.0",
+    "@fe-3rd/": "../3rd/",
+    "@fe-cpl/": "../lib/compiling/",
+    "@fe-edt/": "../lib/editor/",
+    "@fe-lib/": "../lib/",
+    "@fe-pdf.ts-src/": "../pdf/pdf.ts-src/",
+    "@fe-pdf.ts-test/": "../pdf/pdf.ts-test/",
+    "@fe-pdf.ts-web/": "../pdf/pdf.ts-web/",
+    "@fe-src/": "../",
+    "@fe-util/": "../../util/",
+    "@hono/hono": "jsr:@hono/hono@^4.5.8",
+    "@std/assert": "jsr:@std/assert@^1.0.2",
+    "@std/cli": "jsr:@std/cli@^1.0.3",
+    "@std/encoding": "jsr:@std/encoding@^1.0.1",
+    "@std/fs": "jsr:@std/fs@^1.0.1",
+    "@std/http": "jsr:@std/http@^1.0.3",
+    "@std/log": "jsr:@std/log@^0.224.5",
+    "@std/path": "jsr:@std/path@^1.0.2",
+    "@std/testing": "jsr:@std/testing@^1.0.0",
+    "@wretch": "../3rd/wretch-2.9.0/dist/index.js",
+    "@xstate": "npm:xstate@^5.17.1",
+    "@zod": "../3rd/zod-3.23.8/lib/index.mjs"
+  }
+}

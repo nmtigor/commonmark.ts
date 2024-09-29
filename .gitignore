@@ -1,0 +1,5 @@
+/gen/
+/tsconfig.json
+
+/node_modules/
+.vscode/
