@@ -5,7 +5,7 @@
 
 import { LOG_cssc } from "../../alias.ts";
 import { _TRACE, DEV, global, INOUT, RESIZ } from "../../global.ts";
-import { lastCb_i, Moo } from "../Moo.ts";
+import { LastCb_i, Moo } from "../Moo.ts";
 import { Scrolr, Scronr } from "../Scronr.ts";
 import type { CSSStyle, id_t, lnum_t, ts_t, uint } from "../alias.ts";
 import { BufrDir, WritingMode } from "../alias.ts";
@@ -136,7 +136,7 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
         this.scrolr$
           .invalidate_bcr()
           .refreshCarets();
-      }, { i: lastCb_i });
+      }, { i: LastCb_i });
     this.#scronr.syncLayout();
 
     new ResizeObserver(this.#scronr.refresh).observe(this.scrolr$.main_el);

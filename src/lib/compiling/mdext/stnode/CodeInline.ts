@@ -18,12 +18,14 @@ export class CodeInline extends Inline {
   #lastTk;
   #chunkTk_a;
 
-  /** @implement */
-  get frstToken() {
+  override get children() {
+    return undefined;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.#frstTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#lastTk;
   }
 
@@ -38,8 +40,7 @@ export class CodeInline extends Inline {
     this.#lastTk = lastTk_x;
     this.#chunkTk_a = chunkSnt_a_x;
 
-    this.frstBdryTk;
-    this.lastBdryTk;
+    this.ensureBdry();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -60,9 +61,9 @@ export class CodeInline extends Inline {
 
   override _toHTML(lexr_x: MdextLexr): string {
     const s_a: string[] = [];
-    let curLn = this.#chunkTk_a[0].frstLine;
+    let curLn = this.#chunkTk_a[0].sntFrstLine;
     for (const tk of this.#chunkTk_a) {
-      const ln_ = tk.frstLine;
+      const ln_ = tk.sntFrstLine;
       if (ln_ !== curLn) {
         curLn = ln_;
         s_a.push(" ");

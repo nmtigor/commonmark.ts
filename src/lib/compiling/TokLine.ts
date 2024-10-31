@@ -3,13 +3,13 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { Tok } from "./alias.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import { Line } from "./Line.ts";
+import type { TokBufr } from "./TokBufr.ts";
+import type { Tok } from "./alias.ts";
 import type { MdextTok } from "./mdext/MdextTok.ts";
 import type { PlainTok } from "./plain/PlainTok.ts";
 import type { SetTok } from "./set/SetTok.ts";
-import type { TokBufr } from "./TokBufr.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -61,6 +61,7 @@ export class TokLine<T extends Tok = BaseTok> extends Line {
   //   return edtr_x.eline_m.get(this)!;
   // }
 }
+/*64----------------------------------------------------------*/
 
 export type PlainLine = TokLine<PlainTok>;
 export type SetLine = TokLine<SetTok>;

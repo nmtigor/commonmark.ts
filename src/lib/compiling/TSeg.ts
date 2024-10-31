@@ -4,7 +4,7 @@
  ******************************************************************************/
 
 import { LOG_cssc } from "../../alias.ts";
-import { INOUT } from "../../global.ts";
+import { INOUT, PRF } from "../../global.ts";
 import type { id_t, lnum_t, loff_t } from "../alias.ts";
 import type { uint } from "../alias.ts";
 import { zUint } from "../alias.ts";
@@ -135,7 +135,7 @@ export class TSeg {
       this.#ran.reset(this.#bufr); //!
     }
     if (this.tline.bufr !== this.#tbufr) {
-      this.#tloc.reset(this.#tbufr.frstLine_$, 0); //!
+      this.#tloc.set(this.#tbufr.frstLine_$, 0); //!
     }
 
     if (this.nextTSeg_$ && this.prevTSeg_$) {
@@ -234,9 +234,9 @@ export class TSeg {
     // const next = this.nextTSeg_$;
     this.reset_$();
 
-    this.strtLoc.reset_1(lidx_0_x, loff_0_x);
-    this.stopLoc.reset_1(lidx_0_x, loff_0_x + length_x);
-    this.#tloc.reset_1(lidx_1_x, loff_1_x);
+    this.strtLoc.set_O(lidx_0_x, loff_0_x);
+    this.stopLoc.set_O(lidx_0_x, loff_0_x + length_x);
+    this.#tloc.set_O(lidx_1_x, loff_1_x);
 
     this.#correct_line_tseg();
     // if( prev ) this.linkPrev( prev );
@@ -361,7 +361,7 @@ export class TSeg {
     return [prev_a, this.toString(), next_a];
   }
 
-  get _repr(): [string | undefined, string, string | undefined] {
+  _repr(): [string | undefined, string, string | undefined] {
     return [
       this.prevTSeg_$?.toString(),
       this.toString(),
@@ -396,10 +396,12 @@ export class TSegFac extends Factory<TSeg> {
     /*#static*/ if (INOUT) {
       assert(this.#tfmr.tseg_fac === this);
     }
-    // console.log(
-    //   `%c# of cached TSeg instances: ${this.val_a$.length + 1}`,
-    //   `color:${LOG_cssc.performance}`,
-    // );
+    /*#static*/ if (PRF) {
+      console.log(
+        `%c# of cached TSeg instances: ${this.val_a$.length + 1}`,
+        `color:${LOG_cssc.performance}`,
+      );
+    }
     return new TSeg(this.#tfmr);
   }
 

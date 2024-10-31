@@ -7,9 +7,12 @@ import type { uint, uint16 } from "@fe-lib/alias.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
 import { _tag, _toHTML } from "../util.ts";
-import { Block } from "./Block.ts";
+import type { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import { ListItem } from "./ListItem.ts";
+import type { Loc } from "../../Loc.ts";
+import { fail } from "@fe-lib/util/trace.ts";
+import type { MdextTk } from "../../Token.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class List extends CtnrBlock {
@@ -22,31 +25,36 @@ export abstract class List extends CtnrBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  protected override readonly block_a$: ListItem[] = [];
+  //jjjj TOCLEANUP
+  // protected override readonly block_a$: ListItem[] = [];
+
+  override get children(): ListItem[] {
+    return this.children$ as ListItem[];
+  }
+
+  //jjjj TOCLEANUP
+  // /**
+  //  * `in( this.block_a$.length )`
+  //  */
+  // override get frstChild(): Block {
+  //   return this.block_a$[0];
+  // }
+  // /**
+  //  * `in( this.block_a$.length )`
+  //  */
+  // override get lastChild(): Block {
+  //   return this.block_a$.at(-1)!;
+  // }
 
   /**
    * `in( this.block_a$.length )`
    */
-  override get frstChild(): Block {
-    return this.block_a$[0];
-  }
-  /**
-   * `in( this.block_a$.length )`
-   */
-  override get lastChild(): Block {
-    return this.block_a$.at(-1)!;
-  }
-
-  /**
-   * `in( this.block_a$.length )`
-   * @implement
-   */
-  get frstToken() {
-    return this.frstToken$ ??= this.block_a$[0].frstToken;
+  override get frstToken() {
+    return this.frstToken$ ??= this.children[0].frstToken;
   }
   /** @see {@linkcode frstToken()} */
-  get lastToken() {
-    return this.lastToken$ ??= this.block_a$.at(-1)!.lastToken;
+  override get lastToken() {
+    return this.lastToken$ ??= this.children.at(-1)!.lastToken;
   }
 
   #sign;
@@ -69,11 +77,12 @@ export abstract class List extends CtnrBlock {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   protected override closeBlock_impl$(): void {
-    for (let i = 0, iI = this.block_a$.length; i < iI; ++i) {
-      const li_i = this.block_a$[i];
+    const c_a = this.children;
+    for (let i = 0, iI = c_a.length; i < iI; ++i) {
+      const li_i = c_a[i];
       if (i + 1 < iI) {
         /* check for non-final list item ending with blank line */
-        if (li_i.lastLine.nextLine !== this.block_a$[i + 1].frstLine) {
+        if (li_i.sntLastLine.nextLine !== c_a[i + 1].sntFrstLine) {
           this.#tight = false;
           break;
         }
@@ -85,6 +94,11 @@ export abstract class List extends CtnrBlock {
         break;
       }
     }
+  }
+
+  /** @implement */
+  lcolCntStrt(_loc_x: Loc): MdextTk | undefined {
+    fail("Not implemented");
   }
 }
 /*80--------------------------------------------------------------------------*/
@@ -100,7 +114,7 @@ export class BulletList extends List {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   override _toHTML(lexr_x: MdextLexr): string {
-    return `<ul>\n${_toHTML(lexr_x, this.block_a$)}\n</ul>`;
+    return `<ul>\n${_toHTML(lexr_x, this.children)}\n</ul>`;
   }
 }
 /*80--------------------------------------------------------------------------*/
@@ -122,7 +136,7 @@ export class OrderdList extends List {
   override _toHTML(lexr_x: MdextLexr): string {
     return `${
       this.#start !== 1 ? _tag("ol", [["start", this.#start]]) : "<ol>"
-    }\n${_toHTML(lexr_x, this.block_a$)}\n</ol>`;
+    }\n${_toHTML(lexr_x, this.children)}\n</ol>`;
   }
 }
 /*80--------------------------------------------------------------------------*/

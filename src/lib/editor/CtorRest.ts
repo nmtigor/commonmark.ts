@@ -107,7 +107,7 @@ export class CtorRest {
     return ret as ReplRestRepr;
   }
   /** @final */
-  get _repr(): ReplRestRepr {
+  _repr(): ReplRestRepr {
     return this.#_reprReplRest(this.#rest);
   }
 }

@@ -33,7 +33,7 @@ export class TBufr extends Bufr {
   readonly bufr;
 
   constructor(bufr_x: Bufr) {
-    super(bufr_x.dir);
+    super("", bufr_x.dir);
     this.bufr = bufr_x;
   }
 

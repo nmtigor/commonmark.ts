@@ -43,12 +43,20 @@ export class Link extends Inline {
   #textSnt_a;
   #titleTk_a;
 
-  /** @implement */
-  get frstToken() {
+  override get children(): Inline[] {
+    if (this.children$) return this.children$ as Inline[];
+
+    const ret: Inline[] = [];
+    for (const snt of this.#textSnt_a) {
+      if (snt instanceof Inline) ret.push(snt);
+    }
+    return this.children$ = ret;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.#frstTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#lastTk;
   }
 
@@ -76,8 +84,7 @@ export class Link extends Inline {
     if (destTk_a_x?.length) this.#destTk_a = destTk_a_x;
     if (titleTk_a_x?.length) this.#titleTk_a = titleTk_a_x;
 
-    this.frstBdryTk;
-    this.lastBdryTk;
+    this.ensureBdry();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

@@ -98,14 +98,14 @@ export type Chr = string;
  * Ref. http://www.unicode.org/reports/tr9/#Table_Bidirectional_Character_Types
  */
 export enum ChrTyp {
-  // Strong
+  /* Strong */
   L = 1, R = 2, AL = 4,
-  // Weak
+  /* Weak */
   EN = 8, ES = 0x10, ET = 0x20, AN = 0x40, CS = 0x80,
   NSM = 0x0_100, BN = 0x0_200,
-  // Neutral
+  /* Neutral */
   B = 0x0_400, S = 0x0_800, WS = 0x1_000, ON = 0x2_000,
-  // Explicit Formatting
+  /* Explicit Formatting */
   LRE = 0x4_000, LRO = 0x8_000, RLE = 0x10_000, RLO = 0x20_000, PDF = 0x40_000,
   LRI = 0x80_000, RLI = 0x100_000, FSI = 0x200_000, PDI = 0x400_000,
 }

@@ -9,7 +9,6 @@ import { _TRACE, global, INOUT } from "../../global.ts";
 import type { id_t, ldt_t, loff_t } from "../alias.ts";
 import { assert, out, traceOut } from "../util/trace.ts";
 import { Bufr } from "./Bufr.ts";
-import { LocCompared } from "./Loc.ts";
 import { Ran } from "./Ran.ts";
 import { TBufr } from "./TBufr.ts";
 import { TSeg, TSegFac } from "./TSeg.ts";
@@ -72,9 +71,9 @@ export abstract class Tfmr {
    * @final
    * @headconst @param bufr_x
    */
-  reset(bufr_x: Bufr, tbufr_x?: TBufr) {
-    this.bufr$ = bufr_x;
-    this.tbufr$ = tbufr_x ?? new TBufr(bufr_x);
+  reset(bufr_x?: Bufr, tbufr_x?: TBufr) {
+    if (bufr_x) this.bufr$ = bufr_x;
+    this.tbufr$ = tbufr_x ?? new TBufr(this.bufr$);
 
     if (this.tseg_fac$) {
       this.tseg_fac$.reset(this, "hard");
@@ -92,6 +91,7 @@ export abstract class Tfmr {
     this.curTSeg$ = undefined;
     this.stopTSeg$ = this.curTSeg$;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
    * @final
@@ -224,8 +224,8 @@ export abstract class Tfmr {
       if (stopLn_src !== stopLn_tgt || dtLoff !== 0) {
         let tseg: TSeg | undefined = this.stopTSeg$!;
         do {
-          tseg.strtLoc.reset(stopLn_tgt, tseg.strtLoff + dtLoff);
-          tseg.stopLoc.reset(stopLn_tgt, tseg.stopLoff + dtLoff);
+          tseg.strtLoc.set(stopLn_tgt, tseg.strtLoff + dtLoff);
+          tseg.stopLoc.set(stopLn_tgt, tseg.stopLoff + dtLoff);
 
           if (stopLn_src !== stopLn_tgt) {
             if (stopLn_src.isStrtByTSeg_$(tseg)) {

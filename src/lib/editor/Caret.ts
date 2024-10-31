@@ -17,7 +17,7 @@ import { WritingDir } from "../alias.ts";
 import type { Cssc } from "../color/alias.ts";
 import { Pale } from "../color/Pale.ts";
 import { RanP } from "../compiling/Ran.ts";
-import { Ranval, ranval_fac, RanvalMo } from "../compiling/Ranval.ts";
+import { g_ranval_fac, Ranval, RanvalMo } from "../compiling/Ranval.ts";
 import { HTMLVuu } from "../cv.ts";
 import { html, span } from "../dom.ts";
 import "../jslang.ts";
@@ -401,7 +401,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     this.#eran = this.edtr.getERanBy_$(this.ranval, this.#eran);
     // if( !this.#eran.focusCtnr.isText ) { this.hide(); return; }
     // console.log(this.#eran);
-    using fat_rv = ranval_fac.oneMore().reset(rv_x.focusLidx, rv_x.focusLoff);
+    using fat_rv = g_ranval_fac.oneMore().reset(rv_x.focusLidx, rv_x.focusLoff);
     fat_rv.focusLoff += 1;
     this.#fat_eran = this.edtr.getERanBy_$(fat_rv, this.#fat_eran);
 
@@ -431,9 +431,9 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
       assert(this.active);
     }
     const rv_0 = this.#caretrvm![1].val;
-    using rv_ = ranval_fac.oneMore().become(rv_0);
+    using rv_ = g_ranval_fac.oneMore().become(rv_0);
     this.#eran = this.edtr.getERanBy_$(rv_, this.#eran);
-    using fat_rv = ranval_fac.oneMore().reset(rv_0.focusLidx, rv_0.focusLoff);
+    using fat_rv = g_ranval_fac.oneMore().reset(rv_0.focusLidx, rv_0.focusLoff);
     fat_rv.focusLoff += 1;
     this.#fat_eran = this.edtr.getERanBy_$(fat_rv, this.#fat_eran);
 

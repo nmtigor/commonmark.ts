@@ -48,7 +48,7 @@ export class Unre<T extends {} | null> {
   }
 
   /** @const */
-  get _repr(): Record<string, any> {
+  _repr(): Record<string, unknown> {
     return {
       ary: this.ary$,
       ran: `[${this.i_0$}, ${this.i_1$})`,

@@ -7,16 +7,17 @@ import { _TRACE, global, INOUT } from "../../global.ts";
 import type { id_t, ldt_t, loff_t } from "../alias.ts";
 import { MAX_lnum } from "../alias.ts";
 import "../jslang.ts";
-import { SortedArray } from "../util/SortedArray.ts";
+import { SortedIdo } from "../util/SortedArray.ts";
 import { assert, out, traceOut } from "../util/trace.ts";
 import type { Tok } from "./alias.ts";
 import { BaseTok } from "./BaseTok.ts";
 import { LocCompared } from "./Loc.ts";
-import { TokRan } from "./Ran.ts";
+import type { Stnode } from "./Stnode.ts";
 import type { TokBufr } from "./TokBufr.ts";
 import { Token } from "./Token.ts";
 import type { TokLine } from "./TokLine.ts";
 import { TokLoc } from "./TokLoc.ts";
+import { TokRan } from "./TokRan.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class Lexr<T extends Tok = BaseTok> {
@@ -37,30 +38,30 @@ export abstract class Lexr<T extends Tok = BaseTok> {
    * `out( ret; ret.value === BaseTok.strtBdry )`
    * @final
    */
-  get frstToken() {
+  get frstLexTk(): Token<T> {
     return this.bufr$.frstLine.frstTokenBy(this)!;
   }
   /**
    * `out( ret; ret.value === BaseTok.stopBdry )`
    * @final
    */
-  get lastToken() {
+  get lastLexTk(): Token<T> {
     return this.bufr$.lastLine.lastTokenBy(this)!;
   }
   /* ~ */
 
-  protected strtToken$!: Token<T>;
-  get _strtToken() {
-    return this.strtToken$;
+  protected strtLexTk$!: Token<T>;
+  get strtLexTk_$() {
+    return this.strtLexTk$;
   }
-  protected stopToken$!: Token<T>;
-  get stopToken() {
-    return this.stopToken$;
+  protected stopLexTk$!: Token<T>;
+  get stopLexTk_$() {
+    return this.stopLexTk$;
   }
-  protected strtToken_save$!: Token<T>;
-  get strtToken_save() {
-    return this.strtToken_save$;
-  }
+  protected strtLexTk_0$!: Token<T>;
+  // get strtToken_0_$() {
+  //   return this.strtLexTk_0$;
+  // }
 
   #oldStopLoff: loff_t = 0;
   #dtLoff = 0 as ldt_t;
@@ -71,7 +72,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   #adjustStrtToken = false;
   #adjustStopToken = false;
 
-  #errTk_sa = new SortedArray<Token<T>>((a, b) => a.id < b.id);
+  #errTk_sa = new SortedIdo<Token<T>>();
   get hasErr() {
     return !!this.#errTk_sa.length;
   }
@@ -84,6 +85,18 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   }
 
   protected curLoc$!: TokLoc<T>;
+  //jjjj TOCLEANUP
+  // initCurLoc() {
+  //   let loc = this.strtLexTk$.nextToken_$?.sntStrtLoc;
+  //   if (!loc?.posS(this.stopLexTk$.sntStrtLoc)) {
+  //     loc = this.strtLexTk$.sntStopLoc;
+  //   }
+  //   this.curLoc$.become(loc);
+  // }
+
+  readonly #scandTk_a: Token<T>[] = [];
+  /** last scanned Token */
+  lsTk$: Token<T> | undefined;
 
   // static readonly #VALVE = 100;
   // #valve = Lexr.#VALVE;
@@ -92,20 +105,20 @@ export abstract class Lexr<T extends Tok = BaseTok> {
    * @headconst @param bufr_x
    */
   constructor(bufr_x: TokBufr<T>) {
-    this.reset(bufr_x);
+    this.reset$(bufr_x);
   }
 
   /**
    * @final
    * @headconst @param bufr_x
    */
-  reset(bufr_x: TokBufr<T>) {
+  protected reset$(bufr_x: TokBufr<T>): this {
     if (this.bufr$) {
       let ln_: TokLine<T> | undefined = this.bufr$.frstLine;
       let valve = MAX_lnum;
       do {
-        ln_!.delFrstToken_$(this);
-        ln_!.delLastToken_$(this);
+        ln_!.delFrstTokenBy_$(this);
+        ln_!.delLastTokenBy_$(this);
 
         ln_ = ln_!.nextLine;
       } while (ln_ && --valve);
@@ -114,22 +127,27 @@ export abstract class Lexr<T extends Tok = BaseTok> {
 
     this.bufr$ = bufr_x;
 
-    this.strtToken$ = new Token(
+    this.strtLexTk$ = new Token(
       this,
       new TokRan(new TokLoc(bufr_x.frstLine, 0)),
       BaseTok.strtBdry as T,
     );
-    this.stopToken$ = new Token(
+    this.lsTk$ = undefined;
+    this.stopLexTk$ = new Token(
       this,
       new TokRan(new TokLoc(bufr_x.lastLine)),
       BaseTok.stopBdry as T,
     );
+    bufr_x.frstLine.setFrstToken_$(this.strtLexTk$);
+    bufr_x.lastLine.setLastToken_$(this.stopLexTk$);
 
     this.#errTk_sa.reset();
 
-    this.curLoc$ = this.strtToken$.stopLoc.dup();
+    this.curLoc$ = this.strtLexTk$.sntStopLoc.dup();
 
     // this.initialized_ = false; /** @member { Boolean } */
+
+    return this;
   }
 
   // get initialized() { return this.initialized_; }
@@ -145,7 +163,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   //   }
   //   const out = () => {
   //     assert( this.bufr$ );
-  //     assert( this.strtToken$ && this.stopToken$ );
+  //     assert( this.strtLexTk$ && this.stopLexTk$ );
   //     assert( this.initialized_ );
   //   }
 
@@ -155,9 +173,9 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   //   // this.stoploc_ = this.curLoc$.dup();
 
   //   /** @member { Token } */
-  //   this.strtToken$ = new Token( new TokLoc(bufr.frstLine), BaseTok.strtBdry );
+  //   this.strtLexTk$ = new Token( new TokLoc(bufr.frstLine), BaseTok.strtBdry );
   //   /** @member { Token } */
-  //   this.stopToken$ = new Token( new TokLoc(bufr.lastLine,bufr.lastLine.uchrLen), BaseTok.stopBdry );
+  //   this.stopLexTk$ = new Token( new TokLoc(bufr.lastLine,bufr.lastLine.uchrLen), BaseTok.stopBdry );
 
   //   this.initialized_ = true;
 
@@ -165,26 +183,87 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   // }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  protected sufmark$() {
-    let tk_: Token<T> | undefined = this.strtToken$;
-    const tk_1 = this.stopToken$;
+  // /**
+  //  * [`strtTk_x`, `stopTk_x`)
+  //  * @headconst @param strtTk_x
+  //  * @headconst @param stopTk_x
+  //  */
+  // bakeRanvalForw_$(strtTk_x?: Token<T>, stopTk_x?: Token<T>): void {
+  //   if (!strtTk_x) return;
+
+  //   let tk_: Token<T> | undefined = strtTk_x;
+  //   const VALVE = 10_000;
+  //   let valve = VALVE;
+  //   while (tk_ && tk_ !== stopTk_x && --valve) {
+  //     tk_.bakeRanval_$();
+  //     tk_ = tk_.nextToken_$;
+  //   }
+  //   assert(valve, `Loop ${VALVE}±1 times`);
+  // }
+  // /** @see {@linkcode bakeRanvalForw_$()} */
+  // bakeRanvalBack_$(strtTk_x?: Token<T>, stopTk_x?: Token<T>): void {
+  //   if (!strtTk_x) return;
+
+  //   let tk_: Token<T> | undefined = strtTk_x;
+  //   const VALVE = 10_000;
+  //   let valve = VALVE;
+  //   while (tk_ && tk_ !== stopTk_x && --valve) {
+  //     tk_.bakeRanval_$();
+  //     tk_ = tk_.prevToken_$;
+  //   }
+  //   assert(valve, `Loop ${VALVE}±1 times`);
+  // }
+  /**
+   * [`strtTk_x`, `stopTk_x`)
+   * @headconst @param strtTk_x
+   * @headconst @param stopTk_x
+   */
+  saveRanvalForw_$(strtTk_x?: Token<T>, stopTk_x?: Token<T>): void {
+    if (!strtTk_x) return;
+
+    let tk_: Token<T> | undefined = strtTk_x;
     const VALVE = 10_000;
     let valve = VALVE;
-    do {
+    while (tk_ && tk_ !== stopTk_x && --valve) {
       tk_.saveRanval_$();
-      if (tk_ === tk_1) break;
       tk_ = tk_.nextToken_$;
-    } while (tk_ && --valve);
+    }
     assert(valve, `Loop ${VALVE}±1 times`);
+    /*#static*/ if (INOUT) {
+      assert(tk_);
+    }
+  }
+  /** @see {@linkcode saveRanvalForw_$()} */
+  saveRanvalBack_$(strtTk_x?: Token<T>, stopTk_x?: Token<T>): void {
+    if (!strtTk_x) return;
+
+    let tk_: Token<T> | undefined = strtTk_x;
+    const VALVE = 10_000;
+    let valve = VALVE;
+    while (tk_ && tk_ !== stopTk_x && --valve) {
+      tk_.saveRanval_$();
+      tk_ = tk_.prevToken_$;
+    }
+    assert(valve, `Loop ${VALVE}±1 times`);
+    /*#static*/ if (INOUT) {
+      assert(tk_);
+    }
   }
 
+  protected sufmark$() {}
+
   /**
-   * Set `#oldStopLoff`, `#dtLoff`, `strtToken$`, `stopToken$`.
+   * Set `#oldStopLoff`, `#dtLoff`, `strtLexTk$`, `stopLexTk$`.
    * @final
    * @headconst @param oldRan_x
    */
   @traceOut(_TRACE)
-  markLexRegion_$(oldRan_x: TokRan<T>) {
+  @out((_, self: Lexr<T>) => {
+    assert(!self.strtLexTk$.isErr);
+    assert(!self.stopLexTk$.isErr);
+    assert(self.strtLexTk$.posS(self.stopLexTk$));
+  })
+  markLexRegion_$(oldRan_x: TokRan<T>): this {
     /*#static*/ if (_TRACE) {
       console.log(
         `${global.indent}>>>>>>> ${this._type_id}.markLexRegion_$(${oldRan_x}) >>>>>>>`,
@@ -201,111 +280,108 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     this.#oldStopLoff = oldRan_x.stopLoff;
     this.#dtLoff = 0 as ldt_t;
 
-    const regressed = this.strtToken$ === this.stopToken$;
+    const regressed = this.strtLexTk$ === this.stopLexTk$;
 
     const strtLoc_1 = oldRan_x.strtLoc;
     // let valve = 1000;
-    if (regressed || strtLoc_1.posS(this.strtToken$.stopLoc)) {
-      // reset `strtToken$`
-      let ln = oldRan_x.frstLine;
-      let tk = ln.frstTokenBy(this);
+    if (regressed || strtLoc_1.posS(this.strtLexTk$.sntStopLoc)) {
+      /* reset `strtLexTk$` */
+      let ln_ = oldRan_x.frstLine;
+      let tk_ = ln_.frstTokenBy(this);
       while (
-        !tk || strtLoc_1.posS(tk.stopLoc) || tk.value === BaseTok.stopBdry //!
+        !tk_ || strtLoc_1.posS(tk_.sntStopLoc) || tk_.value === BaseTok.stopBdry //!
       ) {
-        if (ln.isFrstLine) {
-          tk = undefined;
+        if (ln_.isFrstLine) {
+          tk_ = undefined;
           break;
         }
 
-        // assert( ln.prevLine );
-        ln = ln.prevLine!;
-        tk = ln.frstTokenBy(this);
+        // assert( ln_.prevLine );
+        ln_ = ln_.prevLine!;
+        tk_ = ln_.frstTokenBy(this);
       }
       // assert(valve);
-      if (tk) {
+      if (tk_) {
         /*#static*/ if (INOUT) {
-          assert(tk.stopLoc.posSE(strtLoc_1));
+          assert(tk_.sntStopLoc.posSE(strtLoc_1));
         }
         while (
-          tk.nextToken_$?.stopLoc.posSE(strtLoc_1) &&
-          tk.nextToken_$.value !== BaseTok.stopBdry
+          tk_.nextToken_$?.sntStopLoc.posSE(strtLoc_1) &&
+          tk_.nextToken_$.value !== BaseTok.stopBdry
         ) {
-          tk = tk.nextToken_$;
+          tk_ = tk_.nextToken_$;
         }
       }
 
-      if (tk) {
-        this.strtToken$ = tk;
+      if (tk_) {
+        this.strtLexTk$ = tk_;
       } else {
         /*#static*/ if (INOUT) {
-          assert(this.strtToken$.value === BaseTok.strtBdry);
+          assert(this.strtLexTk$.value === BaseTok.strtBdry);
         }
       }
     }
 
     const stopLoc_0 = oldRan_x.stopLoc;
-    if (regressed || stopLoc_0.posG(this.stopToken$.strtLoc)) {
-      // reset `stopToken$`
-      let ln = oldRan_x.lastLine;
-      let tk = ln.lastTokenBy(this);
+    if (regressed || stopLoc_0.posG(this.stopLexTk$.sntStrtLoc)) {
+      /* reset `stopLexTk$` */
+      let ln_ = oldRan_x.lastLine;
+      let tk_ = ln_.lastTokenBy(this);
       while (
-        !tk ||
-        tk.strtLoc.posS(stopLoc_0) ||
-        tk.value === BaseTok.strtBdry //!
+        !tk_ ||
+        tk_.sntStrtLoc.posS(stopLoc_0) ||
+        tk_.value === BaseTok.strtBdry //!
       ) {
-        if (ln.isLastLine) {
-          tk = undefined;
+        if (ln_.isLastLine) {
+          tk_ = undefined;
           break;
         }
 
-        // assert( ln.nextLine );
-        ln = ln.nextLine!;
-        tk = ln.lastTokenBy(this);
+        // assert( ln_.nextLine );
+        ln_ = ln_.nextLine!;
+        tk_ = ln_.lastTokenBy(this);
       }
       // assert(valve);
-      if (tk) {
+      if (tk_) {
         /*#static*/ if (INOUT) {
-          assert(stopLoc_0.posSE(tk.strtLoc));
+          assert(stopLoc_0.posSE(tk_.sntStrtLoc));
         }
         while (
-          tk.prevToken_$?.strtLoc.posGE(stopLoc_0) &&
-          tk.prevToken_$.value !== BaseTok.strtBdry
+          tk_.prevToken_$?.sntStrtLoc.posGE(stopLoc_0) &&
+          tk_.prevToken_$.value !== BaseTok.strtBdry
         ) {
-          tk = tk.prevToken_$;
+          tk_ = tk_.prevToken_$;
         }
       }
 
-      if (tk) {
-        this.stopToken$ = tk;
+      if (tk_) {
+        this.stopLexTk$ = tk_;
       } else {
         /*#static*/ if (INOUT) {
-          assert(this.stopToken$.value === BaseTok.stopBdry);
+          assert(this.stopLexTk$.value === BaseTok.stopBdry);
         }
       }
     }
 
-    this.#adjustStrtToken = oldRan_x.frstLine === this.strtToken$.lastLine;
-    this.#adjustStopToken = oldRan_x.lastLine === this.stopToken$.frstLine;
+    this.#adjustStrtToken = this.strtLexTk$.sntLastLine === oldRan_x.frstLine;
+    this.#adjustStopToken = oldRan_x.lastLine === this.stopLexTk$.sntFrstLine;
 
-    // if( this.strtToken$
-    //  && this.strtToken$.value === BaseTok.stopBdry
+    // if( this.strtLexTk$
+    //  && this.strtLexTk$.value === BaseTok.stopBdry
     // ) {
-    //   this.strtToken$ = this.strtToken$.prevToken_$;
+    //   this.strtLexTk$ = this.strtLexTk$.prevToken_$;
     // }
 
-    // // consider "a 1" -> "_a 1", in which case strtToken$ and stopToken$ are BaseTok.strtBdry
-    // if( this.stopToken$
-    //  && this.stopToken$ === this.strtToken$
+    // // consider "a 1" -> "_a 1", in which case strtLexTk$ and stopLexTk$ are BaseTok.strtBdry
+    // if( this.stopLexTk$
+    //  && this.stopLexTk$ === this.strtLexTk$
     // ) {
-    //   this.stopToken$ = this.stopToken$.nextToken_$;
+    //   this.stopLexTk$ = this.stopLexTk$.nextToken_$;
     // }
 
+    this.saveRanvalForw_$(this.strtLexTk$.nextToken_$, this.stopLexTk$);
     this.sufmark$();
-    /*#static*/ if (INOUT) {
-      assert(!this.strtToken$.hasErr);
-      assert(!this.stopToken$.hasErr);
-      assert(this.strtToken$.posS(this.stopToken$));
-    }
+    return this;
   }
 
   // /**
@@ -322,8 +398,8 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   // get stoplocOld$_() { return this.stoplocOld_; }
 
   /**
-   * Reset strtToken$, and tokens before at the same line.\
-   * Adjust stopToken$, and tokens after at the same line.\
+   * Adjust `strtLexTk$`, and tokens before at the same line.\
+   * Adjust `stopLexTk$`, and tokens after at the same line.\
    * Reset `#errTk_sa`
    * @final
    * @headconst @param newRan_x
@@ -338,64 +414,68 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     /*#static*/ if (INOUT) {
       assert(newRan_x.bufr === this.bufr$);
     }
+    const strtLn_tgt = newRan_x.frstLine;
+    const stopLn_tgt = newRan_x.lastLine;
     if (this.#adjustStrtToken) {
-      const strtLn_src = this.strtToken$.lastLine;
-      const strtLn_tgt = newRan_x.frstLine;
+      const strtLn_src = this.strtLexTk$.sntLastLine;
       if (strtLn_src !== strtLn_tgt) {
-        let tk_: Token<T> | undefined = this.strtToken$;
+        let tk_: Token<T> | undefined = this.strtLexTk$;
         do {
-          tk_.stopLoc.line_$ = strtLn_tgt;
-          if (tk_.frstLine === strtLn_src) {
-            tk_.strtLoc.line_$ = strtLn_tgt;
+          tk_.sntStopLoc.line_$ = strtLn_tgt;
+          if (tk_.sntFrstLine === strtLn_src) {
+            tk_.sntStrtLoc.line_$ = strtLn_tgt;
           }
-          tk_.bakeRanval_$(); // Recalc the new one
+          tk_.ran_$.syncRanval_$(); // Recalc the new one
 
           if (tk_ === strtLn_src.frstTokenBy(this)) {
-            strtLn_tgt.frstByToken_$(tk_);
-            strtLn_src.delFrstToken_$(this);
+            strtLn_src.delFrstTokenBy_$(this);
+            strtLn_tgt.setFrstToken_$(tk_);
           }
-          if (tk_ === strtLn_src.lastTokenBy(this)) {
-            strtLn_tgt.lastByToken_$(tk_);
-            strtLn_src.delLastToken_$(this);
+          if (
+            tk_ === strtLn_src.lastTokenBy(this) && strtLn_tgt !== stopLn_tgt
+          ) {
+            strtLn_src.delLastTokenBy_$(this);
+            strtLn_tgt.setLastToken_$(tk_);
           }
 
           tk_ = tk_.prevToken_$;
-        } while (tk_?.lastLine === strtLn_src);
+        } while (tk_?.sntLastLine === strtLn_src);
       }
     }
 
     if (this.#adjustStopToken) {
-      const stopLn_src = this.stopToken$.frstLine;
-      const stopLn_tgt = newRan_x.lastLine;
+      const stopLn_src = this.stopLexTk$.sntFrstLine;
       this.#dtLoff = (newRan_x.stopLoff - this.#oldStopLoff) as ldt_t;
       if (stopLn_src !== stopLn_tgt || this.#dtLoff !== 0) {
-        let tk_: Token<T> | undefined = this.stopToken$;
+        let tk_: Token<T> | undefined = this.stopLexTk$;
         do {
-          tk_.strtLoc.reset(stopLn_tgt, tk_.strtLoff + this.#dtLoff);
-          if (tk_.lastLine === stopLn_src) {
-            tk_.stopLoc.reset(stopLn_tgt, tk_.stopLoff + this.#dtLoff);
+          tk_.sntStrtLoc.set(stopLn_tgt, tk_.strtLoff + this.#dtLoff);
+          if (tk_.sntLastLine === stopLn_src) {
+            tk_.sntStopLoc.set(stopLn_tgt, tk_.stopLoff + this.#dtLoff);
           }
-          tk_.bakeRanval_$(); // Recalc the new one
+          tk_.ran_$.syncRanval_$(); // Recalc the new one
 
-          if (tk_ === stopLn_src.frstTokenBy(this)) {
-            stopLn_tgt.frstByToken_$(tk_);
-            stopLn_src.delFrstToken_$(this);
+          if (
+            tk_ === stopLn_src.frstTokenBy(this) && strtLn_tgt !== stopLn_tgt
+          ) {
+            stopLn_src.delFrstTokenBy_$(this);
+            stopLn_tgt.setFrstToken_$(tk_);
           }
           if (tk_ === stopLn_src.lastTokenBy(this)) {
-            stopLn_tgt.lastByToken_$(tk_);
-            stopLn_src.delLastToken_$(this);
+            stopLn_src.delLastTokenBy_$(this);
+            stopLn_tgt.setLastToken_$(tk_);
           }
 
           tk_ = tk_.nextToken_$;
-        } while (tk_?.frstLine === stopLn_src);
+        } while (tk_?.sntFrstLine === stopLn_src);
       }
     }
 
     if (this.hasErr) {
       /*#static*/ if (INOUT) {
         assert(
-          this.strtToken$.posS(this.#errTk_sa[0]) &&
-            this.stopToken$.posG(this.#errTk_sa.at(-1)!),
+          this.strtLexTk$.posS(this.#errTk_sa[0]) &&
+            this.stopLexTk$.posG(this.#errTk_sa.at(-1)!),
         );
       }
       this.#errTk_sa.reset();
@@ -405,25 +485,17 @@ export abstract class Lexr<T extends Tok = BaseTok> {
 
   // get stoplocNew$_() { return this.stoplocNew_; }
 
-  protected prelex$() {}
-
-  protected suflex$() {
-    let tk_: Token<T> | undefined = this.strtToken_save$;
-    const tk_1 = this.stopToken$;
-    // console.log(tk_.toString());
-    // console.log(tk_1.toString());
-    const VALVE = 10_000;
-    let valve = VALVE;
-    do {
-      tk_.bakeRanval_$();
-      if (tk_ === tk_1) break;
-      tk_ = tk_.nextToken_$;
-    } while (tk_ && --valve);
-    assert(valve, `Loop ${VALVE}±1 times`);
+  /**
+   * Assign `curLoc$`
+   */
+  protected prelex$() {
+    this.curLoc$.become(this.strtLexTk$.sntStopLoc);
   }
 
+  protected suflex$() {}
+
   /**
-   * Lex [ strtToken$.stopLoc, stopToken$.strtLoc )
+   * Lex [ strtLexTk$.stopLoc, stopLexTk$.strtLoc )
    * @final
    */
   @traceOut(_TRACE)
@@ -431,7 +503,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     /*#static*/ if (_TRACE) {
       console.log(`${global.indent}>>>>>>> ${this._type_id}.lex() >>>>>>>`);
     }
-    if (this.strtToken$ === this.stopToken$) {
+    if (this.strtLexTk$ === this.stopLexTk$) {
       /* This is the case of one `Bufr` with two or more `EdtrScrolr`. */
       return;
     }
@@ -439,14 +511,14 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     /*#static*/ if (INOUT) {
       /* Error tokens, if any, are included in the lex region. */
       assert(!this.hasErr);
-      assert(this.strtToken$.posS(this.stopToken$));
+      assert(this.strtLexTk$.posS(this.stopLexTk$));
     }
     this.prelex$();
 
-    this.strtToken_save$ = this.strtToken$;
+    this.strtLexTk_0$ = this.strtLexTk$;
     // this.#valve = Lexr.#VALVE;
-    const tk_a = this.lex_impl$();
-    this.concatTokens$(tk_a);
+    this.lex_impl$()
+      .concatTokens$();
 
     // console.log(this.bufr$.frstLine.frstTokenBy(this));
     // console.log(this.bufr$.lastLine.lastTokenBy(this));
@@ -454,87 +526,87 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     this.suflex$();
   }
 
+  protected getScanningToken$(): undefined | Token<T> | (() => Token<T>) {
+    return this.lsTk$?.nextToken_$;
+  }
+
   /**
-   * Lex [ strtToken$.stopLoc, stopToken$.strtLoc )\
+   * Lex [ strtLexTk$.stopLoc, stopLexTk$.strtLoc )\
   //  * `in( this.#valve > 0 )`
    * @final
    */
-  protected lex_impl$(): Token<T>[] {
+  protected lex_impl$(): this {
     // assert(this.#valve--, `Loop ${Lexr.#VALVE} times`);
-    const ret: Token<T>[] = [];
-
-    this.curLoc$.become(this.strtToken$.stopLoc);
-
-    let tk_0 = this.strtToken$;
+    this.#scandTk_a.length = 0;
+    this.lsTk$ = this.strtLexTk$;
     const VALVE = 10_000;
     let valve = VALVE;
     do {
-      let tk = tk_0.nextToken_$;
-      tk = this._scan(tk);
-      if (tk.value === BaseTok.unknown) { // 2269
+      const tk_ = this._scan(this.getScanningToken$());
+      if (tk_.value === BaseTok.unknown) { // 2269
         assert(valve--, `Loop ${VALVE}±1 times`);
         continue;
       }
-      tk_0.linkNext(tk, this.stopToken$);
+      /* Could set `lsTk$` to `undefined` in `scan_impl$()` to prevent
+      `.lineNext()` here. */
+      this.lsTk$?.linkNext(tk_, this.stopLexTk$);
 
-      if (tk.hasErr) this.#errTk_sa.add(tk);
-      if (!this.hasErr) this.strtToken$ = tk;
-      if (tk === this.stopToken$) break;
+      if (tk_.isErr) this.#errTk_sa.add(tk_);
+      if (!this.hasErr) this.strtLexTk$ = tk_;
+      if (tk_ === this.stopLexTk$) break;
 
-      ret.push(tk);
-      tk_0 = tk;
+      tk_.ran_$.syncRanval_$(); //!
+      this.#scandTk_a.push(tk_);
+      this.lsTk$ = tk_;
     } while (--valve);
     assert(valve, `Loop ${VALVE}±1 times`);
-
-    return ret;
+    return this;
   }
 
   /** @final */
   protected reachRigtBdry$(): LocCompared {
-    return this.curLoc$.locGE(this.stopToken$.strtLoc);
+    return this.curLoc$.locGE(this.stopLexTk$.sntStrtLoc);
   }
   /** @final */
   protected atRigtBdry$(): LocCompared {
-    return this.curLoc$.locE(this.stopToken$.strtLoc);
+    return this.curLoc$.locE(this.stopLexTk$.sntStrtLoc);
   }
   /** @final */
   protected overRigtBdry$(): LocCompared {
-    return this.curLoc$.locG(this.stopToken$.strtLoc);
+    return this.curLoc$.locG(this.stopLexTk$.sntStrtLoc);
   }
 
   /**
-   * Scan one token ab to stopToken$ (excluded).
+   * Scan one token ab to stopLexTk$ (excluded).
    * @param retTk_x Token<T> to fill if any
    */
   @out((ret, self: Lexr<T>) => {
-    if (ret !== self.stopToken$) {
-      assert(ret.posS(self.stopToken$));
-      assert(ret.stopLoc.posSE(self.curLoc$));
+    if (ret !== self.stopLexTk$) {
+      assert(ret.posS(self.stopLexTk$));
+      assert(ret.sntStopLoc.posSE(self.curLoc$));
     }
   })
-  private _scan(retTk_x?: Token<T>): Token<T> {
+  private _scan(retTk_x: undefined | Token<T> | (() => Token<T>)): Token<T> {
     this.curLoc$.correctLoff(); // Could `overEol`
     /*#static*/ if (INOUT) {
-      // assert( this.strtToken$ && this.stopToken$ );
+      // assert( this.strtLexTk$ && this.stopLexTk$ );
       assert(
-        this.strtToken$.stopLoc.posSE(this.curLoc$) &&
-          this.curLoc$.posSE(this.stopToken$.strtLoc),
+        this.strtLexTk$.sntStopLoc.posSE(this.curLoc$) &&
+          this.curLoc$.posSE(this.stopLexTk$.sntStrtLoc),
       );
     }
     if (this.reachRigtBdry$() === LocCompared.yes) {
-      retTk_x = this.stopToken$;
-      return retTk_x;
+      return this.stopLexTk$;
     }
 
-    if (!retTk_x || retTk_x === this.stopToken$) {
+    if (!retTk_x || retTk_x === this.stopLexTk$) {
       retTk_x = new Token(this, new TokRan(this.curLoc$.dup()));
-    } else {
+    } else if (retTk_x instanceof Token) {
       retTk_x.clrErr();
       retTk_x.value = BaseTok.unknown as T;
-      retTk_x.strtLoc.become(this.curLoc$);
+      retTk_x.setStrtLoc(this.curLoc$);
     }
-    this.scan_impl$(retTk_x);
-    return retTk_x;
+    return this.scan_impl$(retTk_x);
   }
 
   /**
@@ -545,100 +617,152 @@ export abstract class Lexr<T extends Tok = BaseTok> {
    */
   protected setTok$(tok_x: T, out_x: Token<T>): void {
     out_x.value = tok_x;
-    out_x.stopLoc.become(this.curLoc$);
+    out_x.setStopLoc(this.curLoc$);
   }
 
   /**
-   * Scan one token ab to stopToken$ (excluded)\
+   * Scan one token ab to stopLexTk$ (excluded)\
    * `in( this.reachRigtBdry$() !== LocCompared.yes )` \
-   * `in( out_x.strtLoc.posSE(this.curLoc$) )`\
-   * `in( out_x.value === BaseTok.unknown )`
-   * @out @param out_x Token<T> to fill
+  //  * `in( retTk_x.strtLoc.posSE(this.curLoc$) )`\
+  //  * `in( retTk_x.value === BaseTok.unknown )`
    */
-  protected abstract scan_impl$(out_x: Token<T>): void;
+  protected abstract scan_impl$(retTk_x: Token<T> | (() => Token<T>)): Token<T>;
 
   /**
    * @const @param tk_0
    * @const @param tk_1
    */
-  protected canConcat$(tk_0: Token<T>, tk_1: Token<T>): boolean {
+  protected canConcat$(_tk_0: Token<T>, _tk_1: Token<T>): boolean {
     return false;
   }
 
   /**
-   * Try to concat `tk_a_x[0]` with `strtToken_save$` and `tk_a_x.at(-1)` with
-   * `stopToken$`.\
-   * `strtToken_save$` could be adjusted to keep valid, which will be used in
+   * Try to concat `#scandTk_a[0]` with `strtLexTk_0$` and `#scandTk_a.at(-1)`
+   * with `stopLexTk$`.\
+   * `strtLexTk_0$` could be adjusted to keep valid, which will be used in
    * `Pazr.paz()`.
    *
-   * Priority to keep unchanged: `stopToken$` > `strtToken_save$` > `tk_a_x`
+   * Priority to keep unchanged: `stopLexTk$` > `strtLexTk_0$` > `#scandTk_a`
    *
    * @final
-   * @headconst @param tk_a_x
    */
-  protected concatTokens$(tk_a_x: Token<T>[]) {
+  protected concatTokens$() {
+    const tk_a = this.#scandTk_a;
     /*#static*/ if (INOUT) {
-      if (tk_a_x.length) {
+      if (tk_a.length) {
         assert(
-          tk_a_x[0].prevToken_$ === this.strtToken_save$ &&
-            tk_a_x.at(-1)!.nextToken_$ === this.stopToken$,
+          tk_a[0].prevToken_$ === this.strtLexTk_0$ &&
+            tk_a.at(-1)!.nextToken_$ === this.stopLexTk$,
         );
       } else {
-        assert(this.strtToken_save$.isConcatedTo(this.stopToken$));
+        assert(this.strtLexTk_0$.isConcatedTo(this.stopLexTk$));
       }
     }
     let tk_0, tk_1: Token<T> | undefined;
-    if (tk_a_x.length) {
-      tk_0 = this.strtToken_save$;
-      tk_1 = tk_a_x[0];
+    if (tk_a.length) {
+      tk_0 = this.strtLexTk_0$;
+      tk_1 = tk_a[0];
       if (this.canConcat$(tk_0, tk_1)) { // 1894
-        tk_0.stopLoc.become(tk_1.stopLoc);
-        tk_0.linkNext(tk_1.nextToken_$!, this.stopToken$);
-        tk_a_x.splice(0, 1);
+        tk_0.setStopLoc(tk_1.sntStopLoc);
+        tk_0.linkNext(tk_1.nextToken_$!, this.stopLexTk$);
+        tk_a.splice(0, 1);
       }
-      tk_0 = tk_a_x.at(-1);
-      tk_1 = this.stopToken$;
+      tk_0 = tk_a.at(-1);
+      tk_1 = this.stopLexTk$;
       if (tk_0 && this.canConcat$(tk_0, tk_1)) { // 1895
-        tk_1.strtLoc.become(tk_0.strtLoc);
-        tk_1.linkPrev(tk_0.prevToken_$!, this.strtToken_save$);
-        tk_a_x.pop();
+        tk_1.setStrtLoc(tk_0.sntStrtLoc);
+        tk_1.linkPrev(tk_0.prevToken_$!, this.strtLexTk_0$);
+        tk_a.pop();
       }
     }
-    if (!tk_a_x.length) {
-      tk_0 = this.strtToken_save$;
-      tk_1 = this.stopToken$;
-      if (this.canConcat$(tk_0, this.stopToken$)) {
-        tk_1.strtLoc.become(tk_0.strtLoc);
+    if (!tk_a.length) {
+      tk_0 = this.strtLexTk_0$;
+      tk_1 = this.stopLexTk$;
+      if (this.canConcat$(tk_0, this.stopLexTk$)) {
+        tk_1.setStrtLoc(tk_0.sntStrtLoc);
         tk_1.linkPrev(tk_0.prevToken_$!);
-        this.strtToken_save$ = tk_1; //!
+        this.strtLexTk_0$ = tk_1; //!
       }
     }
+  }
+
+  /**
+   * @final
+   * @headconst @param sn_x
+   */
+  protected scanBypassSn$(sn_x: Stnode<T>): Token<T> {
+    /*#static*/ if (INOUT) {
+      assert(this.lsTk$);
+    }
+    let tk_: Token<T> | undefined = sn_x.frstToken;
+    this.lsTk$!.linkNext(tk_);
+    const lastTk = sn_x.lastToken;
+    const VALVE = 1_000;
+    let valve = VALVE;
+    while (tk_ && tk_ !== lastTk && --valve) {
+      tk_.ran_$.syncRanval_$(); //!
+      this.#scandTk_a.push(tk_);
+      tk_ = tk_.nextToken_$;
+    }
+    assert(valve, `Loop ${VALVE}±1 times`);
+    this.lsTk$ = undefined; //! to prevent `.lineNext()` in `lex_impl$()`
+    return lastTk;
+  }
+  /**
+   * @final
+   * @headconst @param retTk_x
+   */
+  protected scanBypassTk$(retTk_x: Token<T>): Token<T> {
+    /*#static*/ if (INOUT) {
+      assert(this.lsTk$);
+    }
+    this.lsTk$!.linkNext(retTk_x);
+    retTk_x.ran_$.syncRanval_$(); //!
+    this.#scandTk_a.push(retTk_x);
+    this.lsTk$ = undefined; //! to prevent `.lineNext()` in `lex_impl$()`
+    return retTk_x;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** For testing only */
   toString() {
-    let tk = this.frstToken;
-    const ret_a: string[] = [tk.toString()];
-    let curlidx = tk.frstLine.lidx_1;
-    const lasttk = this.lastToken;
+    let tk_ = this.frstLexTk;
+    const ret_a: string[] = [tk_.toString()];
+
+    let curlidx = tk_.sntFrstLine.lidx_1;
+    const lastTk = this.lastLexTk;
     const VALVE = 1_000;
     let valve = VALVE;
-    while (--valve) {
-      tk = tk.nextToken_$!;
-      const lidx = tk.frstLine.lidx_1;
+    do {
+      tk_ = tk_.nextToken_$!;
+      const lidx = tk_.sntFrstLine.lidx_1;
       if (lidx === curlidx) {
         ret_a.push(" ");
       } else {
         ret_a.push("\n");
         curlidx = lidx;
       }
-      ret_a.push(tk.toString());
-      if (tk.posE(lasttk)) break;
-    }
+      ret_a.push(tk_.toString());
+    } while (!tk_.posE(lastTk) && --valve);
     assert(valve, `Loop ${VALVE}±1 times`);
 
     return ret_a.join("");
+  }
+
+  get _tkId_a(): id_t[] {
+    let tk_ = this.frstLexTk;
+    const ret_a = [tk_.id];
+
+    const lastTk = this.lastLexTk;
+    const VALVE = 1_000;
+    let valve = VALVE;
+    do {
+      tk_ = tk_.nextToken_$!;
+      ret_a.push(tk_.id);
+    } while (!tk_.posE(lastTk) && --valve);
+    assert(valve, `Loop ${VALVE}±1 times`);
+
+    return ret_a;
   }
 }
 /*80--------------------------------------------------------------------------*/
@@ -647,7 +771,7 @@ export abstract class LexdInfo {
   static #ID = 0 as id_t;
   readonly id = ++LexdInfo.#ID as id_t;
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // /** @const */
   // become(li_x: LexdInfo) {}
 

@@ -350,9 +350,7 @@ export class Colr {
   #getHex(valve_x = 10): CsscHexNorm {
     if (this.#hex !== undefined) return this.#hex;
 
-    /*#static*/ if (INOUT) {
-      assert(valve_x--, "Cycle call!");
-    }
+    assert(valve_x--, "Cycle call!");
     let hex_;
     if (this.#name !== undefined) {
       hex_ = csscNameMap.getX(this.#name);
@@ -381,9 +379,7 @@ export class Colr {
   #getRed(valve_x = 10): red_t {
     if (this.#red !== undefined) return this.#red;
 
-    /*#static*/ if (INOUT) {
-      assert(valve_x--, "Cycle call!");
-    }
+    assert(valve_x--, "Cycle call!");
     if (this.#hex !== undefined) {
       this.#byHex();
     } else if (this.#hct?.valid) {
@@ -402,9 +398,7 @@ export class Colr {
   #getGreen(valve_x = 10): red_t {
     if (this.#green !== undefined) return this.#green;
 
-    /*#static*/ if (INOUT) {
-      assert(valve_x--, "Cycle call!");
-    }
+    assert(valve_x--, "Cycle call!");
     this.#getRed(valve_x);
     assert(this.#green !== undefined);
     return this.#green as unknown as red_t;
@@ -415,9 +409,7 @@ export class Colr {
   #getBlue(valve_x = 10): red_t {
     if (this.#blue !== undefined) return this.#blue;
 
-    /*#static*/ if (INOUT) {
-      assert(valve_x--, "Cycle call!");
-    }
+    assert(valve_x--, "Cycle call!");
     this.#getRed(valve_x);
     assert(this.#blue !== undefined);
     return this.#blue as unknown as red_t;

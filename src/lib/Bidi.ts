@@ -12,8 +12,7 @@
 
 import { INOUT } from "../global.ts";
 import type { id_t, loff_t, UChr, uint, uint8 } from "./alias.ts";
-import { ChrTyp } from "./alias.ts";
-import { BufrDir } from "./alias.ts";
+import { BufrDir, ChrTyp } from "./alias.ts";
 import { canonicalOf, chrTypOf, closingOf, openingOf } from "./loadBidi.ts";
 import { assert } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/

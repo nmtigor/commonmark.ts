@@ -6,10 +6,14 @@
 import type { Bidi } from "../Bidi.ts";
 import type { uint32 } from "../alias.ts";
 import type { BaseTok } from "./BaseTok.ts";
-import type { JslangTok } from "./jslang/JslangTok.ts";
+import type { JSLangTok } from "./jslang/JSLangTok.ts";
+import type { LaTeXTok } from "./latex/LaTeXTok.ts";
 import type { MdextTok } from "./mdext/MdextTok.ts";
+import type { PDFTok } from "./pdf/PDFTok.ts";
 import type { PlainTok } from "./plain/PlainTok.ts";
+import type { RMLTok } from "./rml/RMLTok.ts";
 import type { SetTok } from "./set/SetTok.ts";
+import type { URITok } from "./uri/URITok.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**
@@ -37,9 +41,18 @@ export type sig_t = uint32;
  * PlainTok:  BaseTok ∪ [100,200) \
  * SetTok:    BaseTok ∪ [200,300) \
  * MdextTok:  BaseTok ∪ [300,400) \
- * JslangTok: BaseTok ∪ [400,600)
+ * JSLangTok: BaseTok ∪ [400,600)
  */
-export type Tok = BaseTok | PlainTok | SetTok | MdextTok | JslangTok;
+export type Tok =
+  | BaseTok
+  | PlainTok
+  | SetTok
+  | URITok
+  | MdextTok
+  | PDFTok
+  | LaTeXTok
+  | RMLTok
+  | JSLangTok;
 
 export type Bidir = {
   readonly bidi: Bidi;

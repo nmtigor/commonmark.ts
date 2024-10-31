@@ -3,7 +3,7 @@
  * (2023-06-22)
  *
  * @module lib/color/viewing_conditions.ts
- * @license BSD-3-Clause
+ * @license Apache-2.0
  ******************************************************************************/
 
 import { whitePointD65, yFromLstar } from "./color_utils.ts";

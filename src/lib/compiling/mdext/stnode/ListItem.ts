@@ -13,6 +13,7 @@ import { _toHTML } from "../util.ts";
 import type { List } from "./List.ts";
 import { Paragraph } from "./Paragraph.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
+import type { Loc } from "../../Loc.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class ListItem extends CtnrBlock {
@@ -25,6 +26,10 @@ export abstract class ListItem extends CtnrBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
+  override get parent(): List {
+    return this.parent_$ as List;
+  }
+
   #mrkrTk;
   get indent(): lcol_t {
     const li_ = this.#mrkrTk.lexdInfo as ListMrkr_LI;
@@ -33,11 +38,12 @@ export abstract class ListItem extends CtnrBlock {
 
   get tight_1(): boolean {
     let ret = true;
-    if (this.block_a$.length) {
-      for (let i = 0, iI = this.block_a$.length - 1; i < iI; ++i) {
-        const b_i = this.block_a$[i];
-        const b_j = this.block_a$[i + 1];
-        if (b_i.lastLine.nextLine !== b_j.frstLine) {
+    const c_a = this.children;
+    if (c_a.length) {
+      for (let i = 0, iI = c_a.length - 1; i < iI; ++i) {
+        const b_i = c_a[i];
+        const b_j = c_a[i + 1];
+        if (b_i.sntLastLine.nextLine !== b_j.sntFrstLine) {
           ret = false;
           break;
         }
@@ -46,36 +52,39 @@ export abstract class ListItem extends CtnrBlock {
     return ret;
   }
 
-  /** @implement */
-  get frstToken() {
+  override get frstToken() {
     return this.frstToken$ ??= this.#mrkrTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     if (this.lastToken$) return this.lastToken$;
 
-    const tk_ = this.block_a$.at(-1)?.lastToken;
+    const tk_ = this.children.at(-1)?.lastToken;
     return this.lastToken$ = tk_ ?? this.#mrkrTk;
   }
 
-  get _list() {
-    return this.parent_$ as List;
-  }
-
+  /**
+   * @headconst @param mrkrTk_x
+   */
   constructor(mrkrTk_x: MdextTk) {
     super();
     this.#mrkrTk = mrkrTk_x;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
+  /** @implement */
+  lcolCntStrt(_loc_x: Loc): MdextTk | undefined {
+    fail("Not implemented");
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
   override _toHTML(lexr_x: MdextLexr): string {
-    const s_ = _toHTML(lexr_x, this.block_a$);
+    const s_ = _toHTML(lexr_x, this.children);
     if (!s_) return "<li></li>";
 
-    const lf_0 = this.frstChild instanceof Paragraph && this._list._tight
+    const lf_0 = this.frstChild instanceof Paragraph && this.parent._tight
       ? ""
       : "\n";
-    const lf_1 = this.lastChild instanceof Paragraph && this._list._tight
+    const lf_1 = this.lastChild instanceof Paragraph && this.parent._tight
       ? ""
       : "\n";
     return `<li>${lf_0}${s_}${lf_1}</li>`;

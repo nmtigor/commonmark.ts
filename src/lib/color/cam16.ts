@@ -3,7 +3,7 @@
  * (2023-06-22)
  *
  * @module lib/color/cam16
- * @license BSD-3-Clause
+ * @license Apache-2.0
  ******************************************************************************/
 
 import { uint32 } from "../alias.ts";

@@ -7,7 +7,7 @@ import { BaseTok } from "../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 enum MdextTok_ {
-  chunk = 300, // Need to further `lex()` and `paz()` context-relatedly
+  chunk = 400, // Need to further `lex()` and `paz()` context-relatedly
 
   bracket_open, // [
   // angle_bracket_open, // <
@@ -16,9 +16,9 @@ enum MdextTok_ {
   // html_tail, // </pre>, </script>, </style>, </textarea>, -->, ?>, ]]>, ...
   // tag_open, // <abc, </abc
   // tag_cloz, // >, />
-  attribute_name,
-  eq_, // =
-  attribute_value,
+  // attribute_name,
+  // eq_, // =
+  // attribute_value,
   // comment_open, // <!--
   // comment_cloz, // -->
   // processing_instruction_open, // <?
@@ -54,7 +54,7 @@ enum MdextTok_ {
   bang_bracket, // ![
   bracket_cloz, // ]
   paren_cloz, // )
-  absolute_uri, // <http://abc>
+  // absolute_uri, // <http://abc>
   email_address, // <abc@xyz>
   backslash, // \
   escaped, // \]
@@ -64,7 +64,7 @@ enum MdextTok_ {
 
   _max,
 }
-console.assert(MdextTok_._max <= 400);
+console.assert(MdextTok_._max <= 500);
 
 export type MdextTok = BaseTok | MdextTok_;
 export const MdextTok = { ...BaseTok, ...MdextTok_ };

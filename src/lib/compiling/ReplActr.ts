@@ -3,14 +3,14 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import { createActor, setup } from "@xstate";
 import { INOUT } from "../../global.ts";
+import { assert } from "../util/trace.ts";
 import type { Bufr } from "./Bufr.ts";
 import { Lexr } from "./Lexr.ts";
 import { Pazr } from "./Pazr.ts";
-import type { TokRan } from "./Ran.ts";
 import { Tfmr } from "./Tfmr.ts";
-import { assert } from "../util/trace.ts";
-import { createActor, setup } from "@xstate";
+import type { TokRan } from "./TokRan.ts";
 import { BufrReplState } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -41,10 +41,12 @@ export class ReplActr {
             "TO prerepl": {
               actions: () => {
                 /*#static*/ if (INOUT) {
-                  assert(this.#bufr.oldRan_$);
+                  assert(this.#bufr.oldRan_a_$.at(0));
                 }
-                this.#lexr.markLexRegion_$(this.#bufr.oldRan_$ as TokRan<any>);
-                this.#tfmr?.markTfmRegion_$(this.#bufr.oldRan_$!);
+                this.#lexr
+                  .markLexRegion_$(this.#bufr.oldRan_a_$[0] as TokRan<any>);
+                this.#pazr?.markPazRegion_$();
+                this.#tfmr?.markTfmRegion_$(this.#bufr.oldRan_a_$[0]);
               },
               target: "prerepl",
             },
@@ -55,11 +57,12 @@ export class ReplActr {
             ["TO sufrepl"]: {
               actions: () => {
                 /*#static*/ if (INOUT) {
-                  assert(this.#bufr.newRan_$);
+                  assert(this.#bufr.newRan_a_$.at(0));
                 }
-                this.#lexr.adjust_$(this.#bufr.newRan_$ as TokRan<any>).lex();
+                this.#lexr
+                  .adjust_$(this.#bufr.newRan_a_$[0] as TokRan<any>).lex();
                 this.#pazr?.paz();
-                this.#tfmr?.adjust_$(this.#bufr.newRan_$!).tfm();
+                this.#tfmr?.adjust_$(this.#bufr.newRan_a_$[0]).tfm();
               },
               target: "sufrepl",
             },
@@ -106,6 +109,17 @@ export class ReplActr {
     this.#inited = true;
   }
 
+  fina() {
+    this.#lexr = undefined as any;
+    this.#pazr = undefined;
+    this.#tfmr = undefined;
+
+    this.#actr.stop();
+
+    this.#inited = false;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
   /**
    * If called multiple times with the same `_x`, it will only run once.
    */
@@ -113,6 +127,7 @@ export class ReplActr {
     this.#actr.send({
       type: `TO ${BufrReplState[_x] as keyof typeof BufrReplState}`,
     });
+    // debugger;
   }
 }
 /*80--------------------------------------------------------------------------*/

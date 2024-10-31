@@ -20,12 +20,20 @@ export class Emphasis extends Inline {
   #lastTk;
   #textSnt_a;
 
-  /** @implement */
-  get frstToken() {
+  override get children(): Inline[] {
+    if (this.children$) return this.children$ as Inline[];
+
+    const ret: Inline[] = [];
+    for (const snt of this.#textSnt_a) {
+      if (snt instanceof Inline) ret.push(snt);
+    }
+    return this.children$ = ret;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.#frstTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#lastTk;
   }
 
@@ -45,8 +53,7 @@ export class Emphasis extends Inline {
     this.#strong = frstTk_x.length_1 > 1;
     this.#textSnt_a = textSnt_a_x;
 
-    this.frstBdryTk;
-    this.lastBdryTk;
+    this.ensureBdry();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

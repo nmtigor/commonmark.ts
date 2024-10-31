@@ -3,18 +3,17 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { loff_t, uint16, uint8 } from "@fe-lib/alias.ts";
-import { assert, fail } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
+import type { loff_t, uint8 } from "@fe-lib/alias.ts";
+import { assert } from "@fe-lib/util/trace.ts";
 import { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
 import { _toHTML } from "../util.ts";
+import type { CtnrBlock } from "./CtnrBlock.ts";
 import { Inline } from "./Inline.ts";
 import { ILoc, InlineBlock } from "./InlineBlock.ts";
 import { Paragraph } from "./Paragraph.ts";
-import { Linkdef } from "./Linkdef.ts";
-import type { CtnrBlock } from "./CtnrBlock.ts";
 import { ThematicBreak } from "./ThematicBreak.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -24,7 +23,7 @@ class HLoc_ extends ILoc {
     return this.host$ as Heading;
   }
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // /**
   //  * @headconst @param host_x
   //  */
@@ -52,7 +51,7 @@ export abstract class Heading extends InlineBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // protected override inline_impl$(lexr_x: MdextLexr): void {
   //   if (this.snt_a_$.length) {
   //     const iloc = this.iloc.reset_O(this.snt_a_$[0] as MdextTk);
@@ -76,7 +75,7 @@ export const enum ATXHeadingSt {
   head = 1,
   chunk,
   tail,
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // text_inline,
 }
 
@@ -123,12 +122,10 @@ export class ATXHeading extends Heading {
   }
   /* ~ */
 
-  /** @implement */
-  get frstToken() {
+  override get frstToken() {
     return this.frstToken$ ??= this.#headTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     if (this.lastToken$) return this.lastToken$;
 
     if (this.#tailTk) return this.lastToken$ = this.#tailTk;
@@ -159,12 +156,11 @@ export class SetextHeading extends Heading {
   readonly #tailTk;
   /** @implement */
   get level() {
-    return this.#tailTk.strtLoc.ucod === /* "=" */ 0x3D ? 1 : 2;
+    return this.#tailTk.sntStrtLoc.ucod === /* "=" */ 0x3D ? 1 : 2;
   }
   /* ~ */
 
-  /** @implement */
-  get frstToken() {
+  override get frstToken() {
     if (this.frstToken$) return this.frstToken$;
 
     /* The only case `!snt` is that `snt_a_$` is a link definitiosn. */
@@ -173,8 +169,7 @@ export class SetextHeading extends Heading {
       ? snt instanceof Inline ? snt.frstToken : snt
       : this.#tailTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#tailTk;
   }
 
@@ -198,17 +193,17 @@ export class SetextHeading extends Heading {
 
     /* if this contains `Linkdef` only */
     if (iloc.reachEoh) {
-      const ctnr = this.parent_$ as CtnrBlock;
+      const ctnr = this.parent;
       /* See `CtnrBlock.reference()` before change `ctnr` */
       const para = new Paragraph(this.snt_a_$ as MdextTk[]);
       if (this.level === 1) {
         para.appendLine(this.#tailTk);
 
-        const next = ctnr.getBlockAftr(this);
+        const next = ctnr.getChildAftr(this);
         ctnr.replaceChild(this, para);
         if (
           next instanceof Paragraph &&
-          this.lastLine.nextLine === next.frstLine
+          this.sntLastLine.nextLine === next.sntFrstLine
         ) {
           para.appendLines(next.snt_a_$ as MdextTk[]);
           next.removeSelf();

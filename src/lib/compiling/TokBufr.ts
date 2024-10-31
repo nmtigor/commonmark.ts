@@ -7,10 +7,10 @@ import type { lnum_t } from "../alias.ts";
 import { BufrDir } from "../alias.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import { Bufr } from "./Bufr.ts";
-import { TokRan } from "./Ran.ts";
-import { Ranval } from "./Ranval.ts";
-import { TokLine } from "./TokLine.ts";
+import type { Ranval } from "./Ranval.ts";
+import type { TokLine } from "./TokLine.ts";
 import { TokLoc } from "./TokLoc.ts";
+import type { TokRan } from "./TokRan.ts";
 import type { Tok } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -26,11 +26,11 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
     return this.lastLine_$ as TokLine<T>;
   }
 
-  override get oldRan() {
-    return this.oldRan_$ as TokRan<T>;
+  override get oldRan_a() {
+    return this.oldRan_a_$ as TokRan<T>[];
   }
-  override get newRan() {
-    return this.newRan_$ as TokRan<T>;
+  override get newRan_a() {
+    return this.newRan_a_$ as TokRan<T>[];
   }
 
   /**
@@ -44,11 +44,11 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
     tabsize_x: 2 | 4 | 8 = 4,
     srcname_x = "",
   ) {
-    super(dir_x, text_x);
+    super(text_x, dir_x);
     this.tabsize = tabsize_x;
     this.#srcname = srcname_x;
 
-    //kkkk TOCLEANUP
+    //jjjj TOCLEANUP
     // this.dir_mo.registHandler((n_y) => {
     //   // const rv_a = this.edtr_sa.map((edtr_y) =>
     //   //   (edtr_y as EdtrScrolr).proactiveCaret.ranval
@@ -67,7 +67,7 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
     //       mc_.caretrvm![1].force().val = mc_.ranval;
     //     }
     //   }
-    // }, { i: lastCb_i });
+    // }, { i: LastCb_i });
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -124,7 +124,7 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
    */
   getFocusLoc(rv_x: Ranval): TokLoc<T> {
     if (this.#focusLoc) {
-      this.#focusLoc.reset_1(rv_x.focusLidx, rv_x.focusLoff, this);
+      this.#focusLoc.set_O(rv_x.focusLidx, rv_x.focusLoff, this);
     } else {
       this.#focusLoc = TokLoc.create(this, rv_x.focusLidx, rv_x.focusLoff);
     }
@@ -139,7 +139,7 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
    */
   getAnchrLoc(rv_x: Ranval): TokLoc<T> {
     if (this.#anchrLoc) {
-      this.#anchrLoc.reset_1(rv_x.anchrLidx, rv_x.anchrLoff, this);
+      this.#anchrLoc.set_O(rv_x.anchrLidx, rv_x.anchrLoff, this);
     } else {
       this.#anchrLoc = TokLoc.create(this, rv_x.anchrLidx, rv_x.anchrLoff);
     }
@@ -148,7 +148,7 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
     return this.#anchrLoc;
   }
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // /**
   //  * @deprecated
   //  * @const @param text_a

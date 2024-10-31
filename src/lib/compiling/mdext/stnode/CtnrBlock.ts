@@ -3,82 +3,121 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import type { uint } from "@fe-lib/alias.ts";
+import type { Loc } from "../../Loc.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { Block } from "./Block.ts";
+import type { MdextTk } from "../../Token.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class CtnrBlock extends Block {
-  /* block_a$ */
-  protected readonly block_a$: Block[] = [];
-  get empty() {
-    return !this.block_a$.length;
+  /* children$ */
+  override get children(): Block[] {
+    return this.children$ as Block[];
   }
 
-  getBlockAftr(_x: Block): Block | undefined {
-    const i_ = this.block_a$.indexOf(_x);
-    return i_ >= 0 ? this.block_a$.at(i_ + 1) : undefined;
+  getChildAftr(_x: Block): Block | undefined {
+    const i_ = this.children.indexOf(_x);
+    return i_ >= 0 ? this.children.at(i_ + 1) : undefined;
   }
-  getBlockBefo(_x: Block): Block | undefined {
-    const i_ = this.block_a$.indexOf(_x);
-    return i_ > 0 ? this.block_a$.at(i_ - 1) : undefined;
+  getChildBefo(_x: Block): Block | undefined {
+    const i_ = this.children.indexOf(_x);
+    return i_ > 0 ? this.children.at(i_ - 1) : undefined;
   }
   /* ~ */
 
-  override get frstChild(): Block | undefined {
-    return this.block_a$.at(0);
+  /* #iCurChild */
+  #iCurChild: -1 | uint = -1;
+  override get curChild(): Block | undefined {
+    return this.children.at(this.#iCurChild);
   }
-  override get lastChild(): Block | undefined {
-    return this.block_a$.at(-1);
+
+  compiling(child_x: Block | null): void {
+    this.#iCurChild = child_x ? this.children.indexOf(child_x) : -1;
+  }
+
+  get inCompiling() {
+    return this.#iCurChild >= 0;
+  }
+  /* ~ */
+
+  constructor() {
+    super();
+    this.children$ = [];
+  }
+
+  override reset(): this {
+    this.children.length = 0;
+    this.#iCurChild = -1;
+    this.invalidateBdry();
+    return super.reset();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
    * @final
+   * @headconst @param newSn_x
    * @headconst @param ref_x
-   * @headconst @param _x
    */
-  appendBlock(_x: Block, ref_x?: Block) {
-    _x.parent_$ = this;
-    if (ref_x) {
-      const i_ = this.block_a$.indexOf(ref_x);
-      if (i_ >= 0) {
-        this.block_a$.splice(i_ + 1, 0, _x);
-      } else {
-        this.block_a$.push(_x);
-      }
-    } else {
-      this.block_a$.push(_x);
-    }
+  appendBlock(newSn_x: Block, ref_x?: Block) {
+    newSn_x.parent_$ = this;
 
-    this.invalidateBdry();
+    const c_a = this.children;
+    const iI = c_a.length;
+    let i_;
+    if (ref_x) {
+      i_ = c_a.indexOf(ref_x);
+      if (i_ >= 0) i_ += 1;
+      else i_ = iI;
+    } else {
+      i_ = iI;
+    }
+    c_a.splice(i_, 0, newSn_x);
+
+    if (i_ === 0 || i_ === iI - 1) this.invalidateBdry();
   }
 
   /** @final */
   override replaceChild(oldSn_x: Block, newSn_x?: Block) {
-    const iI = this.block_a$.length;
-    const i_ = this.block_a$.indexOf(oldSn_x);
+    const c_a = this.children;
+    const i_ = c_a.indexOf(oldSn_x);
     if (i_ >= 0) {
-      if (newSn_x) this.block_a$.splice(i_, 1, newSn_x);
-      else this.block_a$.splice(i_, 1);
+      if (newSn_x) {
+        newSn_x.parent_$ = this;
+        c_a.splice(i_, 1, newSn_x);
+      } else {
+        c_a.splice(i_, 1);
+      }
     }
 
-    if (i_ === 0 || i_ === iI - 1) {
-      this.invalidateBdry();
-    }
+    if (i_ === 0 || i_ === c_a.length - 1) this.invalidateBdry();
   }
+
+  //jjjj TOCLEANUP
+  // /** @final */
+  // removeAllChild() {
+  //   this.children.length = 0;
+  //   this.invalidateBdry();
+  // }
+
+  /**
+   * @headconst @param _loc_x
+   */
+  abstract lcolCntStrt(_loc_x: Loc): MdextTk | undefined;
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @final */
   override reference(lexr_x: MdextLexr): this {
-    /* `block_a$` may be modified in flying */
-    for (let i = 0; i < this.block_a$.length; ++i) {
-      this.block_a$[i].reference(lexr_x);
+    const c_a = this.children;
+    /* `children$` may be modified in flying */
+    for (let i = 0; i < c_a.length; ++i) {
+      if (!c_a[i].complete) c_a[i].reference(lexr_x);
     }
     return this;
   }
 
   protected override inline_impl$(lexr_x: MdextLexr) {
-    for (const block of this.block_a$) {
+    for (const block of this.children) {
       block.inline(lexr_x);
     }
   }

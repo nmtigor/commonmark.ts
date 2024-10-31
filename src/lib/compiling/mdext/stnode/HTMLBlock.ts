@@ -74,12 +74,14 @@ export class HTMLBlock extends Block {
 
   #chunkTk_a: MdextTk[] = [];
 
-  /** @implement */
-  get frstToken() {
+  override get children() {
+    return undefined;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.#chunkTk_a[0];
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#chunkTk_a.at(-1)!;
   }
 

@@ -33,6 +33,10 @@ export abstract class CodeBlock extends Block {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   protected readonly chunkTk_a$: MdextTk[] = [];
+
+  override get children() {
+    return undefined;
+  }
 }
 /*80--------------------------------------------------------------------------*/
 
@@ -45,12 +49,10 @@ export class IndentedCodeBlock extends CodeBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** @implement */
-  get frstToken() {
+  override get frstToken() {
     return this.frstToken$ ??= this.chunkTk_a$[0];
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.chunkTk_a$.at(-1)!;
   }
 
@@ -65,7 +67,7 @@ export class IndentedCodeBlock extends CodeBlock {
    * in it
    */
   protected override closeBlock_impl$(): void {
-    while (lastNonblankIn(this.chunkTk_a$.at(-1)!.frstLine) < 0) {
+    while (lastNonblankIn(this.chunkTk_a$.at(-1)!.sntFrstLine) < 0) {
       this.chunkTk_a$.pop();
     }
   }
@@ -82,7 +84,7 @@ export class IndentedCodeBlock extends CodeBlock {
 }
 /*80--------------------------------------------------------------------------*/
 
-//kkkk TOCLEANUP
+//jjjj TOCLEANUP
 // export const enum FencedCodeBlockSt {
 //   head = 1,
 //   head_chunk,
@@ -97,7 +99,7 @@ export class FencedCodeBlock extends CodeBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // #st;
   // get st() {
   //   return this.#st;
@@ -111,7 +113,7 @@ export class FencedCodeBlock extends CodeBlock {
   }
 
   get headUCod(): uint16 {
-    return this.#headTk.strtLoc.ucod;
+    return this.#headTk.sntStrtLoc.ucod;
   }
 
   get headSize(): loff_t {
@@ -123,12 +125,12 @@ export class FencedCodeBlock extends CodeBlock {
   #headChunkTk: MdextTk | undefined;
   setHeadChunk(_x: MdextTk) {
     /*#static*/ if (INOUT) {
-      //kkkk TOCLEANUP
+      //jjjj TOCLEANUP
       // assert(!this.#headChunkTk && this.#st === FencedCodeBlockSt.head);
       assert(!this.#headChunkTk);
     }
     this.#headChunkTk = _x;
-    //kkkk TOCLEANUP
+    //jjjj TOCLEANUP
     // this.#st = FencedCodeBlockSt.head_chunk;
   }
   /* ~ */
@@ -137,24 +139,22 @@ export class FencedCodeBlock extends CodeBlock {
   #tailTk: MdextTk | undefined;
   setTail(_x: MdextTk) {
     /*#static*/ if (INOUT) {
-      //kkkk TOCLEANUP
+      //jjjj TOCLEANUP
       // assert(!this.#tailTk && this.#st !== FencedCodeBlockSt.tail);
       assert(!this.#tailTk);
     }
     this.#tailTk = _x;
-    //kkkk TOCLEANUP
+    //jjjj TOCLEANUP
     // this.#st = FencedCodeBlockSt.tail;
 
     this.invalidateBdry();
   }
   /* ~ */
 
-  /** @implement */
-  get frstToken() {
+  override get frstToken() {
     return this.frstToken$ ??= this.#headTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     if (this.lastToken$) return this.lastToken$;
 
     return this.lastToken$ = this.#tailTk ??
@@ -166,7 +166,7 @@ export class FencedCodeBlock extends CodeBlock {
   constructor(headTk_x: MdextTk) {
     super();
     this.#headTk = headTk_x;
-    //kkkk TOCLEANUP
+    //jjjj TOCLEANUP
     // this.#st = FencedCodeBlockSt.head;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/

@@ -29,6 +29,7 @@ export const
     , PDFTS_v = true // verbose
       , PDFTS_vv = false // very verbose
 , /** @deprecated */APP = false // release build
+, PRF = true
 
 , DENO = true
 , TESTING = true

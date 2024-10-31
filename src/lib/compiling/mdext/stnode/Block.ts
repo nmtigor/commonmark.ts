@@ -5,17 +5,18 @@
 
 import { assert, fail } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
-import { MdextSN } from "../../Stnode.ts";
+import { MdextSN } from "../MdextSN.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
+import type { CtnrBlock } from "./CtnrBlock.ts";
 import { BlockCont } from "../alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class Block extends MdextSN {
   /**
-   * @headconst @param lexr_x
+   * @headconst @param _lexr_x
    */
-  continue(lexr_x: MdextLexr): BlockCont {
+  continue(_lexr_x: MdextLexr): BlockCont {
     return BlockCont.break;
   }
 
@@ -25,14 +26,15 @@ export abstract class Block extends MdextSN {
 
   readonly acceptsLines: boolean = false;
   appendLine(_x: MdextTk): void {
-    fail("Not implemented");
+    fail("Disabled");
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  get frstChild(): Block | undefined {
-    return undefined;
+  override get parent(): CtnrBlock {
+    return this.parent_$ as CtnrBlock;
   }
-  get lastChild(): Block | undefined {
+
+  get curChild(): Block | undefined {
     return undefined;
   }
 
@@ -41,39 +43,55 @@ export abstract class Block extends MdextSN {
   get open() {
     return this.#open;
   }
+
+  #complete = false;
+  /** @final */
+  get complete() {
+    return this.#complete;
+  }
+
+  reset(): this {
+    this.#open = true;
+    this.#complete = false;
+    return this;
+  }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   protected closeBlock_impl$() {}
   /** @final */
-  closeBlock(): Block {
+  closeBlock(): CtnrBlock {
+    if (this.#complete) return this.parent;
+
     /*#static*/ if (INOUT) {
       assert(this.#open);
       assert(this.parent_$);
     }
     this.closeBlock_impl$();
     this.#open = false;
-    return this.parent_$ as Block;
+    return this.parent;
   }
 
   /**
-   * @headconst @param lexr_x
+   * @headconst @param _lexr_x
    */
-  reference(lexr_x: MdextLexr): this {
+  reference(_lexr_x: MdextLexr): this {
     return this;
   }
 
   /**
-   * @headconst @param lexr_x
+   * @headconst @param _lexr_x
    */
-  protected inline_impl$(lexr_x: MdextLexr) {}
+  protected inline_impl$(_lexr_x: MdextLexr) {}
   /**
    * @final
    * @headconst @param lexr_x
    */
   inline(lexr_x: MdextLexr): void {
+    if (this.#complete) return;
+
     this.inline_impl$(lexr_x);
-    this.frstBdryTk;
-    this.lastBdryTk;
+    this.ensureBdry();
+    this.#complete = true;
   }
 }
 /*80--------------------------------------------------------------------------*/

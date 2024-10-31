@@ -3,7 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
+import { INOUT, PRF } from "../../global.ts";
 import type {
   id_t,
   int,
@@ -108,7 +108,7 @@ export class Loc {
     return this.bufr?.dir ?? BufrDir.ltr;
   }
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // /** Peeked `Loc` */
   // protected poc$?: Loc;
 
@@ -117,9 +117,8 @@ export class Loc {
    * @const @param loff_x
    */
   constructor(line_x: Line, loff_x?: loff_t) {
-    this.reset(line_x, loff_x);
+    this.set(line_x, loff_x);
   }
-
   /**
    * @headconst @param bufr_x
    * @const @param lidx_x
@@ -135,7 +134,7 @@ export class Loc {
    * @headconst @param line_x
    * @const @param loff_x
    */
-  reset(line_x: Line, loff_x?: loff_t): this {
+  set(line_x: Line, loff_x?: loff_t): this {
     this.line_$ = line_x;
     this.loff_$ = loff_x === undefined ? line_x.uchrLen : loff_x;
     this.#lcol = -1;
@@ -143,12 +142,12 @@ export class Loc {
     return this;
   }
   /** @final */
-  reset_1(lidx_x: lnum_t, loff_x?: loff_t, bufr_x = this.bufr) {
+  set_O(lidx_x: lnum_t, loff_x?: loff_t, bufr_x = this.bufr) {
     /*#static*/ if (INOUT) {
       assert(bufr_x);
     }
     const line = bufr_x!.line(lidx_x);
-    return this.reset(line, loff_x);
+    return this.set(line, loff_x);
   }
 
   /** @const */
@@ -174,16 +173,15 @@ export class Loc {
   }
 
   [Symbol.dispose]() {
-    loc_fac.revoke(this);
+    g_loc_fac.revoke(this);
   }
 
   /**
-   * ! Use with `using`
    * @final
    * @const
    */
-  uoc() {
-    return loc_fac.setLine(this.line_$).oneMore().become(this);
+  using() {
+    return g_loc_fac.setLine(this.line_$).oneMore().become(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -315,14 +313,14 @@ export class Loc {
 
   /** @primaryconst */
   peek_uchr(n_x: int, inline_x?: "inline"): UChr {
-    using loc = this.uoc();
+    using loc = this.using();
     if (n_x >= 0) loc.forwn(n_x, inline_x);
     else loc.backn(-n_x, inline_x);
     return loc.uchr;
   }
   /** @primaryconst */
   peek_ucod(n_x: int, inline_x?: "inline"): uint16 {
-    using loc = this.uoc();
+    using loc = this.using();
     if (n_x >= 0) loc.forwn(n_x, inline_x);
     else loc.backn(-n_x, inline_x);
     return loc.ucod;
@@ -331,7 +329,7 @@ export class Loc {
 
   /**
    * @primaryconst
-   * @headconst @param line_x
+   * @primaryconst @param line_x
    * @const @param loff_x
    */
   #locS(line_x: Line, loff_x: loff_t): LocCompared {
@@ -395,7 +393,7 @@ export class Loc {
   }
   /**
    * @const
-   * @headconst @param line_x
+   * @const @param line_x
    * @const @param loff_x
    */
   #locE(line_x: Line, loff_x: loff_t): LocCompared {
@@ -413,7 +411,7 @@ export class Loc {
   /**
    * @final
    * @primaryconst
-   * @headconst @param rhs_x
+   * @primaryconst @param rhs_x
    */
   locS(rhs_x: Loc): LocCompared {
     return this.#locS(rhs_x.line_$, rhs_x.loff_$);
@@ -453,7 +451,7 @@ export class Loc {
   /**
    * @final
    * @const
-   * @headconst @param rhs_x
+   * @const @param rhs_x
    */
   locE(rhs_x: Loc): LocCompared {
     return this.#locE(rhs_x.line_$, rhs_x.loff_$);
@@ -488,7 +486,7 @@ export class Loc {
     if (hintLoff_x === this.loff_$) return this.#lcol = hintLcol_x;
 
     let ret = hintLcol_x;
-    using loc_ = this.uoc().reset(this.line_$, hintLoff_x);
+    using loc_ = this.using().set(this.line_$, hintLoff_x);
     for (; loc_.loff_$ < this.loff_$; ++loc_.loff_$) {
       if (loc_.ucod === /* "\t" */ 9) {
         ret += this.tabsize$ - ret % this.tabsize$;
@@ -507,7 +505,7 @@ export class Loc {
    * @const @param loc_x
    */
   lcolBy(loc_x: Loc): lcol_t {
-    using loc_ = loc_x.uoc();
+    using loc_ = loc_x.using();
     if (loc_.#part) {
       loc_.#lcol -= loc_.#lcol % this.tabsize$;
       loc_.#part = false;
@@ -650,16 +648,18 @@ class LocFac_ extends Factory<Loc> {
 
   /** @implement */
   protected createVal$() {
-    console.log(
-      `%c# of cached Loc instances: ${this.val_a$.length + 1}`,
-      `color:${LOG_cssc.performance}`,
-    );
+    /*#static*/ if (PRF) {
+      console.log(
+        `%c# of cached Loc instances: ${this.val_a$.length + 1}`,
+        `color:${LOG_cssc.performance}`,
+      );
+    }
     return new Loc(this.#line, 0);
   }
 
   protected override reuseVal$(i_x: uint) {
-    return this.get(i_x).reset(this.#line, 0);
+    return this.get(i_x).set(this.#line, 0);
   }
 }
-export const loc_fac = new LocFac_();
+export const g_loc_fac = new LocFac_();
 /*80--------------------------------------------------------------------------*/

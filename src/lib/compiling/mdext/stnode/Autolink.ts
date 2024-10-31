@@ -20,12 +20,14 @@ export class Autolink extends Inline {
 
   #isEmail;
 
-  /** @implement */
-  get frstToken() {
+  override get children() {
+    return undefined;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.#frstTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#lastTk;
   }
 
@@ -47,8 +49,7 @@ export class Autolink extends Inline {
     this.#lastTk = lastTk_x;
     this.#isEmail = isEmail_x;
 
-    this.frstBdryTk;
-    this.lastBdryTk;
+    this.ensureBdry();
     /*#static*/ if (INOUT) {
       assert(this.#destTk_a.length);
     }

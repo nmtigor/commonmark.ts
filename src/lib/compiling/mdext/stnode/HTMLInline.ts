@@ -35,12 +35,14 @@ export class HTMLInline extends Inline {
   #chunkTk_a;
   #lastTk;
 
-  /** @implement */
-  get frstToken() {
+  override get children() {
+    return undefined;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.#frstTk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#lastTk;
   }
 
@@ -55,8 +57,7 @@ export class HTMLInline extends Inline {
     this.#chunkTk_a = chunkTk_a_x;
     this.#lastTk = lastTk_x;
 
-    this.frstBdryTk;
-    this.lastBdryTk;
+    this.ensureBdry();
     /*#static*/ if (INOUT) {
       assert(this.#chunkTk_a.length);
     }
@@ -80,9 +81,9 @@ export class HTMLInline extends Inline {
 
   override _toHTML(): string {
     const s_a = ["<"];
-    let curLn = this.#chunkTk_a[0].frstLine;
+    let curLn = this.#chunkTk_a[0].sntFrstLine;
     for (const tk of this.#chunkTk_a) {
-      const ln_ = tk.frstLine;
+      const ln_ = tk.sntFrstLine;
       if (ln_ !== curLn) {
         curLn = ln_;
         s_a.push("\n");

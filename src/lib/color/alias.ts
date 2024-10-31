@@ -136,7 +136,7 @@ export type CsscName = ArrEl<typeof csscNameMapData>[0];
  */
 export type Cssc = CsscHexNorm | CsscRGB | CsscRGBA | CsscName;
 
-//kkkk TOCLEANUP
+//jjjj TOCLEANUP
 // const style_ = globalThis.Option ? (new Option()).style : { color: "" };
 const style_ = html("option").style;
 /**

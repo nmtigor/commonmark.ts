@@ -16,12 +16,14 @@ export class Linkdef extends Inline {
   #destTk_a;
   #titleTk_a;
 
-  /** @implement */
-  get frstToken() {
+  override get children() {
+    return undefined;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.#labelTk_a[0];
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#titleTk_a?.at(-1) ??
       this.#destTk_a.at(-1)!;
   }
@@ -35,7 +37,7 @@ export class Linkdef extends Inline {
     this.#labelTk_a = labelTk_a_x;
     this.#destTk_a = destTk_a_x;
     if (titleTk_a_x?.length) this.#titleTk_a = titleTk_a_x;
-    //kkkk TOCLEANUP
+    //jjjj TOCLEANUP
     // let tk_a: MdextTk[] | undefined = this.#labelTk_a;
     // let lastTok = MdextTok.bracket_colon;
     // for (const tk of tk_a_x) {
@@ -79,7 +81,7 @@ export class Linkdef extends Inline {
     //       ? /* ")" */ 0x29
     //       : frstUCod;
     //     assert(
-    //       this.#titleTk_a.at(-1)!.stopLoc.peek_ucod(-1 as int) === lastUCod,
+    //       this.#titleTk_a.at(-1)!.stopLoc.peek_ucod(-1) === lastUCod,
     //     );
     //   }
     // }

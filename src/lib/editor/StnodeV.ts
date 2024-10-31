@@ -100,7 +100,7 @@ export abstract class StnodeV<
    */
   brokenBy_$(subV_x: StnodeV<T, CI, E>): Token<T> {
     const ret = subV_x.stopToken$;
-    if (this.snt$.stopLoc.posSE(ret.strtLoc)) {
+    if (this.snt$.sntStopLoc.posSE(ret.sntStrtLoc)) {
       /* `ret` is after `snt$`, so `subV_x` corresponds to the last sub-Stnode
       of `snt$`. */
       this.broken$ ||= subV_x.broken$;
@@ -117,7 +117,7 @@ export abstract class StnodeV<
       `bline_$, so `this` is also broken.
       */
       this.broken$ ||= subV_x.broken$ ||
-        !subV_x.broken$ && ret.frstLine !== this.bline_$;
+        !subV_x.broken$ && ret.sntFrstLine !== this.bline_$;
     }
     return ret;
   }

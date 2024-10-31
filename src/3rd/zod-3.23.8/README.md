@@ -2308,8 +2308,8 @@ const userId = z.string().refine(async (id) => {
 });
 ```
 
-> ⚠️ If you use async refinements, you must use the `.parseAsync` method to parse
-> data! Otherwise Zod will throw an error.
+> ⚠️ If you use async refinements, you must use the `.parseAsync` method to
+> parse data! Otherwise Zod will throw an error.
 
 #### Relationship to transforms
 

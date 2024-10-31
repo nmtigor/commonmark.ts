@@ -1,11 +1,18 @@
 /** 80**************************************************************************
- * @module 3rd/xstate-5.13.2/xstate
- * @license Apache-2.0
+ * @module lib/compiling/latex/LaTeXTok
+ * @license BSD-3-Clause
  ******************************************************************************/
 
-export {};
+import { BaseTok } from "../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
-export * from "./dist/xstate.esm.js";
-export type * from "./dist/xstate.esm.d.ts";
+enum LaTeXTok_ {
+  _ = 600,
+
+  _max,
+}
+console.assert(LaTeXTok_._max <= 700);
+
+export type LaTeXTok = BaseTok | LaTeXTok_;
+export const LaTeXTok = { ...BaseTok, ...LaTeXTok_ };
 /*80--------------------------------------------------------------------------*/

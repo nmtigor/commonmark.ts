@@ -1,29 +1,18 @@
 /** 80**************************************************************************
- * @module lib/compiling/set/SetTok
+ * @module lib/compiling/pdf/PDFTok
  * @license BSD-3-Clause
  ******************************************************************************/
 
 import { BaseTok } from "../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
-enum SetTok_ {
-  fuzykey = 200,
-  quotkey,
-
-  question, // ?
-  joiner, // >
-
-  subtract, // \
-  intersect, // ∩
-  union, // ∪
-
-  paren_open, // (
-  paren_cloz, // )
+enum PDFTok_ {
+  _ = 500,
 
   _max,
 }
-console.assert(SetTok_._max <= 300);
+console.assert(PDFTok_._max <= 600);
 
-export type SetTok = BaseTok | SetTok_;
-export const SetTok = { ...BaseTok, ...SetTok_ };
+export type PDFTok = BaseTok | PDFTok_;
+export const PDFTok = { ...BaseTok, ...PDFTok_ };
 /*80--------------------------------------------------------------------------*/

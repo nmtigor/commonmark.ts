@@ -4,7 +4,7 @@
  ******************************************************************************/
 
 import { LOG_cssc } from "../../alias.ts";
-import { INOUT } from "../../global.ts";
+import { INOUT, PRF } from "../../global.ts";
 import type { id_t, loff_t, uint } from "../alias.ts";
 import { $facil_node, $ovlap, $tail_ignored } from "../symbols.ts";
 import { Factory } from "../util/Factory.ts";
@@ -96,7 +96,7 @@ export class ERan {
   }
 
   [Symbol.dispose]() {
-    eran_fac.revoke(this);
+    g_eran_fac.revoke(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -263,10 +263,12 @@ const enum EdranCollapseTo {
 class ERanFac_ extends Factory<ERan> {
   /** @implement */
   protected createVal$() {
-    console.log(
-      `%c# of cached ERan instances: ${this.val_a$.length + 1}`,
-      `color:${LOG_cssc.performance}`,
-    );
+    /*#static*/ if (PRF) {
+      console.log(
+        `%c# of cached ERan instances: ${this.val_a$.length + 1}`,
+        `color:${LOG_cssc.performance}`,
+      );
+    }
     return new ERan(new ELoc(document, 0));
   }
 
@@ -278,5 +280,5 @@ class ERanFac_ extends Factory<ERan> {
     return ret;
   }
 }
-export const eran_fac = new ERanFac_();
+export const g_eran_fac = new ERanFac_();
 /*80--------------------------------------------------------------------------*/

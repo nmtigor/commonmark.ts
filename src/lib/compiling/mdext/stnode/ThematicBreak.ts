@@ -11,12 +11,14 @@ import type { MdextTk } from "../../Token.ts";
 export class ThematicBreak extends Block {
   #tk;
 
-  /** @implement */
-  get frstToken() {
+  override get children() {
+    return undefined;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.#tk;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.#tk;
   }
 
@@ -24,8 +26,7 @@ export class ThematicBreak extends Block {
     super();
     this.#tk = tk_x;
 
-    this.frstBdryTk;
-    this.lastBdryTk;
+    this.ensureBdry();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

@@ -191,13 +191,13 @@ export const _toHTML = (
   if (!snt_a || snt_a.length === 0) return "";
 
   const s_a: string[] = [];
-  let curLn = snt_a[0].frstLine;
+  let curLn = snt_a[0].sntFrstLine;
   let s_;
   /** sum of `snt` Lengths before a line */
   let sntL = 0;
   for (let i = 0, iI = snt_a.length; i < iI; ++i) {
     const snt = snt_a[i];
-    const ln_ = snt.frstLine;
+    const ln_ = snt.sntFrstLine;
     if (ln_ !== curLn) {
       // if (!(snt instanceof Block) && sntL) s_a.push("\n");
       if (sntL) s_a.push("\n");
@@ -211,7 +211,7 @@ export const _toHTML = (
       s_a.push(s_);
       // if (snt instanceof Block && i !== iI - 1) s_a.push("\n");
     }
-    curLn = snt.lastLine;
+    curLn = snt.sntLastLine;
   }
   if (s_a.at(-1) === "\n") s_a.pop();
   return s_a.join("");
@@ -220,7 +220,7 @@ export const _toHTML = (
 const reBackslashOrAmp = /[\\&]/;
 const reEntityOrEscapedChar =
   /\\[!"#$%&'()*+,.\/:;<=>?@\[\\\]^_`{|}~-]|&(?:#x[a-f0-9]{1,6}|#[0-9]{1,7}|[a-z][a-z0-9]{1,31});/gi;
-//kkkk TOCLEANUP
+//jjjj TOCLEANUP
 // const textArea_ = html("textarea");
 export const _unescapeString = (s_x: string) =>
   reBackslashOrAmp.test(s_x)

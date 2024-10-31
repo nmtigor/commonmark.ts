@@ -7,7 +7,7 @@ import { z } from "@zod";
 import { INOUT } from "../../global.ts";
 import { Moo } from "../Moo.ts";
 import type { id_t, int, uint } from "../alias.ts";
-import { SortedArray } from "../util/SortedArray.ts";
+import { type Less, SortedArray } from "../util/SortedArray.ts";
 import { assert, warn } from "../util/trace.ts";
 import { createColr, csscLess, csscname } from "./Colr.ts";
 import { ColrFn, type ColrStep, isColrFn, zColrFn } from "./ColrFn.ts";
@@ -331,7 +331,7 @@ export class PaleCoor extends Moo<PaleCoor> {
     // const q_ = this.qm_sa.get(iQM_x)[0];
     // q_?.off(q_, this.#upR);
     // q_?.modified_mo.off(true, this.#onQModified);
-    this.qm_sa.deleteByIndex(iQM_x as int);
+    this.qm_sa.deleteByIndex(iQM_x);
 
     if (iQM_x < this.#iQM) {
       this.#iQM -= 1;
@@ -403,13 +403,9 @@ export class PaleCoor extends Moo<PaleCoor> {
     }
     let resample_ = false;
     if (this.dim === 1) {
-      for (const qm of this.qm_sa) {
-        qm[0] = undefined;
-      }
+      for (const qm of this.qm_sa) qm[0] = undefined;
     } else {
-      for (const qm of this.qm_sa) {
-        qm[0]?.delete(iAx_x as int);
-      }
+      for (const qm of this.qm_sa) qm[0]?.delete(iAx_x);
     }
     Pale.get(this.axes[iAx_x]).removeCsscHandler(this.#upR);
     this.axes.splice(iAx_x, 1);
@@ -445,7 +441,7 @@ class SortedQM extends SortedArray<QM_> {
   /**
    * Regard `undefined` as volume `Infinity`, i.e., last element
    */
-  static #less(a_x: QM_, b_x: QM_) {
+  static #less: Less<QM_> = (a_x, b_x) => {
     let vol_a_: number | undefined,
       vol_b_: number | undefined;
     if (
@@ -463,7 +459,7 @@ class SortedQM extends SortedArray<QM_> {
     } else {
       return b_x[0] === undefined || Number.apxS(vol_a_!, vol_b_!);
     }
-  }
+  };
 
   constructor() {
     super(SortedQM.#less);

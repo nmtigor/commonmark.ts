@@ -9,6 +9,9 @@ import type { MdextBufr } from "./MdextBufr.ts";
 import type { MdextLexr } from "./MdextLexr.ts";
 import type { MdextTok } from "./MdextTok.ts";
 import { Document } from "./stnode/Document.ts";
+import { Block } from "./stnode/Block.ts";
+import type { Stnode } from "../Stnode.ts";
+import type { MdextTk } from "../Token.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -17,18 +20,32 @@ export class MdextPazr extends Pazr<MdextTok> {
   override get root(): Document {
     return this.root$ ??= new Document();
   }
+  get _root() {
+    return this.root$;
+  }
+
+  override get drtSn(): Block {
+    this.drtSn_$ ??= this.root;
+    return this.drtSn_$ as Block;
+  }
 
   /**
-   * Only invoked  in `MdextLexr.create()`
+   * Only invoked in `MdextLexr.create()`
    * @package
    */
   constructor(bufr_x: MdextBufr, Lexr_x: MdextLexr) {
     super(bufr_x, Lexr_x);
   }
+
+  override reset(): this {
+    this.reset$(this.bufr$, this.lexr$);
+    this.root$ = undefined;
+    return this;
+  }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @implement */
   protected paz_impl$(): void {
-    fail("Not implemented");
+    fail("Disabled");
   }
 }

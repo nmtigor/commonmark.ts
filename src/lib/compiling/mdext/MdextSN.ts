@@ -1,18 +1,19 @@
 /** 80**************************************************************************
- * @module lib/compiling/mdext/stnode/Inline
+ * @module lib/compiling/mdext/MdextSN
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { Loc } from "../../Loc.ts";
-import { MdextSN } from "../MdextSN.ts";
-import type { MdextTk } from "../../Token.ts";
+import { Stnode } from "../Stnode.ts";
+import type { MdextLexr } from "./MdextLexr.ts";
+import type { MdextTok } from "./MdextTok.ts";
 /*80--------------------------------------------------------------------------*/
 
-export abstract class Inline extends MdextSN {
+export abstract class MdextSN extends Stnode<MdextTok> {
   /**
-   * @primaryconst
-   * @headconst @param loc_x
+   * @headconst @param lexr_x
    */
-  abstract tokenAt(loc_x: Loc): MdextTk;
+  _toHTML(lexr_x: MdextLexr): string {
+    return "";
+  }
 }
 /*80--------------------------------------------------------------------------*/

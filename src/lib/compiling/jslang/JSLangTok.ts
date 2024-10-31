@@ -1,14 +1,14 @@
 /** 80**************************************************************************
- * @module lib/compiling/jslang/JslangTok
+ * @module lib/compiling/jslang/JSLangTok
  * @license BSD-3-Clause
  ******************************************************************************/
 
 import { BaseTok } from "../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
-enum JslangTok_ {
-  // Other
-  leftParentheses = 400,
+enum JSLangTok_ {
+  /* Other */
+  leftParentheses = 800,
   rightParentheses,
   leftBracket,
   rightBracket,
@@ -24,7 +24,7 @@ enum JslangTok_ {
   as,
   from,
 
-  // Expressions
+  /* Expressions */
   throw,
   new,
   target,
@@ -40,7 +40,7 @@ enum JslangTok_ {
   yield,
   await,
 
-  // Operators
+  /* Operators */
   lessThan,
   greaterThan,
   lessOrEqual,
@@ -94,7 +94,7 @@ enum JslangTok_ {
   andAndAssign,
   orOrAssign,
 
-  // Literals
+  /* Literals */
   null,
   true,
   false,
@@ -103,12 +103,12 @@ enum JslangTok_ {
   regexpLiteral,
   templateLiteral,
 
-  // Leaf operators
+  /* Leaf operators */
   identifier,
   this,
   super,
 
-  // Aggregates
+  /* Aggregates */
   class,
   extends,
   interface,
@@ -127,7 +127,7 @@ enum JslangTok_ {
   function,
   async,
 
-  // Statements
+  /* Statements */
   if,
   else,
   while,
@@ -147,8 +147,8 @@ enum JslangTok_ {
 
   _max,
 }
-console.assert(JslangTok_._max <= 600);
+console.assert(JSLangTok_._max <= 1_000);
 
-export type JslangTok = BaseTok | JslangTok_;
-export const JslangTok = { ...BaseTok, ...JslangTok_ };
+export type JSLangTok = BaseTok | JSLangTok_;
+export const JSLangTok = { ...BaseTok, ...JSLangTok_ };
 /*80--------------------------------------------------------------------------*/

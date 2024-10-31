@@ -23,7 +23,7 @@ export class PLoc extends ILoc {
     return this.host$ as Paragraph;
   }
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // /**
   //  * @headconst @param host_x
   //  */
@@ -57,15 +57,13 @@ export class Paragraph extends InlineBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** @implement */
-  get frstToken() {
+  override get frstToken() {
     if (this.frstToken$) return this.frstToken$;
 
     const snt = this.snt_a_$[0];
     return this.frstToken$ = snt instanceof Inline ? snt.frstToken : snt;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     if (this.lastToken$) return this.lastToken$;
 
     const snt = this.snt_a_$.at(-1)!;
@@ -96,7 +94,7 @@ export class Paragraph extends InlineBlock {
       for (const tk of this.snt_a_$) {
         assert(
           tk instanceof MdextTk && tk.value === MdextTok.chunk &&
-            isLFOr0(tk.stopLoc.ucod),
+            isLFOr0(tk.sntStopLoc.ucod),
         );
       }
     }
@@ -104,12 +102,12 @@ export class Paragraph extends InlineBlock {
     "<code></code>". */
 
     const lastTk = this.snt_a_$.at(-1)!;
-    const lastLn = lastTk.lastLine;
+    const lastLn = lastTk.sntLastLine;
     const i_ = lastNonblankIn(lastLn);
     /*#static*/ if (INOUT) {
       assert(lastTk.strtLoff <= i_ && i_ < lastLn.uchrLen);
     }
-    lastTk.stopLoc.loff = 1 + i_;
+    lastTk.sntStopLoc.loff = 1 + i_;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -125,7 +123,7 @@ export class Paragraph extends InlineBlock {
     return this;
   }
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // protected override inline_impl$(lexr_x: MdextLexr): void {
   //   let iloc = this.iloc;
 
@@ -147,7 +145,7 @@ export class Paragraph extends InlineBlock {
   //   lexr_x.lexEmphasis_$(iloc);
   // }
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // /**
   //  * `in( this.#iloc )`
   //  * @implement
@@ -186,7 +184,7 @@ export class Paragraph extends InlineBlock {
   //   return ret;
   // }
 
-  //kkkk TOCLEANUP
+  //jjjj TOCLEANUP
   // /**
   //  * @primaryconst @param strtLoc_x
   //  * @primaryconst @param stopLoc_x

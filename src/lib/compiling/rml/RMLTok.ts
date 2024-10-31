@@ -1,29 +1,18 @@
 /** 80**************************************************************************
- * @module lib/compiling/set/SetTok
+ * @module lib/compiling/rml/RMLTok
  * @license BSD-3-Clause
  ******************************************************************************/
 
 import { BaseTok } from "../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
-enum SetTok_ {
-  fuzykey = 200,
-  quotkey,
-
-  question, // ?
-  joiner, // >
-
-  subtract, // \
-  intersect, // ∩
-  union, // ∪
-
-  paren_open, // (
-  paren_cloz, // )
+enum RMLTok_ {
+  _ = 700,
 
   _max,
 }
-console.assert(SetTok_._max <= 300);
+console.assert(RMLTok_._max <= 800);
 
-export type SetTok = BaseTok | SetTok_;
-export const SetTok = { ...BaseTok, ...SetTok_ };
+export type RMLTok = BaseTok | RMLTok_;
+export const RMLTok = { ...BaseTok, ...RMLTok_ };
 /*80--------------------------------------------------------------------------*/

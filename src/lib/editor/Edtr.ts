@@ -15,7 +15,7 @@ import type { BaseTok } from "../compiling/BaseTok.ts";
 import type { Lexr } from "../compiling/Lexr.ts";
 import type { Pazr } from "../compiling/Pazr.ts";
 import { Ran, RanP } from "../compiling/Ran.ts";
-import { Ranval, ranval_fac } from "../compiling/Ranval.ts";
+import { g_ranval_fac, Ranval } from "../compiling/Ranval.ts";
 import { Repl } from "../compiling/Repl.ts";
 import type { Stnode } from "../compiling/Stnode.ts";
 import { Tfmr } from "../compiling/Tfmr.ts";
@@ -37,7 +37,7 @@ import { Caret, CaretState } from "./Caret.ts";
 import { ELine } from "./ELine.ts";
 import { OzrInfo } from "./ELineBase.ts";
 import { ELoc } from "./ELoc.ts";
-import { ERan, eran_fac } from "./ERan.ts";
+import { ERan, g_eran_fac } from "./ERan.ts";
 import type { EdtrBaseCI, EdtrScronr } from "./EdtrBase.ts";
 import { EdtrBase, EdtrBaseScrolr } from "./EdtrBase.ts";
 import type { EdtrShortcut, EdtrState } from "./alias.ts";
@@ -277,11 +277,11 @@ export abstract class EdtrScrolr<
 
   /** `in( this.bufr$ )` */
   #onBufr_idle2prerepl = (_: BufrReplState) => {
-    if (this.bufr$.oldRan) this.prereplace_$();
+    if (this.bufr$.oldRan_a.length) this.prereplace_$();
   };
   /** `in( this.bufr$ )` */
   #onBufr_sufrepl2idle = (_: BufrReplState) => {
-    if (this.bufr$.newRan) this.replace_$();
+    if (this.bufr$.newRan_a.length) this.replace_$();
   };
 
   #onBufrDir = (n_x: BufrDir) => {
@@ -494,7 +494,7 @@ export abstract class EdtrScrolr<
   /**
    * Set `ranpA_$`, `offsA_$`, `ranpF_$`, `offsF_$` of each `Caret` in
    * `caret_a$`\
-   * `in( this.bufr.oldRan )`
+   * `in( this.bufr.oldRan_a.length )`
    * @final
    */
   prereplace_$(): void {
@@ -503,7 +503,11 @@ export abstract class EdtrScrolr<
         `${global.indent}>>>>>>> ${this._type_id}.prereplace_$() >>>>>>>`,
       );
     }
-    const oldRan = this.bufr$.oldRan!;
+    if (this.bufr$.oldRan_a.length > 1) {
+      fail("Not implemented"); //kkkk
+    }
+
+    const oldRan = this.bufr$.oldRan_a[0];
     let mc_ = this.proactiveCaret;
     if (
       mc_.eran &&
@@ -667,14 +671,18 @@ export abstract class EdtrScrolr<
    * `in( this.bufr$.newRan && this.bufr$.oldRan )`
    * @final
    */
-  replace_$() {
+  replace_$(): void {
     /*#static*/ if (_TRACE) {
       console.log(
         `${global.indent}>>>>>>> ${this._type_id}.replace_$() >>>>>>>`,
       );
     }
+    if (this.bufr$.newRan_a.length > 1) {
+      fail("Not implemented"); //kkkk
+    }
+
     // const oldRan = this.bufr$.oldRan;
-    const newRan = this.bufr$.newRan!;
+    const newRan = this.bufr$.newRan_a[0];
     const mc_ = this.proactiveCaret;
     if (mc_.ranpF_$ === RanP.unknown) {
       /* In passive `EdtrScrolr`, where its `proactiveCaret` does not `blink()` or
@@ -1459,7 +1467,7 @@ export abstract class EdtrScrolr<
       "",
     );
     this.#composingRepl.replFRun(evt_x.data);
-    this.#replText_a.become(this.#composingRepl!.replText_a);
+    this.#replText_a.become(this.#composingRepl!.replText_a!);
     this.#syncAllCaret(true);
 
     // evt_x.preventDefault();
@@ -1516,7 +1524,7 @@ export abstract class EdtrScrolr<
     if (evt_x.data) {
       this.bufr$.doqOnly(this.#composingRepl!);
     } else {
-      this.#composingRepl!.replText_a.become(this.#replText_a);
+      this.#composingRepl!.replText_a!.become(this.#replText_a);
       this.#composingRepl!.replBRun();
       this.#syncAllCaret(true);
     }
@@ -1803,11 +1811,11 @@ export abstract class EdtrScrolr<
     /* `anchrRecOf_$()` could modify its `eran_x`, so not to use `mc_x.eran`
     directly, because if return `EdtrFuncRet.nope`, `mc_x.eran` will have no
     chance to be corrected back. */
-    using eran_0 = eran_fac.oneMore().become(mc_x.eran!);
+    using eran_0 = g_eran_fac.oneMore().become(mc_x.eran!);
     const rec_0 = this.anchrRecOf_$(rv_x, eran_0);
 
-    using rv_1 = ranval_fac.oneMore().reset(rv_x.anchrLidx, 0);
-    using eran_1 = eran_fac.oneMore().become(mc_x.eran!);
+    using rv_1 = g_ranval_fac.oneMore().reset(rv_x.anchrLidx, 0);
+    using eran_1 = g_eran_fac.oneMore().become(mc_x.eran!);
     let rec_1 = this.anchrRecOf_$(rv_1, eran_1);
     if (sameline(rec_1, blockOf(rec_0))) {
       if (rv_x.anchrLidx === 0) {
@@ -1864,7 +1872,7 @@ export abstract class EdtrScrolr<
   //  * @headconst @param mc_x
   //  */
   // private _anchrPrevRow(rv_x: Ranval, mc_x: Caret): EdtrFuncRet {
-  //   using rv_ = ranval_fac.oneMore().become(rv_x);
+  //   using rv_ = g_ranval_fac.oneMore().become(rv_x);
   //   const ret = this._prevRow(rv_, mc_x);
   //   rv_x.anchrLidx = rv_.anchrLidx;
   //   rv_x.anchrLoff = rv_.anchrLoff;
@@ -1880,7 +1888,7 @@ export abstract class EdtrScrolr<
    * @headconst @param mc_x
    */
   private _focusPrevRow(rv_x: Ranval, mc_x: Caret): EdtrFuncRet {
-    using rv_ = ranval_fac.oneMore().reset(rv_x.focusLidx, rv_x.focusLoff);
+    using rv_ = g_ranval_fac.oneMore().reset(rv_x.focusLidx, rv_x.focusLoff);
     const ret = this._prevRow(rv_, mc_x);
     rv_x.focusLidx = rv_.anchrLidx;
     rv_x.focusLoff = rv_.anchrLoff;
@@ -1947,14 +1955,14 @@ export abstract class EdtrScrolr<
     /* `anchrRecOf_$()` could modify its `eran_x`, so not to use `mc_x.eran`
     directly, because if return `EdtrFuncRet.nope`, `mc_x.eran` will have no
     chance to be corrected back. */
-    using eran_0 = eran_fac.oneMore().become(mc_x.eran!);
+    using eran_0 = g_eran_fac.oneMore().become(mc_x.eran!);
     const rec_0 = this.anchrRecOf_$(rv_x, eran_0);
 
-    using rv_1 = ranval_fac.oneMore().reset(
+    using rv_1 = g_ranval_fac.oneMore().reset(
       rv_x.anchrLidx,
       Number.MAX_SAFE_INTEGER,
     );
-    using eran_1 = eran_fac.oneMore().become(mc_x.eran!);
+    using eran_1 = g_eran_fac.oneMore().become(mc_x.eran!);
     let rec_1 = this.anchrRecOf_$(rv_1, eran_1);
     if (sameline(rec_1, blockOf(rec_0))) {
       if (rv_x.anchrLidx >= this.bufr$.lineN - 1) {
@@ -2004,7 +2012,7 @@ export abstract class EdtrScrolr<
   }
   // /** @see {@linkcode _anchrPrevRow()} */
   // private _anchrNextRow(rv_x: Ranval, mc_x: Caret): EdtrFuncRet {
-  //   using rv_ = ranval_fac.oneMore().become(rv_x);
+  //   using rv_ = g_ranval_fac.oneMore().become(rv_x);
   //   const ret = this._nextRow(rv_, mc_x);
   //   rv_x.anchrLidx = rv_.anchrLidx;
   //   rv_x.anchrLoff = rv_.anchrLoff;
@@ -2012,7 +2020,7 @@ export abstract class EdtrScrolr<
   // }
   /** @see {@linkcode _focusPrevRow()} */
   private _focusNextRow(rv_x: Ranval, mc_x: Caret): EdtrFuncRet {
-    using rv_ = ranval_fac.oneMore().reset(rv_x.focusLidx, rv_x.focusLoff);
+    using rv_ = g_ranval_fac.oneMore().reset(rv_x.focusLidx, rv_x.focusLoff);
     const ret = this._nextRow(rv_, mc_x);
     rv_x.focusLidx = rv_.anchrLidx;
     rv_x.focusLoff = rv_.anchrLoff;

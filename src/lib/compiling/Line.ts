@@ -123,22 +123,22 @@ export class Line {
     let ret: Token<T> | undefined;
     let tk_ = this.frstTokenBy(lexr_x);
     if (tk_) {
-      ret = tk_.prevToken_$?.lastLine === this ? tk_.prevToken_$ : tk_;
+      ret = tk_.prevToken_$?.sntLastLine === this ? tk_.prevToken_$ : tk_;
     } else {
       tk_ = this.prevLine?.lastTokenBy(lexr_x);
-      if (tk_?.nextToken_$?.lastLine === this) {
+      if (tk_?.nextToken_$?.sntLastLine === this) {
         ret = tk_.nextToken_$;
       }
     }
     return ret;
   }
-  frstByToken_$<T extends Tok>(tk_x: Token<T>) {
+  setFrstToken_$<T extends Tok>(tk_x: Token<T>) {
     this.#frstToken_m.set(tk_x.lexr_$, tk_x);
   }
-  isFrstByToken_$<T extends Tok>(tk_x: Token<T>): boolean {
+  isFrstToken_$<T extends Tok>(tk_x: Token<T>): boolean {
     return this.#frstToken_m.get(tk_x.lexr_$) === tk_x;
   }
-  delFrstToken_$<T extends Tok>(lexr_x: Lexr<T>) {
+  delFrstTokenBy_$<T extends Tok>(lexr_x: Lexr<T>) {
     this.#frstToken_m.delete(lexr_x);
   }
   // hasStrt_$( lexr_x:Lexr ) { return this.#frstToken_m.has(lexr_x); }
@@ -163,22 +163,22 @@ export class Line {
     let ret: Token<T> | undefined;
     let tk_ = this.lastTokenBy(lexr_x);
     if (tk_) {
-      ret = tk_.nextToken_$?.frstLine === this ? tk_.nextToken_$ : tk_;
+      ret = tk_.nextToken_$?.sntFrstLine === this ? tk_.nextToken_$ : tk_;
     } else {
       tk_ = this.nextLine?.frstTokenBy(lexr_x);
-      if (tk_?.prevToken_$?.frstLine === this) {
+      if (tk_?.prevToken_$?.sntFrstLine === this) {
         ret = tk_.prevToken_$;
       }
     }
     return ret;
   }
-  lastByToken_$<T extends Tok>(tk_x: Token<T>) {
+  setLastToken_$<T extends Tok>(tk_x: Token<T>) {
     this.#lastToken_m.set(tk_x.lexr_$, tk_x);
   }
-  isLastByToken_$<T extends Tok>(tk_x: Token<T>): boolean {
+  isLastToken_$<T extends Tok>(tk_x: Token<T>): boolean {
     return this.#lastToken_m.get(tk_x.lexr_$) === tk_x;
   }
-  delLastToken_$<T extends Tok>(lexr_x: Lexr<T>) {
+  delLastTokenBy_$<T extends Tok>(lexr_x: Lexr<T>) {
     this.#lastToken_m.delete(lexr_x);
   }
   // hasStop_$( lexr_x:Lexr ) { return this.#lastToken_m.has(lexr_x); }
@@ -584,9 +584,10 @@ export class Line {
     this.linked_$ = false;
     this.bufr$ = undefined;
 
-    /* Because Lexr<T> could keep using to make `this` unreleasable. */
-    this.#frstToken_m.clear();
-    this.#lastToken_m.clear();
+    /* `#frstToken_m`, `#lastToken_m` will be used in `Lexr.adjust_$()` */
+    // /* Because Lexr<T> could keep using to make `this` unreleasable. */
+    // this.#frstToken_m.clear();
+    // this.#lastToken_m.clear();
   }
 
   // /**

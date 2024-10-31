@@ -3,17 +3,17 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
-import type { id_t, lnum_t, loff_t } from "../alias.ts";
-import { assert } from "../util/trace.ts";
-import type { Tok } from "./alias.ts";
+import { type Less, SortedArray } from "../util/SortedArray.ts";
+import { DEV, INOUT, PRF } from "../../global.ts";
+import type { id_t, lnum_t, loff_t, uint } from "../alias.ts";
+import { space } from "../util/global.ts";
+import { assert, out } from "../util/trace.ts";
 import type { Bufr } from "./Bufr.ts";
 import type { Line } from "./Line.ts";
-import { Loc, LocCompared } from "./Loc.ts";
-import { TokLoc } from "./TokLoc.ts";
+import { Loc } from "./Loc.ts";
 import { Ranval } from "./Ranval.ts";
-import type { TokBufr } from "./TokBufr.ts";
-import { space } from "../util/global.ts";
+import { Factory } from "../util/Factory.ts";
+import { LOG_cssc } from "../../alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**
@@ -47,11 +47,17 @@ export class Ran {
   get ranval() {
     return this.#ranval;
   }
-  resetRanval_$() {
+  syncRanvalAnchr_$() {
     this.#ranval.anchrLidx = this.frstLine.lidx_1;
     this.#ranval.anchrLoff = this.strtLoff;
+  }
+  syncRanvalFocus_$() {
     this.#ranval.focusLidx = this.lastLine.lidx_1;
     this.#ranval.focusLoff = this.stopLoff;
+  }
+  syncRanval_$() {
+    this.syncRanvalAnchr_$();
+    this.syncRanvalFocus_$();
   }
   /* ~ */
 
@@ -103,11 +109,33 @@ export class Ran {
     );
   }
 
+  /** @const */
+  dup() {
+    return new Ran(this.strtLoc.dup(), this.stopLoc.dup());
+  }
+
+  reset(bufr_x?: Bufr): this {
+    bufr_x ??= this.bufr;
+    /*#static*/ if (INOUT) {
+      assert(bufr_x);
+    }
+    this.strtLoc$.set(bufr_x!.frstLine_$, 0);
+    this.stopLoc$.set(bufr_x!.frstLine_$, 0);
+    return this;
+  }
+
   /**
-   * @headconst @param loc_x [COPIED]
+   * @primaryconst @param loc_x [COPIED]
    * @param loc_1_x [COPIED]
    */
-  set(loc_x: Loc, loc_1_x?: Loc) {
+  @out((_, self: Ran) => {
+    assert(
+      self.strtLoc$ && self.stopLoc$ &&
+        self.strtLoc$ !== self.stopLoc$ &&
+        self.strtLoc$.posSE(self.stopLoc$),
+    );
+  })
+  set(loc_x: Loc, loc_1_x?: Loc): this {
     loc_1_x ??= loc_x.dup();
     if (loc_x.posSE(loc_1_x)) {
       this.strtLoc$ = loc_x;
@@ -116,41 +144,46 @@ export class Ran {
       this.strtLoc$ = loc_1_x;
       this.stopLoc$ = loc_x;
     }
-    // this.resetRanval_$();
-    /*#static*/ if (INOUT) {
-      assert(
-        this.strtLoc$ && this.stopLoc$ &&
-          this.strtLoc$ !== this.stopLoc$ &&
-          this.strtLoc$.posSE(this.stopLoc$),
-      );
-    }
+    // this.syncRanval_$();
     return this;
-  }
-
-  /** @const */
-  dup() {
-    return new Ran(this.strtLoc.dup(), this.stopLoc.dup());
-  }
-
-  reset(bufr_x?: Bufr) {
-    bufr_x ??= this.bufr;
-    /*#static*/ if (INOUT) {
-      assert(bufr_x);
-    }
-    this.strtLoc$.reset(bufr_x!.frstLine_$, 0);
-    this.stopLoc$.reset(bufr_x!.frstLine_$, 0);
   }
 
   /**
-   * @headconst @param ran_x
+   * @final
+   * @headconst @param bufr_x
+   * @const @param rv_x
    */
-  become(ran_x: Ran) {
+  setByRanval(bufr_x: Bufr, rv_x: Ranval): this {
+    return this.set(
+      Loc.create(bufr_x, rv_x.anchrLidx, rv_x.anchrLoff),
+      Loc.create(bufr_x, rv_x.focusLidx, rv_x.focusLoff),
+    );
+  }
+
+  /**
+   * @final
+   * @const @param ran_x
+   */
+  become(ran_x: Ran): this {
     this.strtLoc$.become(ran_x.strtLoc$);
     this.stopLoc$.become(ran_x.stopLoc$);
 
-    // this.resetRanval_$();
+    // this.syncRanval_$();
 
     return this;
+  }
+
+  [Symbol.dispose]() {
+    g_ran_fac.revoke(this);
+  }
+
+  /**
+   * `in( this.bufr )`
+   * @final
+   * @const
+   */
+  using() {
+    return g_ran_fac.setBufr(this.bufr!).oneMore().become(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -165,7 +198,7 @@ export class Ran {
   collapse() {
     this.strtLoc$.become(this.stopLoc$);
 
-    // this.resetRanval_$();
+    // this.syncRanval_$();
 
     return this;
   }
@@ -210,11 +243,14 @@ export class Ran {
       this.strtLoc$.posE(rhs_x.strtLoc$) && this.stopLoc$.posE(rhs_x.stopLoc$);
   }
 
-  /** @primaryconst */
+  /**
+   * @primaryconst
+   * @primaryconst @param loc_x
+   */
   contain(loc_x: Loc): boolean {
     return this.strtLoc$.posSE(loc_x) && loc_x.posS(this.stopLoc$);
   }
-  /** @primaryconst */
+  /** @see {@linkcode contain()} */
   touch(loc_x: Loc): boolean {
     return this.contain(loc_x) || this.stopLoc$.posE(loc_x);
   }
@@ -303,6 +339,9 @@ export class Ran {
     this.stopLoc$.toRanval(ret_x, 0);
     return ret_x;
   }
+  get _rv() {
+    return this.toRanval();
+  }
 
   /** For testing only */
   toString() {
@@ -311,44 +350,39 @@ export class Ran {
       : `[${this.strtLoc$.toString()},${this.stopLoc$.toString()})`;
   }
 }
-/*80--------------------------------------------------------------------------*/
+/*64----------------------------------------------------------*/
 
-/** @final */
-export class TokRan<T extends Tok> extends Ran {
-  override get strtLoc() {
-    return this.strtLoc$ as TokLoc<T>;
-  }
-  override get stopLoc() {
-    return this.stopLoc$ as TokLoc<T>;
-  }
-  override get frstLine() {
-    return this.strtLoc.line;
-  }
-  override get lastLine() {
-    return this.stopLoc.line;
-  }
+// export class SortedRan extends SortedArray<Ran> {
+//   static #less: Less<Ran> = (a, b) => a.stopLoc.posS(b.strtLoc);
 
-  /**
-   * @headconst @param loc_x [COPIED]
-   * @param loc_1_x [COPIED]
-   */
-  constructor(loc_x: TokLoc<T>, loc_1_x?: TokLoc<T>) {
-    super(loc_x, loc_1_x);
-  }
+//   constructor(val_a_x?: Ran[]) {
+//     super(SortedRan.#less, val_a_x);
+//   }
+// }
+/*64----------------------------------------------------------*/
 
-  /**
-   * @headconst @param bufr_x
-   * @const @param rv_x
-   */
-  static override create<U extends Tok>(bufr_x: TokBufr<U>, rv_x: Ranval) {
-    return new TokRan(
-      TokLoc.create(bufr_x, rv_x.anchrLidx, rv_x.anchrLoff),
-      TokLoc.create(bufr_x, rv_x.focusLidx, rv_x.focusLoff),
-    );
+class RanFac_ extends Factory<Ran> {
+  #bufr!: Bufr;
+  setBufr(_x: Bufr): this {
+    this.#bufr = _x;
+    return this;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  /** @implement */
+  protected createVal$() {
+    /*#static*/ if (PRF) {
+      console.log(
+        `%c# of cached Ran instances: ${this.val_a$.length + 1}`,
+        `color:${LOG_cssc.performance}`,
+      );
+    }
+    return new Ran(new Loc(this.#bufr.frstLine_$, 0));
   }
 
-  override dup() {
-    return new TokRan<T>(this.strtLoc.dup(), this.stopLoc.dup());
+  protected override reuseVal$(i_x: uint) {
+    return this.get(i_x).reset(this.#bufr);
   }
 }
+export const g_ran_fac = new RanFac_();
 /*80--------------------------------------------------------------------------*/

@@ -3,28 +3,30 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { EdtrScrolr } from "../editor/Edtr.ts";
-import { Unre } from "../util/Unre.ts";
 import { DEV, INOUT } from "../../global.ts";
-import { lastCb_i, Moo } from "../Moo.ts";
+import { LastCb_i, Moo } from "../Moo.ts";
 import type { id_t, lnum_t, ts_t, uint } from "../alias.ts";
 import { BufrDir, MAX_lnum } from "../alias.ts";
-import { SortedArray } from "../util/SortedArray.ts";
+import type { EdtrScrolr } from "../editor/Edtr.ts";
+import { SortedIdo } from "../util/SortedArray.ts";
+import { Unre } from "../util/Unre.ts";
 import { linesOf } from "../util/general.ts";
-import { assert } from "../util/trace.ts";
+import { assert, out } from "../util/trace.ts";
 import { Line } from "./Line.ts";
-import type { Ran } from "./Ran.ts";
+import { type Ran } from "./Ran.ts";
+import { g_ranval_fac, type Ranval } from "./Ranval.ts";
 import { Repl } from "./Repl.ts";
+import { ReplActr } from "./ReplActr.ts";
 import type { sig_t } from "./alias.ts";
 import { BufrDoState, BufrReplState } from "./alias.ts";
-import { ReplActr } from "./ReplActr.ts";
-import { type Ranval, ranval_fac } from "./Ranval.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**
  * A nnon-generic base s.t. many related uses can be non-generic.
  *
  * primaryconst: const exclude `maxValidLidx_$`
+ *
+ * @using
  */
 export class Bufr {
   static #ID = 0 as id_t;
@@ -33,12 +35,34 @@ export class Bufr {
   get _type_id() {
     return `${this.constructor.name}_${this.id}`;
   }
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
+  /* dir_mo */
   readonly dir_mo = new Moo({ val: BufrDir.ltr, active: true });
   get dir() {
     return this.dir_mo.val;
   }
+
+  #onDir = () => {
+    // const rv_a = this.edtr_sa.map((edtr_y) =>
+    //   (edtr_y as EdtrScrolr).proactiveCaret.ranval
+    // );
+    // console.log(rv_a);
+    this.refresh();
+    /* Notice, `invalidate_bcr()` should be called firstly for all `edtr_sa`,
+    because setting `mc_.caretrvm![1]` in one `eds` will impact other `eds`s
+    immediately. */
+    this.edtr_sa.forEach((eds) => (eds as EdtrScrolr).invalidate_bcr());
+    for (let i = this.edtr_sa.length; i--;) {
+      const eds = this.edtr_sa.at(i) as EdtrScrolr;
+      const mc_ = eds.proactiveCaret;
+      if (mc_.shown) {
+        // mc_.caretrvm![1].force().val = rv_a[i];
+        mc_.caretrvm![1].force().val = mc_.ranval;
+      }
+    }
+  };
+  /* ~ */
 
   lineN_$ = 0 as lnum_t;
   /** @final */
@@ -48,14 +72,14 @@ export class Bufr {
   maxValidLidx_$: lnum_t | -1 = -1;
 
   frstLine_$: Line;
-  lastLine_$: Line;
   get frstLine() {
     return this.frstLine_$;
   }
+  lastLine_$: Line;
   get lastLine() {
     return this.lastLine_$;
   }
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /* modified */
   readonly modified_mo = new Moo({ val: false });
@@ -81,13 +105,15 @@ export class Bufr {
 
   // oldRan_$ = new RanMoo(); /** @member */
   // newRan_$ = new RanMoo(); /** @member */
-  oldRan_$?: Ran;
-  get oldRan() {
-    return this.oldRan_$;
+  /** @using */
+  readonly oldRan_a_$: Ran[] = [];
+  get oldRan_a() {
+    return this.oldRan_a_$;
   }
-  newRan_$?: Ran;
-  get newRan() {
-    return this.newRan_$;
+  /** @using */
+  readonly newRan_a_$: Ran[] = [];
+  get newRan_a() {
+    return this.newRan_a_$;
   }
   // dtLineN_$ = 0;
   // get dtLn() {
@@ -133,7 +159,7 @@ export class Bufr {
   /* ~ */
 
   readonly repl_actr = new ReplActr(this);
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   lastView_ts = Date.now() as ts_t;
 
@@ -166,40 +192,21 @@ export class Bufr {
   }
   /* ~ */
 
-  readonly edtr_sa = new SortedArray<{ id: id_t }>((a, b) => a.id < b.id);
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+  readonly edtr_sa = new SortedIdo();
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
    * @const @param text_x
    */
-  constructor(dir_x: BufrDir, text_x?: string) {
+  constructor(text_x?: string | undefined, dir_x = BufrDir.ltr) {
     this.dir_mo.set(dir_x);
-    this.dir_mo.registHandler((n_y) => {
-      // const rv_a = this.edtr_sa.map((edtr_y) =>
-      //   (edtr_y as EdtrScrolr).proactiveCaret.ranval
-      // );
-      // console.log(rv_a);
-      this.refresh();
-      /* Notice, `invalidate_bcr()` should be called firstly for all `edtr_sa`,
-      because setting `mc_.caretrvm![1]` in one `eds` will impact other `eds`s
-      immediately. */
-      this.edtr_sa.forEach((eds) => (eds as EdtrScrolr).invalidate_bcr());
-      for (let i = this.edtr_sa.length; i--;) {
-        const eds = this.edtr_sa.at(i) as EdtrScrolr;
-        const mc_ = eds.proactiveCaret;
-        if (mc_.shown) {
-          // mc_.caretrvm![1].force().val = rv_a[i];
-          mc_.caretrvm![1].force().val = mc_.ranval;
-        }
-      }
-    }, { i: lastCb_i });
+    this.dir_mo.registHandler(this.#onDir, { i: LastCb_i });
 
     this.frstLine_$ = this.createLine();
     this.frstLine_$.linked_$ = true;
     this.lastLine_$ = this.frstLine_$;
 
-    const text_a = text_x ? linesOf(text_x) : [""];
-    this.setLines(text_a);
+    this.setLines(text_x);
     // // #if DEV && !TESTING
     //   reportBuf( text_a );
     // // #endif
@@ -210,30 +217,68 @@ export class Bufr {
     }
   }
 
-  destructor() {
+  @out((_, self: Bufr) => {
+    assert(self.lineN_$ >= 1);
+    assert(self.frstLine_$ && self.frstLine_$.bufr === self);
+    assert(self.lastLine_$ && self.lastLine_$.bufr === self);
+  })
+  reset(): this {
+    this.dir_mo.reset().registHandler(this.#onDir, { i: LastCb_i });
+
     let line: Line | undefined = this.lastLine;
     const VALVE = 10_000;
     let valve = VALVE;
     while (line && line !== this.frstLine_$ && --valve) {
-      let line_1: Line | undefined = line.prevLine;
+      const line_1: Line | undefined = line.prevLine;
       line.removeSelf_$();
       line = line_1;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
     line!.removeSelf_$();
 
-    this.onReplStateChange = undefined;
+    this.modified_mo.reset();
+    this.#lastRepl = this.#repl_saved = undefined;
+
+    for (const ran of this.oldRan_a_$) ran[Symbol.dispose]();
+    for (const ran of this.newRan_a_$) ran[Symbol.dispose]();
+
+    this.#doState = BufrDoState.idle;
+
+    this.#doq.reset();
+    this.canUndo_mo.reset();
+    this.canRedo_mo.reset();
+
+    this.repl_mo.reset();
+    this.#onReplStateChange = undefined;
+
+    this.repl_actr.fina();
+
+    this.lastView_ts = Date.now() as ts_t;
+
+    /*#static*/ if (DEV) {
+      assert(this.#sigPool === 0xffff_ffff); //kkkk
+    }
+
+    /*#static*/ if (DEV) {
+      assert(this.edtr_sa.length === 0); //kkkk
+    }
+
+    return this;
+  }
+
+  [Symbol.dispose]() {
+    this.reset();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
-   * @const @param txt_a
+   * @const @param text_x
    */
-  setLines(txt_a: string[]): this {
+  setLines(text_x?: string): this {
     /*#static*/ if (INOUT) {
       assert(this.lineN === 1);
-      assert(txt_a.length);
     }
+    const txt_a = text_x ? linesOf(text_x) : [""];
     this.frstLine_$.resetText_$(txt_a[0]);
 
     let ln = this.frstLine_$;
@@ -253,6 +298,9 @@ export class Bufr {
     return Line.create(this, text_x);
   }
 
+  /**
+   * @const @param lidx_x
+   */
   line(lidx_x: lnum_t): Line {
     if (lidx_x >= this.lineN) return this.lastLine;
 
@@ -352,10 +400,11 @@ export class Bufr {
 
     this.#lastRepl = new Repl(this, rv_x, txt_x);
     this.#lastRepl.replFRun();
+    this.modified = true;
+
     this.#doq.add(this.#lastRepl);
     // console.log(this.#doq._repr);
     this.#updateDoCap();
-    this.modified = true;
 
     this.#doState = doState_save;
   }
@@ -367,7 +416,7 @@ export class Bufr {
     const doState_save = this.#doState;
     this.#doState = BufrDoState.doing;
 
-    using rv_ = ranval_fac.oneMore();
+    using rv_ = g_ranval_fac.oneMore();
     rv_.anchrLidx = 0 as lnum_t;
     rv_.anchrLoff = 0;
     rv_.focusLidx = this.lastLine_$.lidx_1;
@@ -385,9 +434,10 @@ export class Bufr {
     this.#doState = BufrDoState.doing;
 
     this.#lastRepl = repl_x;
+    this.modified = true;
+
     this.#doq.add(repl_x);
     this.#updateDoCap();
-    this.modified = true;
 
     this.#doState = doState_save;
   }
@@ -402,9 +452,10 @@ export class Bufr {
       // this.#updateDoCap();
       // this.#lastRepl = this.#doq.peekUn(); //!
       this.#lastRepl = this.#doq.getUn();
-      this.#updateDoCap();
       this.#lastRepl.replBRun();
       this.modified = this.#lastRepl !== this.#repl_saved;
+
+      this.#updateDoCap();
 
       this.#doState = doState_save;
     }
@@ -417,9 +468,10 @@ export class Bufr {
       this.#doState = BufrDoState.redoing;
 
       this.#lastRepl = this.#doq.getRe();
-      this.#updateDoCap();
       this.#lastRepl.replFRun();
       this.modified = this.#lastRepl !== this.#repl_saved;
+
+      this.#updateDoCap();
 
       this.#doState = doState_save;
     }

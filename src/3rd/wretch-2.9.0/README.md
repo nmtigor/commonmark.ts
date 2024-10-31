@@ -206,7 +206,7 @@ located under the `/dist/bundle` folder.
 
 <!-- Modern import -->
 <script type="module">
-  import wretch from 'https://cdn.skypack.dev/wretch/dist/bundle/wretch.all.min.mjs'
+  import wretch from "https://cdn.skypack.dev/wretch/dist/bundle/wretch.all.min.mjs";
 
   // ... //
 </script>

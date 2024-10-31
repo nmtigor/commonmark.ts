@@ -11,14 +11,14 @@ import { WritingMode } from "../alias.ts";
 import { Bidi } from "../Bidi.ts";
 import type { Bidir } from "../compiling/alias.ts";
 import type { Line } from "../compiling/Line.ts";
-import { ranval_fac } from "../compiling/Ranval.ts";
+import { g_ranval_fac } from "../compiling/Ranval.ts";
 import { HTMLVuu, Vuu } from "../cv.ts";
 import { div, textnode } from "../dom.ts";
 import "../jslang.ts";
 import { $tail_ignored, $vuu } from "../symbols.ts";
 import { assert } from "../util/trace.ts";
 import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
-import { eran_fac } from "./ERan.ts";
+import { g_eran_fac } from "./ERan.ts";
 import { StnodeV } from "./StnodeV.ts";
 import { TextV } from "./TextV.ts";
 import type { BlockOf, Sameline } from "./util.ts";
@@ -146,8 +146,8 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     // }
     const edtr = this.coo;
     const bln = this.bline_$;
-    using rv_ = ranval_fac.oneMore().reset(bln.lidx_1, 0);
-    using eran = eran_fac.oneMore();
+    using rv_ = g_ranval_fac.oneMore().reset(bln.lidx_1, 0);
+    using eran = g_eran_fac.oneMore();
     let rec = edtr._scrolr.anchrRecOf_$(rv_, eran);
     const LEN = bln.uchrLen;
     this.#wrap_a.length = 0;

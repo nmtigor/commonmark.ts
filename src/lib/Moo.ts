@@ -58,7 +58,7 @@ class MooHandlerDB<T extends {} | null, D = any> {
    * @headconst @param match_n_x
    * @headconst @param match_o_x
    * @const @param force_x
-   * @const @param index_x [frstCb_i, lastCb_i]
+   * @const @param index_x [FrstCb_i, LastCb_i]
    * @return `true` if added, `false` if not.
    */
   add(
@@ -168,8 +168,8 @@ type MooCtorP_<T extends {} | null> = {
   _name?: string;
 };
 
-export const frstCb_i = -100;
-export const lastCb_i = 100 as int;
+export const FrstCb_i = -100;
+export const LastCb_i = 100;
 
 type RegistHandlerO_<T extends {} | null> = {
   /** Match new value */
@@ -178,7 +178,7 @@ type RegistHandlerO_<T extends {} | null> = {
   o?: T | undefined;
   /** Forcing or not */
   f?: boolean | undefined;
-  /** Inddex [frstCb_i, lastCb_i] */
+  /** Inddex [FrstCb_i, LastCb_i] */
   i?: int;
 };
 
@@ -192,7 +192,7 @@ type RemoveHandlerO_<T extends {} | null> = {
 type OnO_ = {
   /** Forcing or not */
   f?: boolean | undefined;
-  /** Inddex [frstCb_i, lastCb_i] */
+  /** Inddex [FrstCb_i, LastCb_i] */
   i?: int;
 };
 
@@ -300,7 +300,7 @@ export class Moo<T extends {} | null, D = any> {
     { n, o, f, i = 0 } = {} as RegistHandlerO_<T>,
   ) {
     /*#static*/ if (INOUT) {
-      assert(frstCb_i <= i && i <= lastCb_i);
+      assert(FrstCb_i <= i && i <= LastCb_i);
     }
     this.#handler_db.add(h_x, n, o, f, i);
     // console.log( `this.#handler_db.size=${this.#handler_db.size}` );
@@ -327,7 +327,7 @@ export class Moo<T extends {} | null, D = any> {
    * Force `match_n_x`, ignore `match_o_x`
    * @final
    */
-  on(n_x: T, h_x: MooHandler<T, D>, { f, i = 0 as int } = {} as OnO_) {
+  on(n_x: T, h_x: MooHandler<T, D>, { f, i = 0 } = {} as OnO_) {
     this.registHandler(h_x, { n: n_x, f, i });
   }
   /**
@@ -341,7 +341,7 @@ export class Moo<T extends {} | null, D = any> {
    * Force `match_n_x`, ignore `match_o_x`
    * @final
    */
-  once(n_x: T, h_x: MooHandler<T, D>, { f, i = 0 as int } = {} as OnO_) {
+  once(n_x: T, h_x: MooHandler<T, D>, { f, i = 0 } = {} as OnO_) {
     this.registOnceHandler(h_x, { n: n_x, f, i });
   }
 

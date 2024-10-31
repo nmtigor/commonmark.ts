@@ -3,7 +3,7 @@
  * (2023-06-22)
  *
  * @module lib/color/hct_solver.ts
- * @license BSD-3-Clause
+ * @license Apache-2.0
  ******************************************************************************/
 
 import type { uint32 } from "../alias.ts";

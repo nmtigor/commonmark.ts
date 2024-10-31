@@ -14,6 +14,8 @@ export type Less<T> = (a: T, b: T) => boolean;
 //kkkk SortedArray: consider using B-tree, ref. https://youtu.be/K1a2Bk8NrYQ
 /**
  * Completely ordered array without duplicate.
+ *
+ * primaryconst: const exclude `#sorted`, `#tmp_a`
  */
 export class SortedArray<T> extends Array<T> {
   static #ID = 0 as id_t;
@@ -61,8 +63,9 @@ export class SortedArray<T> extends Array<T> {
 
   /**
    * @headconst @param less_x
-   * @headconst @param val_a_x Not handled it. Could `resort()` later
+   * @headconst @param val_a_x Not handled yet. Could `resort()` later
    */
+  // deno-lint-ignore constructor-super
   constructor(less_x: Less<T>, val_a_x?: T[]) {
     if (val_a_x) {
       if (val_a_x.length === 1) {
@@ -80,8 +83,17 @@ export class SortedArray<T> extends Array<T> {
     this.#less = less_x;
   }
 
+  reset(): this {
+    this.length = 0;
+    this.#index = 0; //!
+    this.#tmp_a = undefined;
+    this.#sorted = true;
+    return this;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
   /**
-   * If `#sorted`, set `#index`
+   * If `#sorted`, assign `#index`
    * @headconst @param val_x
    */
   override includes(val_x: T): boolean {
@@ -108,10 +120,10 @@ export class SortedArray<T> extends Array<T> {
   override slice(strt_x?: int | undefined, stop_x?: int | undefined): T[] {
     if (!this.length) return [];
 
-    if (strt_x === undefined) strt_x = 0 as int;
-    else strt_x = Number.normalize(strt_x, this.length) as int;
-    if (stop_x === undefined) stop_x = this.length as int;
-    else stop_x = Number.normalize(stop_x, this.length) as int;
+    if (strt_x === undefined) strt_x = 0;
+    else strt_x = Number.normalize(strt_x, this.length);
+    if (stop_x === undefined) stop_x = this.length;
+    else stop_x = Number.normalize(stop_x, this.length);
     if (strt_x! >= stop_x!) return [];
 
     const ret = new Array<T>(stop_x! - strt_x!);
@@ -128,8 +140,16 @@ export class SortedArray<T> extends Array<T> {
    * will cause problems because this constructor is inconsistent with Array's
    * constructor.
    */
-  override splice(..._x: any[]): T[] {
-    fail("`splice()` is disabled in `SortedArray<T>`");
+  override splice(..._x: unknown[]): T[] {
+    fail("Disabled");
+  }
+
+  /** @see {@linkcode splice()} */
+  override map<U>(
+    _callbackfn: (value: T, index: number, array: T[]) => U,
+    _thisArg?: unknown,
+  ): U[] {
+    fail("Disabled");
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -139,15 +159,8 @@ export class SortedArray<T> extends Array<T> {
   // less_or_equal_( a, b ) { return this.#less( a, b ) || this.equal_( a, b ); }
   // more_( a, b ) { return this.less_or_equal_( b, a ); }
 
-  reset() {
-    this.length = 0;
-    this.#index = 0; //!
-    this.#tmp_a = undefined;
-    this.#sorted = true;
-  }
-
   /**
-   * Set `#index`
+   * Assign `#index`
    * @headconst @param val_x
    * @const @param jdx_x
    * @const @param len_x
@@ -239,6 +252,14 @@ export class SortedArray<T> extends Array<T> {
     }
     return had ? -1 : this.#index;
   }
+  /**
+   * @headconst @param val_a_x
+   */
+  add_O(val_a_x?: T[]): void {
+    if (val_a_x) {
+      for (const v of val_a_x) this.add(v);
+    }
+  }
 
   /**
    * `in( this.length )`\
@@ -258,7 +279,7 @@ export class SortedArray<T> extends Array<T> {
   deleteByIndex(_x: int): uint | -1 {
     if (!this.length) return -1;
 
-    _x = Number.normalize(_x, this.length) as int;
+    _x = Number.normalize(_x, this.length);
     this.#deleteByIndex_impl(_x);
     return _x;
   }
@@ -276,6 +297,11 @@ export class SortedArray<T> extends Array<T> {
       this.#deleteByIndex_impl(this.#index);
     }
     return has ? this.#index : -1;
+  }
+  delete_O(val_a_x?: T[]): void {
+    if (val_a_x) {
+      for (const v of val_a_x) this.delete(v);
+    }
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -395,5 +421,15 @@ export class SortedArray<T> extends Array<T> {
   // toJSON(): T[] {
   //   return this.val_a$;
   // }
+}
+/*64----------------------------------------------------------*/
+
+export class SortedIdo<T extends { id: id_t } = { id: id_t }>
+  extends SortedArray<T> {
+  static #less: Less<{ id: id_t }> = (a, b) => a.id < b.id;
+
+  constructor(val_a_x?: T[]) {
+    super(SortedIdo.#less, val_a_x);
+  }
 }
 /*80--------------------------------------------------------------------------*/

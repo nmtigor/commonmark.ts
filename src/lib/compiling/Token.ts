@@ -6,20 +6,25 @@
 import { DEV, INOUT } from "../../global.ts";
 import type { id_t, lnum_t, loff_t, TupleOf, uint } from "../alias.ts";
 import { zUint } from "../alias.ts";
-import { assert, fail, out } from "../util/trace.ts";
-import type { Tok } from "./alias.ts";
+import { assert } from "../util/trace.ts";
 import { BaseTok } from "./BaseTok.ts";
-import { JslangTok } from "./jslang/JslangTok.ts";
 import type { LexdInfo } from "./Lexr.ts";
 import { Lexr } from "./Lexr.ts";
 import type { Loc } from "./Loc.ts";
-import { MdextTok } from "./mdext/MdextTok.ts";
-import { PlainTok } from "./plain/PlainTok.ts";
-import type { TokRan } from "./Ran.ts";
 import { Ranval } from "./Ranval.ts";
-import { SetTok } from "./set/SetTok.ts";
 import { Stnode } from "./Stnode.ts";
 import type { TokLine } from "./TokLine.ts";
+import type { TokRan } from "./TokRan.ts";
+import type { Tok } from "./alias.ts";
+import { JSLangTok } from "./jslang/JSLangTok.ts";
+import { MdextTok } from "./mdext/MdextTok.ts";
+import { PlainTok } from "./plain/PlainTok.ts";
+import { SetTok } from "./set/SetTok.ts";
+import { RMLTok } from "./rml/RMLTok.ts";
+import { PDFTok } from "./pdf/PDFTok.ts";
+import { URITok } from "./uri/URITok.ts";
+import { SortedIdo } from "../util/SortedArray.ts";
+import { LaTeXTok } from "./latex/LaTeXTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 type NErr_ = 2;
@@ -39,12 +44,15 @@ export class Token<T extends Tok = BaseTok> {
     return this.#oldRanval!;
   }
 
-  bakeRanval_$() {
-    this.ran_$.resetRanval_$();
-    if (!this.#oldRanval) this.saveRanval_$();
-  }
+  //jjjj TOCLEANUP
+  // bakeRanval_$() {
+  //   this.ran_$.syncRanval_$();
+  // }
 
   saveRanval_$() {
+    //jjjj TOCLEANUP
+    // this.ran_$.syncRanval_$();
+
     this.#oldRanval ??= new Ranval(0 as lnum_t, 0);
     this.#oldRanval.become(this.ran_$.ranval);
   }
@@ -53,27 +61,50 @@ export class Token<T extends Tok = BaseTok> {
   /* ran_$ */
   readonly ran_$: TokRan<T>;
 
-  get strtLoc() {
+  /**
+   * ! Do not use `sntStrtLoc.become()`. Use `setStrtLoc()` instead.
+   */
+  get sntStrtLoc() {
     return this.ran_$.strtLoc;
   }
-  get frstLine() {
+  /**
+   * @const @param loc_x
+   */
+  setStrtLoc(loc_x: Loc): this {
+    this.ran_$.strtLoc.become(loc_x);
+    this.ran_$.syncRanvalAnchr_$();
+    return this;
+  }
+
+  get sntFrstLine() {
     return this.ran_$.frstLine;
   }
-  get frstLidx_1(): lnum_t {
-    return this.frstLine.lidx_1;
+  get tkFrstLidx_1(): lnum_t {
+    return this.sntFrstLine.lidx_1;
   }
   get strtLoff() {
     return this.ran_$.strtLoff;
   }
 
-  get stopLoc() {
+  /**
+   * ! Do not use `sntStopLoc.become()`. Use `setStopLoc()` instead.
+   */
+  get sntStopLoc() {
     return this.ran_$.stopLoc;
   }
-  get lastLine() {
+  /**
+   * @const @param loc_x
+   */
+  setStopLoc(loc_x: Loc): this {
+    this.ran_$.stopLoc.become(loc_x);
+    this.ran_$.syncRanvalFocus_$();
+    return this;
+  }
+  get sntLastLine() {
     return this.ran_$.lastLine;
   }
-  get lastLidx_1(): lnum_t {
-    return this.lastLine.lidx_1;
+  get tkLastLidx_1(): lnum_t {
+    return this.sntLastLine.lidx_1;
   }
   get stopLoff() {
     return this.ran_$.stopLoff;
@@ -91,11 +122,14 @@ export class Token<T extends Tok = BaseTok> {
     return this.ran_$.lineN_1;
   }
 
-  /** @primaryconst */
+  /**
+   * @primaryconst
+   * @primaryconst @param loc_x
+   */
   contain(loc_x: Loc): boolean {
     return this.ran_$.contain(loc_x);
   }
-  /** @primaryconst */
+  /** @see {@linkcode contain()} */
   touch(loc_x: Loc): boolean {
     return this.ran_$.touch(loc_x);
   }
@@ -123,8 +157,18 @@ export class Token<T extends Tok = BaseTok> {
         (this as any)._valvename = PlainTok[_x];
       } else if (_x <= SetTok._max) {
         (this as any)._valvename = SetTok[_x];
+      } else if (_x <= URITok._max) {
+        (this as any)._valvename = URITok[_x];
       } else if (_x <= MdextTok._max) {
         (this as any)._valvename = MdextTok[_x];
+      } else if (_x <= PDFTok._max) {
+        (this as any)._valvename = PDFTok[_x];
+      } else if (_x <= LaTeXTok._max) {
+        (this as any)._valvename = LaTeXTok[_x];
+      } else if (_x <= RMLTok._max) {
+        (this as any)._valvename = RMLTok[_x];
+      } else if (_x <= JSLangTok._max) {
+        (this as any)._valvename = JSLangTok[_x];
       }
     }
   }
@@ -135,7 +179,7 @@ export class Token<T extends Tok = BaseTok> {
   get _err() {
     return this.#errMsg_a.filter(Boolean);
   }
-  get hasErr() {
+  get isErr() {
     return !!this.#errMsg_a[0];
   }
 
@@ -176,7 +220,7 @@ export class Token<T extends Tok = BaseTok> {
   /**
    * `this` is a DIRECT boundary token of `stnode`.
    */
-  stnode_$: Stnode<T> | undefined;
+  stnod_$: Stnode<T> | undefined;
 
   /**
    * @headconst @param lexr_x
@@ -185,11 +229,9 @@ export class Token<T extends Tok = BaseTok> {
    */
   constructor(lexr_x: Lexr<T>, ran_x: TokRan<T>, value_x?: T) {
     this.lexr_$ = lexr_x;
+    /* `syncRanval_$()` after `this` is scanned or adjusted */
+    // ran_x.syncRanval_$();
     this.ran_$ = ran_x;
-    /* Very much likely, `this` will be modified after creation. So
-    `bakeRanval_$()` or `saveRanval_$()` here make no sense. */
-    // this.bakeRanval_$();
-    // this.saveRanval_$();
     this.value = value_x ? value_x : BaseTok.unknown as T;
   }
 
@@ -217,7 +259,7 @@ export class Token<T extends Tok = BaseTok> {
 
     this.#oldRanval = tk_x.#oldRanval;
     this.#errMsg_a.become(tk_x.#errMsg_a);
-    this.stnode_$ = tk_x.stnode_$;
+    this.stnod_$ = tk_x.stnod_$;
     return this;
   }
 
@@ -227,11 +269,11 @@ export class Token<T extends Tok = BaseTok> {
    * @const @param stopLoc_x
    */
   reset(value_x: T, strtLoc_x?: Loc, stopLoc_x?: Loc) {
-    if (strtLoc_x) this.strtLoc.become(strtLoc_x);
-    if (stopLoc_x) this.stopLoc.become(stopLoc_x);
+    if (strtLoc_x) this.setStrtLoc(strtLoc_x);
+    if (stopLoc_x) this.setStopLoc(stopLoc_x);
     this.value = value_x;
     this.clrErr();
-    this.stnode_$ = undefined;
+    this.stnod_$ = undefined;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -319,11 +361,11 @@ export class Token<T extends Tok = BaseTok> {
   // notAsLinebdry_()
   // {
   //   const strtLine = this.strtLine;
-  //   if( strtLine.isFrstByToken_$(this) ) strtLine.delFrstToken_$(this.lexr_$);
-  //   if( strtLine.isLastByToken_$(this) ) strtLine.delLastToken_$(this.lexr_$);
+  //   if( strtLine.isFrstToken_$(this) ) strtLine.delFrstTokenBy_$(this.lexr_$);
+  //   if( strtLine.isLastToken_$(this) ) strtLine.delLastTokenBy_$(this.lexr_$);
   //   const stopLine = this.stopLine;
-  //   if( stopLine.isFrstByToken_$(this) ) stopLine.delFrstToken_$(this.lexr_$);
-  //   if( stopLine.isLastByToken_$(this) ) stopLine.delLastToken_$(this.lexr_$);
+  //   if( stopLine.isFrstToken_$(this) ) stopLine.delFrstTokenBy_$(this.lexr_$);
+  //   if( stopLine.isLastToken_$(this) ) stopLine.delLastTokenBy_$(this.lexr_$);
   // }
 
   // correct_line_strt_stop_token_()
@@ -337,33 +379,33 @@ export class Token<T extends Tok = BaseTok> {
 
   //   if( this.hasErr )
   //   {
-  //     if( tk00 === this ) strtLine.delFrstToken_$(this.lexr_$);
-  //     if( tk01 === this ) strtLine.delLastToken_$(this.lexr_$);
-  //     if( tk10 === this ) stopLine.delFrstToken_$(this.lexr_$);
-  //     if( tk11 === this ) stopLine.delLastToken_$(this.lexr_$);
+  //     if( tk00 === this ) strtLine.delFrstTokenBy_$(this.lexr_$);
+  //     if( tk01 === this ) strtLine.delLastTokenBy_$(this.lexr_$);
+  //     if( tk10 === this ) stopLine.delFrstTokenBy_$(this.lexr_$);
+  //     if( tk11 === this ) stopLine.delLastTokenBy_$(this.lexr_$);
   //   }
   //   else {
   //     if( this.prevToken_$ && this.prevToken_$.strtLine !== strtLine
   //      || !this.prevToken_$ && this.value === Tok.strtBdry
   //     ) {
-  //       strtLine.frstByToken_$( this );
+  //       strtLine.setFrstToken_$( this );
   //       tk00 = this;
   //     }
-  //     else if( strtLine.isFrstByToken_$(this) )
+  //     else if( strtLine.isFrstToken_$(this) )
   //     {
-  //       strtLine.delFrstToken_$( this.lexr_$ );
+  //       strtLine.delFrstTokenBy_$( this.lexr_$ );
   //       tk00 = null;
   //     }
 
   //     if( this.nextToken_$ && this.nextToken_$.stopLine !== stopLine
   //      || !this.nextToken_$ && this.value === Tok.stopBdry
   //     ) {
-  //       stopLine.lastByToken_$( this );
+  //       stopLine.setLastToken_$( this );
   //       tk11 = this;
   //     }
-  //     else if( stopLine.isLastByToken_$(this) )
+  //     else if( stopLine.isLastToken_$(this) )
   //     {
-  //       stopLine.delLastToken_$( this.lexr_$ );
+  //       stopLine.delLastTokenBy_$( this.lexr_$ );
   //       tk11 = null;
   //     }
 
@@ -373,14 +415,14 @@ export class Token<T extends Tok = BaseTok> {
   //        && (this.nextToken_$ !== tk10 ||
   //            this.nextToken_$.strtLine !== stopLine)
   //       ) {
-  //         stopLine.delFrstToken_$( this.lexr_$ );
+  //         stopLine.delFrstTokenBy_$( this.lexr_$ );
   //         tk10 = null;
   //       }
   //       if( this.prevToken_$
   //        && (this.prevToken_$ !== tk01 ||
   //            this.prevToken_$.stopLine !== strtLine)
   //       ) {
-  //         strtLine.delLastToken_$( this.lexr_$ );
+  //         strtLine.delLastTokenBy_$( this.lexr_$ );
   //         tk01 = null;
   //       }
   //     }
@@ -388,22 +430,22 @@ export class Token<T extends Tok = BaseTok> {
 
   //   if( tk00 && !tk00.linked_ )
   //   {
-  //     strtLine.delFrstToken_$(this.lexr_$);
+  //     strtLine.delFrstTokenBy_$(this.lexr_$);
   //     tk00 = null;
   //   }
   //   if( tk01 && !tk01.linked_ )
   //   {
-  //     strtLine.delLastToken_$(this.lexr_$);
+  //     strtLine.delLastTokenBy_$(this.lexr_$);
   //     tk01 = null;
   //   }
   //   if( tk10 && !tk10.linked_ )
   //   {
-  //     stopLine.delFrstToken_$(this.lexr_$);
+  //     stopLine.delFrstTokenBy_$(this.lexr_$);
   //     tk10 = null;
   //   }
   //   if( tk11 && !tk11.linked_ )
   //   {
-  //     stopLine.delLastToken_$(this.lexr_$);
+  //     stopLine.delLastTokenBy_$(this.lexr_$);
   //     tk11 = null;
   //   }
 
@@ -418,7 +460,7 @@ export class Token<T extends Tok = BaseTok> {
   //       tk = tk.nextToken_$;
   //     }
   //     assert(valve);
-  //     if( !tk.hasErr ) stopLine.lastByToken_$( tk );
+  //     if( !tk.hasErr ) stopLine.setLastToken_$( tk );
   //   }
   //   if( !tk00 )
   //   {
@@ -430,7 +472,7 @@ export class Token<T extends Tok = BaseTok> {
   //       tk = tk.prevToken_$;
   //     }
   //     assert(valve);
-  //     if( !tk.hasErr ) strtLine.frstByToken_$( tk );
+  //     if( !tk.hasErr ) strtLine.setFrstToken_$( tk );
   //   }
   //   // if( !stopLine.nextLine && stopLine.hasStop_$(this.lexr_$) )
   //   // {
@@ -458,35 +500,35 @@ export class Token<T extends Tok = BaseTok> {
   /**
    * Correct `frstLine.#frstToken_m`
    */
-  #correct_line_strtToken(): TokLine<T> {
-    const retLn = this.frstLine;
-    retLn.delFrstToken_$(this.lexr_$);
+  #correct_line_frstToken(): TokLine<T> {
+    const retLn = this.sntFrstLine;
+    retLn.delFrstTokenBy_$(this.lexr_$);
 
     let tk: Token<T> = this;
     const VALVE = 1_000;
     let valve = VALVE;
-    while (tk.prevToken_$?.frstLine === retLn && --valve) {
+    while (tk.prevToken_$?.sntFrstLine === retLn && --valve) {
       tk = tk.prevToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
-    if (!tk.hasErr) retLn.frstByToken_$(tk);
+    if (!tk.isErr) retLn.setFrstToken_$(tk);
     return retLn;
   }
   /**
    * Correct `lastLine.#lastToken_m`
    */
-  #correct_line_stopToken(): TokLine<T> {
-    const retLn = this.lastLine;
-    retLn.delLastToken_$(this.lexr_$);
+  #correct_line_lastToken(): TokLine<T> {
+    const retLn = this.sntLastLine;
+    retLn.delLastTokenBy_$(this.lexr_$);
 
     let tk: Token<T> = this;
     const VALVE = 1_000;
     let valve = VALVE;
-    while (tk.nextToken_$?.lastLine === retLn && --valve) {
+    while (tk.nextToken_$?.sntLastLine === retLn && --valve) {
       tk = tk.nextToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
-    if (!tk.hasErr) retLn.lastByToken_$(tk);
+    if (!tk.isErr) retLn.setLastToken_$(tk);
     return retLn;
   }
 
@@ -500,7 +542,7 @@ export class Token<T extends Tok = BaseTok> {
       retTk.nextToken_$ = this.prevToken_$ = undefined;
       // retTk.notAsLinebdry_();
       // retTk.linked_ = false;
-      if (retTk !== stndKept_tk_x) retTk.stnode_$ = undefined;
+      if (retTk !== stndKept_tk_x) retTk.stnod_$ = undefined;
     }
     return retTk;
   }
@@ -514,7 +556,7 @@ export class Token<T extends Tok = BaseTok> {
       retTk.prevToken_$ = this.nextToken_$ = undefined;
       // retTk.notAsLinebdry_();
       // retTk.linked_ = false;
-      if (retTk !== stndKept_tk_x) retTk.stnode_$ = undefined;
+      if (retTk !== stndKept_tk_x) retTk.stnod_$ = undefined;
     }
     return retTk;
   }
@@ -525,7 +567,7 @@ export class Token<T extends Tok = BaseTok> {
    * @headconst @param stndKept_tk_x kkkk check uses, then better remove this
    */
   // @out((_,self:any)=>{}) //! Cause "segmentation fault"
-  linkPrev(retTk_x: Token<T>, stndKept_tk_x?: Token<T>) {
+  linkPrev(retTk_x: Token<T>, stndKept_tk_x?: Token<T>): Token<T> {
     /*#static*/ if (INOUT) {
       assert(retTk_x !== this);
       assert(retTk_x.posS(this));
@@ -539,12 +581,12 @@ export class Token<T extends Tok = BaseTok> {
       // retTk_x.linked_ = true;
     }
 
-    if (retTk_x !== stndKept_tk_x) retTk_x.stnode_$ = undefined;
+    if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
 
-    const frstLn = retTk_x.#correct_line_strtToken();
-    const lastLn = retTk_x.#correct_line_stopToken();
-    if (this.frstLine !== frstLn) this.#correct_line_strtToken();
-    if (this.lastLine !== lastLn) this.#correct_line_stopToken();
+    const frstLn = retTk_x.#correct_line_frstToken();
+    const lastLn = retTk_x.#correct_line_lastToken();
+    if (this.sntFrstLine !== frstLn) this.#correct_line_frstToken();
+    if (this.sntLastLine !== lastLn) this.#correct_line_lastToken();
 
     /*#static*/ if (INOUT) {
       assert(retTk_x === this.prevToken_$);
@@ -559,7 +601,7 @@ export class Token<T extends Tok = BaseTok> {
    * @headconst @param stndKept_tk_x
    */
   // @out((_,self:any)=>{}) //! Cause "segmentation fault"
-  linkNext(retTk_x: Token<T>, stndKept_tk_x?: Token<T>) {
+  linkNext(retTk_x: Token<T>, stndKept_tk_x?: Token<T>): Token<T> {
     /*#static*/ if (INOUT) {
       assert(retTk_x !== this);
       assert(this.posS(retTk_x));
@@ -573,12 +615,12 @@ export class Token<T extends Tok = BaseTok> {
       // retTk_x.linked_ = true;
     }
 
-    if (retTk_x !== stndKept_tk_x) retTk_x.stnode_$ = undefined;
+    if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
 
-    const frstLn = retTk_x.#correct_line_strtToken();
-    const lastLn = retTk_x.#correct_line_stopToken();
-    if (this.frstLine !== frstLn) this.#correct_line_strtToken();
-    if (this.lastLine !== lastLn) this.#correct_line_stopToken();
+    const frstLn = retTk_x.#correct_line_frstToken();
+    const lastLn = retTk_x.#correct_line_lastToken();
+    if (this.sntFrstLine !== frstLn) this.#correct_line_frstToken();
+    if (this.sntLastLine !== lastLn) this.#correct_line_lastToken();
 
     /*#static*/ if (INOUT) {
       assert(retTk_x === this.nextToken_$);
@@ -602,12 +644,12 @@ export class Token<T extends Tok = BaseTok> {
 
     let frstLn, lastLn;
     if (prev) {
-      frstLn = prev.#correct_line_strtToken();
-      lastLn = prev.#correct_line_stopToken();
+      frstLn = prev.#correct_line_frstToken();
+      lastLn = prev.#correct_line_lastToken();
     }
     if (next) {
-      if (next.frstLine != frstLn) next.#correct_line_strtToken();
-      if (next.lastLine != lastLn) next.#correct_line_stopToken();
+      if (next.sntFrstLine != frstLn) next.#correct_line_frstToken();
+      if (next.sntLastLine != lastLn) next.#correct_line_lastToken();
     }
 
     return ret_x === "prev" ? prev : ret_x === "next" ? next : undefined;
@@ -632,12 +674,12 @@ export class Token<T extends Tok = BaseTok> {
     retTk_x.nextToken_$ = this;
     this.prevToken_$ = retTk_x;
 
-    if (retTk_x !== stndKept_tk_x) retTk_x.stnode_$ = undefined;
+    if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
 
-    const frstLn = retTk_x.#correct_line_strtToken();
-    const lastLn = retTk_x.#correct_line_stopToken();
-    if (this.frstLine !== frstLn) this.#correct_line_strtToken();
-    if (this.lastLine !== lastLn) this.#correct_line_stopToken();
+    const frstLn = retTk_x.#correct_line_frstToken();
+    const lastLn = retTk_x.#correct_line_lastToken();
+    if (this.sntFrstLine !== frstLn) this.#correct_line_frstToken();
+    if (this.sntLastLine !== lastLn) this.#correct_line_lastToken();
 
     /*#static*/ if (INOUT) {
       assert(retTk_x === this.prevToken_$);
@@ -661,12 +703,12 @@ export class Token<T extends Tok = BaseTok> {
     retTk_x.prevToken_$ = this;
     this.nextToken_$ = retTk_x;
 
-    if (retTk_x !== stndKept_tk_x) retTk_x.stnode_$ = undefined;
+    if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
 
-    const frstLn = retTk_x.#correct_line_strtToken();
-    const lastLn = retTk_x.#correct_line_stopToken();
-    if (this.frstLine !== frstLn) this.#correct_line_strtToken();
-    if (this.lastLine !== lastLn) this.#correct_line_stopToken();
+    const frstLn = retTk_x.#correct_line_frstToken();
+    const lastLn = retTk_x.#correct_line_lastToken();
+    if (this.sntFrstLine !== frstLn) this.#correct_line_frstToken();
+    if (this.sntLastLine !== lastLn) this.#correct_line_lastToken();
 
     /*#static*/ if (INOUT) {
       assert(retTk_x === this.nextToken_$);
@@ -698,7 +740,7 @@ export class Token<T extends Tok = BaseTok> {
   //   return tk;
   // }
   // get nextToken_paz() {
-  //   this.stnode_$ = undefined;
+  //   this.stnod_$ = undefined;
   //   return this.nextToken_$;
   // }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -708,8 +750,12 @@ export class Token<T extends Tok = BaseTok> {
     return BaseTok[this.value] ??
       PlainTok[this.value] ??
       SetTok[this.value] ??
+      URITok[this.value] ??
       MdextTok[this.value] ??
-      JslangTok[this.value];
+      PDFTok[this.value] ??
+      LaTeXTok[this.value] ??
+      RMLTok[this.value] ??
+      JSLangTok[this.value];
   }
 
   /** @final */
@@ -758,20 +804,20 @@ export class Token<T extends Tok = BaseTok> {
   //   ];
   // }
 }
-/*80--------------------------------------------------------------------------*/
+/*64----------------------------------------------------------*/
 
 export type PlainTk = Token<PlainTok>;
-/*64----------------------------------------------------------*/
 
 export type SetTk = Token<SetTok>;
 export const SetTk = Token<SetTok>;
-/*64----------------------------------------------------------*/
+
+export type URITk = Token<URITok>;
+export const URITk = Token<URITok>;
 
 /** `frstLine === lastLine` */
 export type MdextTk = Token<MdextTok>;
 export const MdextTk = Token<MdextTok>;
-
-//kkkk TOCLEANUP
+//jjjj TOCLEANUP
 // /** @final */
 // export class MdextTk extends Token<MdextTok> {
 //   get line() {
@@ -788,4 +834,21 @@ export const MdextTk = Token<MdextTok>;
 //     return super.getText();
 //   }
 // }
+
+export type PDFTk = Token<PDFTok>;
+export const PDFTk = Token<PDFTok>;
+
+export type LaTeXTk = Token<LaTeXTok>;
+export const LaTeXTk = Token<LaTeXTok>;
+
+export type RMLTk = Token<RMLTok>;
+export const RMLTk = Token<RMLTok>;
+
+export type JSLangTk = Token<JSLangTok>;
+export const JSLangTk = Token<JSLangTok>;
+/*80--------------------------------------------------------------------------*/
+
+/** @final */
+export class SortedToken_id<T extends Tok = BaseTok>
+  extends SortedIdo<Token<T>> {}
 /*80--------------------------------------------------------------------------*/

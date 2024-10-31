@@ -4,7 +4,6 @@
  ******************************************************************************/
 
 import { domParser } from "@fe-lib/util/general.ts";
-import { fail } from "@fe-lib/util/trace.ts";
 import type { MdextTk } from "../../Token.ts";
 import { _escapeXml } from "../util.ts";
 import { Inline } from "./Inline.ts";
@@ -13,12 +12,14 @@ import { Inline } from "./Inline.ts";
 export abstract class TokenSN extends Inline {
   protected tk$;
 
-  /** @implement */
-  get frstToken() {
+  override get children() {
+    return undefined;
+  }
+
+  override get frstToken() {
     return this.frstToken$ ??= this.tk$;
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     return this.lastToken$ ??= this.tk$;
   }
 

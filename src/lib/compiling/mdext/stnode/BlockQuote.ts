@@ -3,6 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import type { Loc } from "../../Loc.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
@@ -10,6 +11,7 @@ import { _toHTML } from "../util.ts";
 import { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import { ListItem } from "./ListItem.ts";
+import { isSpaceOrTab } from "@fe-lib/util/general.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -28,16 +30,14 @@ export class BlockQuote extends CtnrBlock {
     this.#mrkrTk_a.push(tk_x);
   }
 
-  /** @implement */
-  get frstToken() {
+  override get frstToken() {
     return this.#mrkrTk_a[0];
   }
-  /** @implement */
-  get lastToken() {
+  override get lastToken() {
     if (this.lastToken$) return this.lastToken$;
 
     const mrkrTk = this.#mrkrTk_a.at(-1)!;
-    const tk_ = this.block_a$.at(-1)?.lastToken;
+    const tk_ = this.children.at(-1)?.lastToken;
     return this.lastToken$ = !tk_ || tk_.posSE(mrkrTk) ? mrkrTk : tk_;
   }
 
@@ -47,8 +47,24 @@ export class BlockQuote extends CtnrBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
+  override lcolCntStrt(loc_x: Loc): MdextTk | undefined {
+    let ret: MdextTk | undefined;
+    const ln_ = loc_x.line_$;
+    for (const tk of this.#mrkrTk_a) {
+      if (tk.sntFrstLine === ln_) {
+        loc_x.become(tk.sntStopLoc);
+        /* optional following space */
+        if (isSpaceOrTab(loc_x.ucod)) loc_x.forwnCol(1);
+        ret = tk;
+        break;
+      }
+    }
+    return ret;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
   override _toHTML(lexr_x: MdextLexr): string {
-    const s_ = _toHTML(lexr_x, this.block_a$);
+    const s_ = _toHTML(lexr_x, this.children);
     return `<blockquote>\n${s_}${s_ ? "\n" : ""}</blockquote>`;
   }
 }
