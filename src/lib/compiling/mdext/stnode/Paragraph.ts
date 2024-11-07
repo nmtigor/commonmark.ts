@@ -92,10 +92,9 @@ export class Paragraph extends InlineBlock {
   protected override closeBlock_impl$(): void {
     /*#static*/ if (INOUT) {
       for (const tk of this.snt_a_$) {
-        assert(
-          tk instanceof MdextTk && tk.value === MdextTok.chunk &&
-            isLFOr0(tk.sntStopLoc.ucod),
-        );
+        assert(tk instanceof MdextTk && isLFOr0(tk.sntStopLoc.ucod));
+        /* `tk.value` can be other than `chunk`, in which case, `this` is
+        `reuse()`ed. */
       }
     }
     /* Do not handle soft break here because line end may be in some multiline
@@ -105,7 +104,7 @@ export class Paragraph extends InlineBlock {
     const lastLn = lastTk.sntLastLine;
     const i_ = lastNonblankIn(lastLn);
     /*#static*/ if (INOUT) {
-      assert(lastTk.strtLoff <= i_ && i_ < lastLn.uchrLen);
+      assert(lastTk.sntStrtLoff <= i_ && i_ < lastLn.uchrLen);
     }
     lastTk.sntStopLoc.loff = 1 + i_;
   }

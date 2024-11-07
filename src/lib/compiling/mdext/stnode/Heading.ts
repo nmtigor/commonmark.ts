@@ -193,7 +193,7 @@ export class SetextHeading extends Heading {
 
     /* if this contains `Linkdef` only */
     if (iloc.reachEoh) {
-      const ctnr = this.parent;
+      const ctnr = this.parent!;
       /* See `CtnrBlock.reference()` before change `ctnr` */
       const para = new Paragraph(this.snt_a_$ as MdextTk[]);
       if (this.level === 1) {

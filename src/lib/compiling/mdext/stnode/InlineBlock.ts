@@ -23,6 +23,8 @@ import { Inline } from "./Inline.ts";
 import { Link, type LinkMode } from "./Link.ts";
 import type { TokenSN } from "./TokenSN.ts";
 import { Linkdef } from "./Linkdef.ts";
+import type { SortedSnt_id } from "../../Snt.ts";
+import type { SortedStnod_id } from "../../Stnode.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**
@@ -44,6 +46,9 @@ export class ILoc extends TokLoc<MdextTok> {
 
   /* iCurSnt_$ */
   iCurSnt_$: uint = 0;
+  get valid() {
+    return 0 <= this.iCurSnt_$ && this.iCurSnt_$ < this.host$.snt_a_$.length;
+  }
 
   /**
    * @final
@@ -55,7 +60,8 @@ export class ILoc extends TokLoc<MdextTok> {
 
   /**
    * ! Set `line_$`, `loff_$` correct (by e.g. `become()`) first, then call
-   * this. Otherwise `snt.tokenAt()` could fail.
+   * this. Otherwise `snt.tokenAt()` could fail.\
+   * `in( this.valid )`
    * @final
    * @primaryconst
    */
@@ -86,7 +92,7 @@ export class ILoc extends TokLoc<MdextTok> {
    * @const @param iSnt_x MUST be valid
    */
   getTokenBefo(tk_x: MdextTk, iSnt_x: uint): MdextTk | undefined {
-    let tk_ = tk_x.prevToken_$;
+    const tk_ = tk_x.prevToken_$;
     if (!tk_) return undefined;
 
     let snt = this.host$.snt_a_$[iSnt_x];
@@ -100,7 +106,7 @@ export class ILoc extends TokLoc<MdextTok> {
   }
   /** @see {@linkcode prevTk())} */
   getTokenAftr(tk_x: MdextTk, iSnt_x: uint): MdextTk | undefined {
-    let tk_ = tk_x.nextToken_$;
+    const tk_ = tk_x.nextToken_$;
     if (!tk_) return undefined;
 
     let snt = this.host$.snt_a_$[iSnt_x];
@@ -170,7 +176,7 @@ export class ILoc extends TokLoc<MdextTok> {
    * @headconst @param host_x
    */
   constructor(host_x: InlineBlock) {
-    super(host_x.sntFrstLine, host_x.strtLoff);
+    super(host_x.sntFrstLine, host_x.sntStrtLoff);
     this.host$ = host_x;
     this.tabsize$ = IndentedCodeBlock.indent;
   }
@@ -302,7 +308,7 @@ export class ILoc extends TokLoc<MdextTok> {
    * @param tk_x
    */
   toTk(endp_x: "strt" | "stop", tk_x = this.curTk_$): this {
-    if (tk_x === this.curTk_$) {
+    if (this.valid && tk_x === this.curTk_$) {
       this.become(endp_x === "strt" ? tk_x.sntStrtLoc : tk_x.sntStopLoc);
     } else {
       this.toLoc(endp_x === "strt" ? tk_x.sntStrtLoc : tk_x.sntStopLoc);
@@ -481,7 +487,6 @@ export abstract class InlineBlock extends Block {
 
   override reset(): this {
     this.snt_a_$.length = 0;
-    this.invalidateBdry();
     return super.reset();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -496,9 +501,10 @@ export abstract class InlineBlock extends Block {
     for (; i_ < iI; ++i_) if (!(snt_a[i_] instanceof Linkdef)) break;
     if (i_ === iI) return;
 
-    /*#static*/ if (INOUT) {
-      assert(snt_a[i_] instanceof MdextTk);
-    }
+    //jjjj TOCLEANUP
+    // /*#static*/ if (INOUT) {
+    //   assert(snt_a[i_] instanceof MdextTk);
+    // }
     iloc.reset_O(snt_a[i_] as MdextTk);
 
     const VALVE = 1_000;
@@ -797,10 +803,25 @@ export abstract class InlineBlock extends Block {
       const ln_ = tk_.sntFrstLine;
       if (ln_ !== curLn) {
         curLn = ln_;
-        s_a.push(curLn.text.slice(tk_.strtLoff));
+        s_a.push(curLn.text.slice(tk_.sntStrtLoff));
       }
     }
     return s_a.join("\n");
+  }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    _unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    for (const snt of this.snt_a_$) {
+      if (
+        snt.sntStopLoc.posSE(drtStrtLoc_x) ||
+        snt.sntStrtLoc.posGE(drtStopLoc_x)
+      ) unrelSnt_sa_x.add(snt);
+    }
   }
 }
 /*80--------------------------------------------------------------------------*/

@@ -4,12 +4,12 @@
  ******************************************************************************/
 
 import { INOUT } from "../../global.ts";
-import type { id_t, int, loff_t, TupleOf, uint } from "../alias.ts";
+import type { int, loff_t, TupleOf, uint } from "../alias.ts";
 import { type Less, SortedArray, SortedIdo } from "../util/SortedArray.ts";
-import { Visitable } from "../util/Visitor.ts";
 import { assert, fail, out } from "../util/trace.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import type { Loc } from "./Loc.ts";
+import { Snt } from "./Snt.ts";
 import type { Token } from "./Token.ts";
 import type { Tok } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
@@ -48,15 +48,7 @@ const FilterDepth_ = 2;
 /**
  * primaryconst: const exclude `#depth`, `frstToken$`, `lastToken$`
  */
-export abstract class Stnode<T extends Tok = BaseTok> extends Visitable {
-  static #ID = 0 as id_t;
-  /** @final */
-  readonly id = ++Stnode.#ID as id_t;
-  /** @final */
-  get _type_id() {
-    return `${this.constructor.name}_${this.id}`;
-  }
-
+export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   /* parent_$ */
   parent_$: Stnode<T> | undefined;
   get parent() {
@@ -101,9 +93,10 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Visitable {
     return this.children?.at(i_x);
   }
 
-  get hasChild() {
-    return this.children?.length;
-  }
+  //jjjj TOCLEANUP
+  // get hasChild() {
+  //   return this.children?.length;
+  // }
 
   /** @final */
   get frstChild(): Stnode<T> | undefined {
@@ -271,7 +264,10 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Visitable {
     tk_.stnod_$ ??= this; // First setting wins.
     return tk_;
   }
-  /** @final */
+  /**
+   * @final
+   * @implement
+   */
   get sntFrstLine() {
     return this.frstToken.sntFrstLine;
   }
@@ -279,13 +275,19 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Visitable {
   get snFrstLidx_1() {
     return this.sntFrstLine.lidx_1;
   }
-  /** @final */
+  /**
+   * @final
+   * @implement
+   */
   get sntStrtLoc() {
     return this.frstToken.sntStrtLoc;
   }
-  /** @final */
-  get strtLoff(): loff_t {
-    return this.frstToken.strtLoff;
+  /**
+   * @final
+   * @implement
+   */
+  get sntStrtLoff(): loff_t {
+    return this.frstToken.sntStrtLoff;
   }
   /* ~ */
 
@@ -304,7 +306,10 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Visitable {
     tk_.stnod_$ ??= this; // First setting wins.
     return tk_;
   }
-  /** @final */
+  /**
+   * @final
+   * @implement
+   */
   get sntLastLine() {
     return this.lastToken.sntLastLine;
   }
@@ -312,13 +317,19 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Visitable {
   get snLastLidx_1() {
     return this.sntLastLine.lidx_1;
   }
-  /** @final */
+  /**
+   * @final
+   * @implement
+   */
   get sntStopLoc() {
     return this.lastToken.sntStopLoc;
   }
-  /** @final */
-  get stopLoff(): loff_t {
-    return this.lastToken.stopLoff;
+  /**
+   * @final
+   * @implement
+   */
+  get sntStopLoff(): loff_t {
+    return this.lastToken.sntStopLoff;
   }
   /* ~ */
 
@@ -655,11 +666,6 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Visitable {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** For testing only */
-  override toString() {
-    return this._type_id;
-  }
-
   /** @final */
   get _info(): string {
     return `${this.constructor.name}(${this.depth_2})`;
@@ -672,13 +678,10 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Visitable {
   //     `${this.lastToken$?._name}${this.lastToken$?.oldRanval} ]`;
   // }
   /** @final */
-  get _oldInfo(): string {
+  override get _oldInfo(): string {
     return this.frstToken === this.lastToken
-      ? `${this._info}[ ` +
-        `${this.frstToken._name}${this.frstToken.oldRanval} ]`
-      : `${this._info}[ ` +
-        `${this.frstToken._name}${this.frstToken.oldRanval}, ` +
-        `${this.lastToken._name}${this.lastToken.oldRanval} ]`;
+      ? `${this._info}[ ${this.frstToken._oldInfo} ]`
+      : `${this._info}[ ${this.frstToken._oldInfo}, ${this.lastToken._oldInfo} ]`;
   }
   /** @final */
   get _newInfo(): string {

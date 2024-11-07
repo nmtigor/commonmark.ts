@@ -4,6 +4,7 @@
  ******************************************************************************/
 
 import { DEV, INOUT } from "../../global.ts";
+import { Bidi } from "../Bidi.ts";
 import { LastCb_i, Moo } from "../Moo.ts";
 import type { id_t, lnum_t, ts_t, uint } from "../alias.ts";
 import { BufrDir, MAX_lnum } from "../alias.ts";
@@ -199,8 +200,8 @@ export class Bufr {
    * @const @param text_x
    */
   constructor(text_x?: string | undefined, dir_x = BufrDir.ltr) {
-    this.dir_mo.set(dir_x);
-    this.dir_mo.registHandler(this.#onDir, { i: LastCb_i });
+    this.dir_mo.set(dir_x)
+      .registHandler(this.#onDir, { i: LastCb_i });
 
     this.frstLine_$ = this.createLine();
     this.frstLine_$.linked_$ = true;
@@ -223,7 +224,8 @@ export class Bufr {
     assert(self.lastLine_$ && self.lastLine_$.bufr === self);
   })
   reset(): this {
-    this.dir_mo.reset().registHandler(this.#onDir, { i: LastCb_i });
+    this.dir_mo.reset()
+      .registHandler(this.#onDir, { i: LastCb_i });
 
     let line: Line | undefined = this.lastLine;
     const VALVE = 10_000;

@@ -90,8 +90,7 @@ export type UChr = string;
 /**
  * Type of each element of `[..."(😄)"]`
  */
-export type Chr = string;
-// export type Chr = Brand<string, "Chr">; //jjjj try to use this
+export type Chr = Brand<string, "Chr">;
 
 // deno-fmt-ignore
 /**

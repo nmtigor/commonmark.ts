@@ -3,15 +3,14 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { fail } from "@fe-lib/util/trace.ts";
+import { assert, fail, out } from "@fe-lib/util/trace.ts";
+import { INOUT } from "@fe-src/global.ts";
 import { Pazr } from "../Pazr.ts";
 import type { MdextBufr } from "./MdextBufr.ts";
 import type { MdextLexr } from "./MdextLexr.ts";
 import type { MdextTok } from "./MdextTok.ts";
-import { Document } from "./stnode/Document.ts";
 import { Block } from "./stnode/Block.ts";
-import type { Stnode } from "../Stnode.ts";
-import type { MdextTk } from "../Token.ts";
+import { Document } from "./stnode/Document.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -43,6 +42,43 @@ export class MdextPazr extends Pazr<MdextTok> {
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  @out((_, self: MdextPazr) => {
+    assert(!self.drtSn_$ || self.drtSn_$ instanceof Block);
+  })
+  protected override sufmark$(): void {
+    const drtSn = this.drtSn_$;
+    if (drtSn) {
+      if (!(drtSn instanceof Block)) {
+        let sn_ = drtSn.parent_$;
+        const VALVE = 100;
+        let valve = VALVE;
+        while (sn_ && --valve) {
+          if (sn_ instanceof Block) break;
+          sn_ = sn_.parent_$;
+        }
+        assert(valve, `Loop ${VALVE}±1 times`);
+        /*#static*/ if (INOUT) {
+          assert(sn_);
+        }
+        this.enlargeBdriesTo_$(sn_!);
+      }
+    } else {
+      //jjjj TOCLEANUP
+      // this.#pazr.maximizeBdries_$();
+    }
+
+    const drtStopLoc = this.tailBdryClrTk_$!.sntStrtLoc;
+    for (let i = this.unrelSn_sa_$.length; i--;) {
+      if (drtStopLoc.posE(this.unrelSn_sa_$[i].sntStrtLoc)) {
+        /* Reusability of Stnode is checked by `sntStrtLoc`. In case of this
+        branch, current Stnode can not be reused. Deleting it from
+        `unrelSn_sa_$` makes its Token be able to be gathered by
+        `#gathrUnrelSntIn()`. */
+        this.unrelSn_sa_$.deleteByIndex(i);
+      }
+    }
+  }
 
   /** @implement */
   protected paz_impl$(): void {

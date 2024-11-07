@@ -8,6 +8,8 @@ import type { Loc } from "../../Loc.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { Block } from "./Block.ts";
 import type { MdextTk } from "../../Token.ts";
+import type { SortedSnt_id } from "../../Snt.ts";
+import type { SortedStnod_id } from "../../Stnode.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class CtnrBlock extends Block {
@@ -28,17 +30,36 @@ export abstract class CtnrBlock extends Block {
 
   /* #iCurChild */
   #iCurChild: -1 | uint = -1;
+  //jjjj TOCLEANUP
+  // private set _iCurChild(_x: -1 | uint) {
+  //   this.#wasCompiling = this.isCompiling;
+  //   this.#iCurChild = _x;
+  // }
   override get curChild(): Block | undefined {
     return this.children.at(this.#iCurChild);
   }
 
   compiling(child_x: Block | null): void {
-    this.#iCurChild = child_x ? this.children.indexOf(child_x) : -1;
+    if (child_x) {
+      /* `#iCurChild` won't change to other non-negatives after setting to a
+      non-negative. */
+      if (this.#iCurChild === -1) {
+        this.#iCurChild = this.children.indexOf(child_x);
+      }
+    } else {
+      this.#iCurChild = -1;
+    }
   }
 
-  get inCompiling() {
+  get isCompiling() {
     return this.#iCurChild >= 0;
   }
+
+  //jjjj TOCLEANUP
+  // #wasCompiling = false;
+  // get wasCompiling() {
+  //   return this.#wasCompiling;
+  // }
   /* ~ */
 
   constructor() {
@@ -49,7 +70,8 @@ export abstract class CtnrBlock extends Block {
   override reset(): this {
     this.children.length = 0;
     this.#iCurChild = -1;
-    this.invalidateBdry();
+    //jjjj TOCLEANUP
+    // this.#wasCompiling = false;
     return super.reset();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -99,11 +121,6 @@ export abstract class CtnrBlock extends Block {
   //   this.children.length = 0;
   //   this.invalidateBdry();
   // }
-
-  /**
-   * @headconst @param _loc_x
-   */
-  abstract lcolCntStrt(_loc_x: Loc): MdextTk | undefined;
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @final */
@@ -121,5 +138,32 @@ export abstract class CtnrBlock extends Block {
       block.inline(lexr_x);
     }
   }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    //jjjj TOCLEANUP
+    // /* Functinal Token (e.g. ">" in BlockQuote) are not gathered. They are
+    // skipped (reused) by `lcolCntStrt()` */
+    for (const c of this.children) {
+      if (!unrelSn_sa_x.includes(c)) {
+        c.gathrUnrelSnt(
+          drtStrtLoc_x,
+          drtStopLoc_x,
+          unrelSn_sa_x,
+          unrelSnt_sa_x,
+        );
+      }
+    }
+  }
+
+  /**
+   * @headconst @param _loc_x
+   */
+  abstract lcolCntStrt(_loc_x: Loc): MdextTk | undefined;
 }
 /*80--------------------------------------------------------------------------*/

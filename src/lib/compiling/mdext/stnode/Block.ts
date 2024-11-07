@@ -30,8 +30,8 @@ export abstract class Block extends MdextSN {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override get parent(): CtnrBlock {
-    return this.parent_$ as CtnrBlock;
+  override get parent(): CtnrBlock | undefined {
+    return this.parent_$ as CtnrBlock | undefined;
   }
 
   get curChild(): Block | undefined {
@@ -50,17 +50,22 @@ export abstract class Block extends MdextSN {
     return this.#complete;
   }
 
-  reset(): this {
+  /** @final */
+  reuse(): this {
     this.#open = true;
     this.#complete = false;
+    this.invalidateBdry();
     return this;
+  }
+  reset(): this {
+    return this.reuse();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   protected closeBlock_impl$() {}
   /** @final */
   closeBlock(): CtnrBlock {
-    if (this.#complete) return this.parent;
+    if (this.#complete) return this.parent!;
 
     /*#static*/ if (INOUT) {
       assert(this.#open);
@@ -68,7 +73,7 @@ export abstract class Block extends MdextSN {
     }
     this.closeBlock_impl$();
     this.#open = false;
-    return this.parent;
+    return this.parent!;
   }
 
   /**

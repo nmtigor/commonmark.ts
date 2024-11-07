@@ -25,6 +25,7 @@ import type { BlockOf, Sameline } from "./util.ts";
 import { sameline_bot, sameline_left, sameline_rigt } from "./util.ts";
 /*80--------------------------------------------------------------------------*/
 
+/** @final */
 export class TailV extends TextV {
   constructor(host_x: ELineBase) {
     super(host_x, "|", host_x.bline_$.uchrLen);

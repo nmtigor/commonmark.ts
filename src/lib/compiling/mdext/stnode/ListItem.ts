@@ -69,6 +69,10 @@ export abstract class ListItem extends CtnrBlock {
     super();
     this.#mrkrTk = mrkrTk_x;
   }
+
+  override reset(): this {
+    fail("Not implemented");
+  }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @implement */

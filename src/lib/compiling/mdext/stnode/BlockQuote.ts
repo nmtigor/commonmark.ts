@@ -4,6 +4,8 @@
  ******************************************************************************/
 
 import type { Loc } from "../../Loc.ts";
+import type { SortedSnt_id } from "../../Snt.ts";
+import type { SortedStnod_id } from "../../Stnode.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
@@ -31,7 +33,7 @@ export class BlockQuote extends CtnrBlock {
   }
 
   override get frstToken() {
-    return this.#mrkrTk_a[0];
+    return this.frstToken$ ??= this.#mrkrTk_a[0];
   }
   override get lastToken() {
     if (this.lastToken$) return this.lastToken$;
@@ -45,7 +47,32 @@ export class BlockQuote extends CtnrBlock {
     super();
     this.#mrkrTk_a = [mrkrTk_x];
   }
+
+  override reset(): this {
+    this.#mrkrTk_a.length = 0;
+    return super.reset();
+  }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    super.gathrUnrelSnt(
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      unrelSn_sa_x,
+      unrelSnt_sa_x,
+    );
+    for (const tk of this.#mrkrTk_a) {
+      if (
+        tk.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk.sntStrtLoc.posGE(drtStopLoc_x)
+      ) unrelSnt_sa_x.add(tk);
+    }
+  }
 
   override lcolCntStrt(loc_x: Loc): MdextTk | undefined {
     let ret: MdextTk | undefined;

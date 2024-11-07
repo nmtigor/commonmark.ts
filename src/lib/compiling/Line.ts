@@ -256,7 +256,7 @@ export class Line {
     assert(valve, `Loop ${VALVE}±1 times`);
     return tseg === tseg_x;
   }
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   protected constructor(bufr_x: Bufr) {
     this.bufr$ = bufr_x;
@@ -275,14 +275,14 @@ export class Line {
   /**
    * @const @param text_x
    */
+  @out((_, self: Line) => {
+    assert(self.text$.length < llen_MAX);
+  })
   resetText_$(text_x?: string): this {
     this.text$ = text_x ?? "";
     this.bidi.reset(this.text$, this.dir);
     /*#static*/ if (!TESTING) {
       this.bidi.validate();
-    }
-    /*#static*/ if (INOUT) {
-      assert(this.text$.length < llen_MAX);
     }
     return this;
   }

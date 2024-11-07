@@ -54,7 +54,7 @@ export class TokLine<T extends Tok = BaseTok> extends Line {
   // }
 
   // /**
-  //  * in( edtr_x.bufr === this.bufr)`
+  //  * `in( edtr_x.bufr === this.bufr)`
   //  * @headconst @param edtr_x
   //  */
   // getELineIn(edtr_x: EdtrScrolr<T>): ELine<T> {

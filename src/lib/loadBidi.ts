@@ -54,17 +54,18 @@ function parseCharacterMap(
       }
     } else {
       prevPair = entry_y;
-      let [a, b] = entry_y.split(">");
+      let [a, b]: (string | Chr)[] = entry_y.split(">");
       a = String.fromCodePoint(lastCode += parseInt(a, RADIX));
       b = String.fromCodePoint(lastCode += parseInt(b, RADIX));
-      map.set(a, b);
-      reverseMap?.set(b, a);
+      map.set(a as Chr, b as Chr);
+      reverseMap?.set(b as Chr, a as Chr);
     }
   });
   return { map, reverseMap };
 }
 
 /**
+ * Assign `chrTyp_m_`, `openToClose_m_`, `closeToOpen_m_`, `canonical_m_`\
  * Ref. https://github.com/lojjic/bidi-js/blob/main/src/charTypes.js \
  * Ref. https://github.com/lojjic/bidi-js/blob/main/src/brackets.js
  * @noreject
@@ -127,7 +128,7 @@ export async function loadBidi() {
   }
   try {
     const DATA = (await import("../data/bidi/bidiBrackets.data.js")).default;
-    let { map, reverseMap } = parseCharacterMap(DATA.pairs, true);
+    const { map, reverseMap } = parseCharacterMap(DATA.pairs, true);
     openToClose_m_ = map;
     closeToOpen_m_ = reverseMap;
     canonical_m_ = parseCharacterMap(DATA.canonical, false).map;

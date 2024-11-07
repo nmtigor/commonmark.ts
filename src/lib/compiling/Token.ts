@@ -4,7 +4,7 @@
  ******************************************************************************/
 
 import { DEV, INOUT } from "../../global.ts";
-import type { id_t, lnum_t, loff_t, TupleOf, uint } from "../alias.ts";
+import type { lnum_t, loff_t, TupleOf, uint } from "../alias.ts";
 import { zUint } from "../alias.ts";
 import { assert } from "../util/trace.ts";
 import { BaseTok } from "./BaseTok.ts";
@@ -12,36 +12,32 @@ import type { LexdInfo } from "./Lexr.ts";
 import { Lexr } from "./Lexr.ts";
 import type { Loc } from "./Loc.ts";
 import { Ranval } from "./Ranval.ts";
+import { Snt } from "./Snt.ts";
 import { Stnode } from "./Stnode.ts";
 import type { TokLine } from "./TokLine.ts";
 import type { TokRan } from "./TokRan.ts";
 import type { Tok } from "./alias.ts";
 import { JSLangTok } from "./jslang/JSLangTok.ts";
-import { MdextTok } from "./mdext/MdextTok.ts";
-import { PlainTok } from "./plain/PlainTok.ts";
-import { SetTok } from "./set/SetTok.ts";
-import { RMLTok } from "./rml/RMLTok.ts";
-import { PDFTok } from "./pdf/PDFTok.ts";
-import { URITok } from "./uri/URITok.ts";
-import { SortedIdo } from "../util/SortedArray.ts";
 import { LaTeXTok } from "./latex/LaTeXTok.ts";
+import { MdextTok } from "./mdext/MdextTok.ts";
+import { PDFTok } from "./pdf/PDFTok.ts";
+import { PlainTok } from "./plain/PlainTok.ts";
+import { RMLTok } from "./rml/RMLTok.ts";
+import { SetTok } from "./set/SetTok.ts";
+import { URITok } from "./uri/URITok.ts";
 /*80--------------------------------------------------------------------------*/
 
 type NErr_ = 2;
 const NErr_ = 2;
 
 /** @final */
-export class Token<T extends Tok = BaseTok> {
-  static #ID = 0 as id_t;
-  readonly id = ++Token.#ID as id_t;
-
+export class Token<T extends Tok = BaseTok> extends Snt {
   readonly lexr_$: Lexr<T>;
 
   /* #oldRanval */
   #oldRanval: Ranval | undefined;
-  /** `in( this.#oldRanval )` */
-  get oldRanval(): Ranval {
-    return this.#oldRanval!;
+  get oldRanval(): Ranval | undefined {
+    return this.#oldRanval;
   }
 
   //jjjj TOCLEANUP
@@ -63,6 +59,7 @@ export class Token<T extends Tok = BaseTok> {
 
   /**
    * ! Do not use `sntStrtLoc.become()`. Use `setStrtLoc()` instead.
+   * @implement
    */
   get sntStrtLoc() {
     return this.ran_$.strtLoc;
@@ -76,18 +73,21 @@ export class Token<T extends Tok = BaseTok> {
     return this;
   }
 
+  /** @implement */
   get sntFrstLine() {
     return this.ran_$.frstLine;
   }
   get tkFrstLidx_1(): lnum_t {
     return this.sntFrstLine.lidx_1;
   }
-  get strtLoff() {
+  /** @implement */
+  get sntStrtLoff(): loff_t {
     return this.ran_$.strtLoff;
   }
 
   /**
    * ! Do not use `sntStopLoc.become()`. Use `setStopLoc()` instead.
+   * @implement
    */
   get sntStopLoc() {
     return this.ran_$.stopLoc;
@@ -100,13 +100,15 @@ export class Token<T extends Tok = BaseTok> {
     this.ran_$.syncRanvalFocus_$();
     return this;
   }
+  /** @implement */
   get sntLastLine() {
     return this.ran_$.lastLine;
   }
   get tkLastLidx_1(): lnum_t {
     return this.sntLastLine.lidx_1;
   }
-  get stopLoff() {
+  /** @implement */
+  get sntStopLoff(): loff_t {
     return this.ran_$.stopLoff;
   }
 
@@ -228,6 +230,7 @@ export class Token<T extends Tok = BaseTok> {
    * @const @param value_x
    */
   constructor(lexr_x: Lexr<T>, ran_x: TokRan<T>, value_x?: T) {
+    super();
     this.lexr_$ = lexr_x;
     /* `syncRanval_$()` after `this` is scanned or adjusted */
     // ran_x.syncRanval_$();
@@ -745,7 +748,6 @@ export class Token<T extends Tok = BaseTok> {
   // }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** @final */
   get _name(): string {
     return BaseTok[this.value] ??
       PlainTok[this.value] ??
@@ -758,9 +760,12 @@ export class Token<T extends Tok = BaseTok> {
       JSLangTok[this.value];
   }
 
-  /** @final */
-  toString() {
+  override toString() {
     return `${this._name}${this.ran_$}${this.lexdInfo ? this.lexdInfo : ""}`;
+  }
+
+  override get _oldInfo(): string {
+    return `${this._name}${this.#oldRanval ?? `*${this.ran_$}`}`;
   }
 
   /**
@@ -846,9 +851,4 @@ export const RMLTk = Token<RMLTok>;
 
 export type JSLangTk = Token<JSLangTok>;
 export const JSLangTk = Token<JSLangTok>;
-/*80--------------------------------------------------------------------------*/
-
-/** @final */
-export class SortedToken_id<T extends Tok = BaseTok>
-  extends SortedIdo<Token<T>> {}
 /*80--------------------------------------------------------------------------*/

@@ -86,7 +86,7 @@ export class TLine extends Line {
         newt_x = newt_x.slice(i_, j_);
       }
     }
-    const chr_a = newt_x ? [...newt_x] : [];
+    const chr_a = (newt_x ? [...newt_x] : []) as Chr[];
     if (strt_x < stop_x || chr_a.length) {
       this._splice_impl(strt_x, stop_x, chr_a);
       this.#text = undefined; //!
