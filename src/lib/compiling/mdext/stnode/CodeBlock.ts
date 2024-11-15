@@ -16,7 +16,10 @@ import {
 import type { FencedCBHead_LI, MdextLexr } from "../MdextLexr.ts";
 import type { BlockCont } from "../alias.ts";
 import { INOUT } from "@fe-src/global.ts";
-import type { lcol_t, loff_t, uint16 } from "@fe-lib/alias.ts";
+import type { lcol_t, lnum_t, loff_t, uint16 } from "@fe-lib/alias.ts";
+import type { Loc } from "../../Loc.ts";
+import type { SortedStnod_id } from "../../Stnode.ts";
+import type { SortedSnt_id } from "../../Snt.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class CodeBlock extends Block {
@@ -36,6 +39,41 @@ export abstract class CodeBlock extends Block {
 
   override get children() {
     return undefined;
+  }
+
+  override reset(): this {
+    this.chunkTk_a$.length = 0;
+    return super.reset();
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    _unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    for (const tk of this.chunkTk_a$) {
+      if (
+        tk.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk.sntStrtLoc.posGE(drtStopLoc_x)
+      ) unrelSnt_sa_x.add(tk);
+    }
+  }
+
+  override lidxOf(loc_x: Loc): lnum_t | -1 {
+    const i_ = this.chunkTk_a$.findIndex((tk) => loc_x.posE(tk.sntStrtLoc));
+    return i_ >= 0 ? this.chunkTk_a$[i_].sntFrstLidx_1 : -1;
+  }
+
+  override reuseLine(lidx_x: lnum_t): MdextTk[] {
+    const ret: MdextTk[] = [];
+    for (const tk of this.chunkTk_a$) {
+      const lidx = tk.sntFrstLidx_1;
+      if (lidx > lidx_x) break;
+      if (lidx === lidx_x) ret.push(tk);
+    }
+    return ret;
   }
 }
 /*80--------------------------------------------------------------------------*/
@@ -169,10 +207,83 @@ export class FencedCodeBlock extends CodeBlock {
     //jjjj TOCLEANUP
     // this.#st = FencedCodeBlockSt.head;
   }
+
+  override reset(): this {
+    this.#headChunkTk = undefined;
+    this.#tailTk = undefined;
+    return super.reset();
+  }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** */
   protected override closeBlock_impl$(): void {
+  }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    _unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    let tk_ = this.#headTk;
+    if (
+      tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+      tk_.sntStrtLoc.posGE(drtStopLoc_x)
+    ) unrelSnt_sa_x.add(tk_);
+
+    if (this.#headChunkTk) {
+      tk_ = this.#headChunkTk;
+      if (
+        tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk_.sntStrtLoc.posGE(drtStopLoc_x)
+      ) unrelSnt_sa_x.add(tk_);
+    }
+
+    super.gathrUnrelSnt(
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      _unrelSn_sa_x,
+      unrelSnt_sa_x,
+    );
+
+    if (this.#tailTk) {
+      tk_ = this.#tailTk;
+      if (
+        tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk_.sntStrtLoc.posGE(drtStopLoc_x)
+      ) unrelSnt_sa_x.add(tk_);
+    }
+  }
+
+  /**
+   * @const @param loc_x
+   */
+  override lidxOf(loc_x: Loc): lnum_t | -1 {
+    if (
+      loc_x.posE(this.#headTk.sntStrtLoc) ||
+      this.#headChunkTk?.sntStrtLoc.posE(loc_x)
+    ) return this.#headTk.sntFrstLidx_1;
+
+    if (this.#tailTk?.sntStrtLoc.posE(loc_x)) {
+      return this.#tailTk.sntFrstLidx_1;
+    }
+
+    return super.lidxOf(loc_x);
+  }
+
+  override reuseLine(lidx_x: lnum_t): MdextTk[] {
+    if (this.sntFrstLidx_1 === lidx_x) {
+      return this.#headChunkTk
+        ? [this.#headTk, this.#headChunkTk]
+        : [this.#headTk];
+    }
+
+    if (this.#tailTk && this.sntLastLidx_1 === lidx_x) {
+      return [this.#tailTk];
+    }
+
+    return super.reuseLine(lidx_x);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

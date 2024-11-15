@@ -21,9 +21,9 @@ export const enum BlockCont {
   /** we've failed to match a block */
   break,
   /** */
-  matchedPart,
-  /** we've hit end of line for fenced code close and can returnb */
-  matchedFull,
+  matched,
+  // /** we've hit end of line for fenced code close and can returnb */
+  // matchedFull,
 }
 
 //jjjj TOCLEANUP

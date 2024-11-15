@@ -3,7 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { id_t, loff_t } from "../alias.ts";
+import type { id_t, lnum_t, loff_t } from "../alias.ts";
 import { SortedIdo } from "../util/SortedArray.ts";
 import type { Line } from "./Line.ts";
 import type { Loc } from "./Loc.ts";
@@ -31,6 +31,9 @@ export abstract class Snt {
 
   abstract get sntFrstLine(): Line;
   abstract get sntLastLine(): Line;
+
+  abstract get sntFrstLidx_1(): lnum_t;
+  abstract get sntLastLidx_1(): lnum_t;
 
   abstract get sntStrtLoff(): loff_t;
   abstract get sntStopLoff(): loff_t;

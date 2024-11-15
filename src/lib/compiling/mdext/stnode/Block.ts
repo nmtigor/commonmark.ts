@@ -10,6 +10,9 @@ import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import type { CtnrBlock } from "./CtnrBlock.ts";
 import { BlockCont } from "../alias.ts";
+import type { lnum_t, uint } from "@fe-lib/alias.ts";
+import type { Loc } from "../../Loc.ts";
+import type { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class Block extends MdextSN {
@@ -97,6 +100,21 @@ export abstract class Block extends MdextSN {
     this.inline_impl$(lexr_x);
     this.ensureBdry();
     this.#complete = true;
+  }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  /**
+   * @const @param loc_x
+   */
+  lidxOf(loc_x: Loc): lnum_t | -1 {
+    return -1;
+  }
+
+  /**
+   * @const @param _lidx_x
+   */
+  reuseLine(_lidx_x?: lnum_t): (MdextTk | Inline)[] | undefined {
+    return undefined;
   }
 }
 /*80--------------------------------------------------------------------------*/

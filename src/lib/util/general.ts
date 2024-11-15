@@ -88,6 +88,15 @@ export const isWhitespaceUCod = (_x: uint16) => ws_a_.indexOf(_x) >= 0;
 // export const isWhitespace = (_x: string) => ws_re_.test(_x);
 /*80--------------------------------------------------------------------------*/
 
+// /**
+//  * Ref. [[pdf.js]/src/shared/util.js](https://github.com/mozilla/pdf.js/blob/master/src/shared/util.js)
+//  */
+// export const hexNumbers = Array.from(
+//   Array(256).keys(),
+//   (n) => n.toString(16).padStart(2, "0"),
+// );
+/*80--------------------------------------------------------------------------*/
+
 export const stopPropagation = (evt_x: Event) => {
   evt_x.stopPropagation();
 };

@@ -3,6 +3,8 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import type { lnum_t, uint } from "../../../alias.ts";
+import { fail } from "@fe-lib/util/trace.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { SortedStnod_id } from "../../Stnode.ts";
@@ -12,6 +14,7 @@ import { BlockCont } from "../alias.ts";
 import { _toHTML } from "../util.ts";
 import { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
+import type { Inline } from "./Inline.ts";
 import { ListItem } from "./ListItem.ts";
 import { isSpaceOrTab } from "@fe-lib/util/general.ts";
 /*80--------------------------------------------------------------------------*/
@@ -72,6 +75,18 @@ export class BlockQuote extends CtnrBlock {
         tk.sntStrtLoc.posGE(drtStopLoc_x)
       ) unrelSnt_sa_x.add(tk);
     }
+  }
+
+  override lidxOf(loc_x: Loc): lnum_t | -1 {
+    const i_ = this.#mrkrTk_a.findIndex((tk) => loc_x.posE(tk.sntStrtLoc));
+    return i_ >= 0 ? this.#mrkrTk_a[i_].sntFrstLidx_1 : -1;
+  }
+
+  override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] {
+    return [
+      this.#mrkrTk_a[lidx_x - this.sntFrstLidx_1],
+      ...super.reuseLine(lidx_x) ?? [],
+    ];
   }
 
   override lcolCntStrt(loc_x: Loc): MdextTk | undefined {

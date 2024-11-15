@@ -94,7 +94,7 @@ export class Paragraph extends InlineBlock {
       for (const tk of this.snt_a_$) {
         assert(tk instanceof MdextTk && isLFOr0(tk.sntStopLoc.ucod));
         /* `tk.value` can be other than `chunk`, in which case, `this` is
-        `reuse()`ed. */
+        reused. */
       }
     }
     /* Do not handle soft break here because line end may be in some multiline

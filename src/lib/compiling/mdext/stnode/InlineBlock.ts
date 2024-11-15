@@ -3,7 +3,14 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { Constructor, int, loff_t, uint, uint16 } from "@fe-lib/alias.ts";
+import type {
+  Constructor,
+  int,
+  lnum_t,
+  loff_t,
+  uint,
+  uint16,
+} from "@fe-lib/alias.ts";
 import { assert, fail, out } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
 import type { LexdInfo } from "../../Lexr.ts";
@@ -822,6 +829,21 @@ export abstract class InlineBlock extends Block {
         snt.sntStrtLoc.posGE(drtStopLoc_x)
       ) unrelSnt_sa_x.add(snt);
     }
+  }
+
+  override lidxOf(loc_x: Loc): lnum_t | -1 {
+    const i_ = this.snt_a_$.findIndex((snt) => loc_x.posE(snt.sntStrtLoc));
+    return i_ >= 0 ? this.snt_a_$[i_].sntFrstLidx_1 : -1;
+  }
+
+  override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] {
+    const ret: (MdextTk | Inline)[] = [];
+    for (const snt of this.snt_a_$) {
+      const lidx = snt.sntFrstLidx_1;
+      if (lidx > lidx_x) break;
+      if (lidx === lidx_x) ret.push(snt);
+    }
+    return ret;
   }
 }
 /*80--------------------------------------------------------------------------*/

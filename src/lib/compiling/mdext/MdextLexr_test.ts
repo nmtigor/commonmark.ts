@@ -174,14 +174,12 @@ describe("Compiling Paragraph", () => {
     // console.log("🚀 ~ it ~ tkId_a_1:", tkId_a_1)
     assertEquals(
       pazr._root?._toHTML(lexr),
-      /* deno-fmt-ignore */ [
-        "<p>p</p>", "<p>abc", "1234", "xyz</p>", "<p>n</p>",
-      ].join("\n"),
+      ["<p>p</p>", "<p>abc", "1234", "xyz</p>", "<p>n</p>"].join("\n"),
     );
     assertStrictEquals(pazr.drtSn_$, pazr._root?._c(1));
     assertEquals(pazr.unrelSn_sa_$._repr(), []);
     assertEquals(pazr.takldSn_sa_$._repr(), []);
-    // assertEquals(lexr.unrelSnt_sa_$._repr(), ["text[3-0,3-3)"]);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), ["text[3-0,3-3)"]);
     assertEquals(lexr.takldSnt_sa_$._repr(), [
       "text[2-0,2-3)",
       "text[4-0,4-3)",
@@ -211,9 +209,7 @@ describe("Compiling Paragraph", () => {
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
     assertEquals(
       pazr._root?._toHTML(lexr),
-      /* deno-fmt-ignore */ [
-        "<p>p</p>", "<p>ac", "1234", "xyz</p>", "<p>n</p>",
-      ].join("\n"),
+      ["<p>p</p>", "<p>ac", "1234", "xyz</p>", "<p>n</p>"].join("\n"),
     );
     assertStrictEquals(pazr.drtSn_$, pazr._root);
     assertEquals(pazr.unrelSn_sa_$._repr(), []);
@@ -262,9 +258,7 @@ describe("Compiling Paragraph", () => {
     // console.log("🚀 ~ it ~ tkId_a_1:", tkId_a_1)
     assertEquals(
       pazr._root?._toHTML(lexr),
-      /* deno-fmt-ignore */ [
-        "<p>p</p>", "<p>abc", "123", "xyz4</p>", "<p>n</p>",
-      ].join("\n"),
+      ["<p>p</p>", "<p>abc", "123", "xyz4</p>", "<p>n</p>"].join("\n"),
     );
     assertStrictEquals(pazr.drtSn_$, pazr._root);
     assertEquals(pazr.unrelSn_sa_$._repr(), []);
@@ -305,9 +299,7 @@ describe("Compiling Paragraph", () => {
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
     assertEquals(
       pazr._root?._toHTML(lexr),
-      /* deno-fmt-ignore */ [
-        "<p>p</p>", "<p>abc", "123", "xyz</p>", "<p>n</p>",
-      ].join("\n"),
+      ["<p>p</p>", "<p>abc", "123", "xyz</p>", "<p>n</p>"].join("\n"),
     );
     assertStrictEquals(pazr.drtSn_$, pazr._root);
     assertEquals(pazr.unrelSn_sa_$._repr(), []);
@@ -346,9 +338,7 @@ describe("Compiling Paragraph", () => {
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
     assertEquals(
       pazr._root?._toHTML(lexr),
-      /* deno-fmt-ignore */ [
-        "<p>p</p>", "<p>4abc", "123", "xyz</p>", "<p>n</p>",
-      ].join("\n"),
+      ["<p>p</p>", "<p>4abc", "123", "xyz</p>", "<p>n</p>"].join("\n"),
     );
     assertStrictEquals(pazr.drtSn_$, pazr._root);
     assertEquals(pazr.unrelSn_sa_$._repr(), []);
@@ -388,9 +378,7 @@ describe("Compiling Paragraph", () => {
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
     assertEquals(
       pazr._root?._toHTML(lexr),
-      /* deno-fmt-ignore */ [
-        "<p>p</p>", "<p>abc", "123", "xyz</p>", "<p>n</p>",
-      ].join("\n"),
+      ["<p>p</p>", "<p>abc", "123", "xyz</p>", "<p>n</p>"].join("\n"),
     );
     assertStrictEquals(pazr.drtSn_$, pazr._root);
     assertEquals(pazr.unrelSn_sa_$._repr(), []);
@@ -1036,12 +1024,315 @@ describe("Compiling BlockQuote", () => {
       > n
       >
        */
+      assertEquals(lexr.strtLexTk_$._Repr(), [
+        /* deno-fmt-ignore */ [
+          "strtBdry[0-0)", "block_quote_marker[0-0,0-1)", "text[0-2,0-3)",
+          "block_quote_marker[1-0,1-1)", "text[1-2,1-3)",
+          "block_quote_marker[2-0,2-1)",
+        ],
+        "stopBdry[2-1)",
+        [],
+      ]);
+      assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
       assertEquals(
         pazr._root?._toHTML(lexr),
         ["<blockquote>", "<p>p", "n</p>", "</blockquote>"].join("\n"),
       );
       assertStrictEquals(pazr.drtSn_$, pazr._root);
+      assertEquals(pazr.unrelSn_sa_$._repr(), [
+        "Document(0)[ block_quote_marker[0-0,0-1), block_quote_marker*[2-0,2-1) ]",
+        "Paragraph(2)[ text[0-2,0-3), text[1-2,1-3) ]",
+      ]);
+      assertEquals(pazr.takldSn_sa_$._repr(), [
+        "BlockQuote(1)[ block_quote_marker[0-0,0-1), block_quote_marker*[2-0,2-1) ]",
+      ]);
+      assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0));
+      assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+      assertEquals(lexr.takldSnt_sa_$._repr(), []);
+
+      undo();
+      /*
+      > p
+      > n
+       */
+      assertEquals(lexr.strtLexTk_$._Repr(), [
+        /* deno-fmt-ignore */ [
+          "strtBdry[0-0)", "block_quote_marker[0-0,0-1)", "text[0-2,0-3)",
+          "block_quote_marker[1-0,1-1)", "text[1-2,1-3)",
+        ],
+        "stopBdry[1-3)",
+        [],
+      ]);
+      assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+      assertEquals(
+        pazr._root?._toHTML(lexr),
+        ["<blockquote>", "<p>p", "n</p>", "</blockquote>"].join("\n"),
+      );
+      assertStrictEquals(pazr.drtSn_$, pazr._root);
+      assertEquals(pazr.unrelSn_sa_$._repr(), []);
+      assertEquals(pazr.takldSn_sa_$._repr(), []);
+      assertEquals(lexr.unrelSnt_sa_$._repr(), ["block_quote_marker[2-0,2-1)"]);
+      assertEquals(lexr.takldSnt_sa_$._repr(), /* deno-fmt-ignore */ [
+        "block_quote_marker[0-0,0-1)", "text[0-2,0-3)",
+        "block_quote_marker[1-0,1-1)", "text[1-2,1-3)",
+      ]);
     });
+  });
+});
+
+describe("Compiling FencedCodeBlock", () => {
+  it("edits in one FencedCodeBlock", () => {
+    init(["p", "```", "```", "n"]);
+
+    repl(ran(1)._rv, "\n");
+    /*
+    p
+    ```
+
+    ```
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "code_fence[1-0,1-3)",
+        "chunk[2-0)",
+        "code_fence[3-0,3-3)",
+      ],
+      "text[4-0,4-1)",
+      ["stopBdry[4-1)"],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<pre><code>", "</code></pre>", "<p>n</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(1));
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), ["code_fence[1-0,1-3)"]);
+    assertEquals(lexr.takldSnt_sa_$._repr(), ["code_fence[2-0,2-3)"]);
+
+    repl(rv(3, 0), "abc\n");
+    /*
+    p
+    ```
+
+    abc
+    ```
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "code_fence[1-0,1-3)",
+        "chunk[2-0)",
+        "chunk[3-0,3-3)",
+        "code_fence[4-0,4-3)",
+      ],
+      "text[5-0,5-1)",
+      ["stopBdry[5-1)"],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      /* deno-fmt-ignore */ [
+        "<p>p</p>", "<pre><code>", "abc", "</code></pre>", "<p>n</p>"
+      ].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(1));
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), ["code_fence[1-0,1-3)"]);
+    assertEquals(lexr.takldSnt_sa_$._repr(), [
+      "code_fence[3-0,3-3)",
+      "chunk[2-0)",
+    ]);
+
+    repl(ran(1)._rv, "xyz");
+    /*
+    p
+    ```xyz
+
+    abc
+    ```
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "code_fence[1-0,1-3)", "chunk[1-3,1-6)",
+        "chunk[2-0)",
+        "chunk[3-0,3-3)",
+        "code_fence[4-0,4-3)",
+      ],
+      "text[5-0,5-1)",
+      ["stopBdry[5-1)"],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      /* deno-fmt-ignore */ [
+        "<p>p</p>", '<pre><code class="language-xyz">', "abc", "</code></pre>", "<p>n</p>"
+      ].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(1));
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), ["code_fence[1-0,1-3)"]);
+    assertEquals(lexr.takldSnt_sa_$._repr(), [
+      "code_fence[4-0,4-3)",
+      "chunk[2-0)",
+      "chunk[3-0,3-3)",
+    ]);
+  });
+
+  it("edits at boundaries of one FencedCodeBlock", () => {
+    init(["p", "```", "```", "n"]);
+
+    repl(rv(1, 0), "`");
+    /*
+    p
+    ````
+    ```
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "code_fence[1-0,1-4)",
+        "chunk[2-0,2-3)",
+        "text[3-0,3-1)",
+      ],
+      "stopBdry[3-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<pre><code>```", "n", "</code></pre>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Paragraph(1)[ text[0-0,0-1) ]",
+      "Paragraph(1)[ text[3-0,3-1) ]",
+    ]);
+    assertStrictEquals(pazr._root?._c(0), pazr.takldSn_sa_$.at(0));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), ["code_fence[1-0,1-3)"]);
+    assertEquals(lexr.takldSnt_sa_$._repr(), [
+      "code_fence[2-0,2-3)",
+      "text[3-0,3-1)",
+    ]);
+
+    repl(rv(1, 0), "\n");
+    /*
+    p
+
+    ````
+    ```
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "code_fence[2-0,2-4)",
+        "chunk[3-0,3-3)",
+        "text[4-0,4-1)",
+      ],
+      "stopBdry[4-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<pre><code>```", "n", "</code></pre>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), ["Paragraph(1)[ text[0-0,0-1) ]"]);
+    assertStrictEquals(pazr._root?._c(0), pazr.takldSn_sa_$.at(0));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.takldSnt_sa_$._repr(), [
+      "text[3-0,3-1)",
+      "code_fence[1-0,1-4)",
+      "chunk[2-0,2-3)",
+    ]);
+
+    repl(ran(3)._rv, "`"); // 3113
+    /*
+    p
+
+    ````
+    ````
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "code_fence[2-0,2-4)",
+        "code_fence[3-0,3-4)",
+        "text[4-0,4-1)",
+      ],
+      "stopBdry[4-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<pre><code></code></pre>", "<p>n</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Paragraph(1)[ text[0-0,0-1) ]",
+      "FencedCodeBlock(1)[ code_fence[2-0,2-4), code_fence*[3-0,3-4) ]",
+    ]);
+    assertStrictEquals(pazr._root?._c(0), pazr.takldSn_sa_$.at(0));
+    assertStrictEquals(pazr._root?._c(1), pazr.takldSn_sa_$.at(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), [
+      "code_fence[2-0,2-4)",
+      "chunk[3-0,3-3)",
+    ]);
+    assertEquals(lexr.takldSnt_sa_$._repr(), ["text[4-0,4-1)"]);
+
+    repl(ran(3)._rv, "`");
+    /*
+    p
+
+    ````
+    `````
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "code_fence[2-0,2-4)",
+        "code_fence[3-0,3-5)",
+        "text[4-0,4-1)",
+      ],
+      "stopBdry[4-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<pre><code></code></pre>", "<p>n</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Paragraph(1)[ text[0-0,0-1) ]",
+      "FencedCodeBlock(1)[ code_fence[2-0,2-4), code_fence[3-0,3-4) ]",
+    ]);
+    assertStrictEquals(pazr._root?._c(0), pazr.takldSn_sa_$.at(0));
+    assertNotStrictEquals(pazr._root?._c(1), pazr.takldSn_sa_$.at(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.takldSnt_sa_$._repr(), [
+      "text[4-0,4-1)",
+      "code_fence[2-0,2-4)",
+      "code_fence[3-0,3-4)",
+    ]);
   });
 });
 /*80--------------------------------------------------------------------------*/

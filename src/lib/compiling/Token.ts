@@ -77,7 +77,8 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   get sntFrstLine() {
     return this.ran_$.frstLine;
   }
-  get tkFrstLidx_1(): lnum_t {
+  /** @implement */
+  get sntFrstLidx_1(): lnum_t {
     return this.sntFrstLine.lidx_1;
   }
   /** @implement */
@@ -104,7 +105,8 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   get sntLastLine() {
     return this.ran_$.lastLine;
   }
-  get tkLastLidx_1(): lnum_t {
+  /** @implement */
+  get sntLastLidx_1(): lnum_t {
     return this.sntLastLine.lidx_1;
   }
   /** @implement */

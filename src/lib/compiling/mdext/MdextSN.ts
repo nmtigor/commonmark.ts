@@ -26,9 +26,9 @@ export abstract class MdextSN extends Stnode<MdextTok> {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
-   * @headconst @param lexr_x
+   * @headconst @param _lexr_x
    */
-  _toHTML(lexr_x: MdextLexr): string {
+  _toHTML(_lexr_x: MdextLexr): string {
     return "";
   }
 }

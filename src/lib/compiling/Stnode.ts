@@ -271,8 +271,11 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   get sntFrstLine() {
     return this.frstToken.sntFrstLine;
   }
-  /** @final */
-  get snFrstLidx_1() {
+  /**
+   * @final
+   * @implement
+   */
+  get sntFrstLidx_1() {
     return this.sntFrstLine.lidx_1;
   }
   /**
@@ -313,8 +316,11 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   get sntLastLine() {
     return this.lastToken.sntLastLine;
   }
-  /** @final */
-  get snLastLidx_1() {
+  /**
+   * @final
+   * @implement
+   */
+  get sntLastLidx_1() {
     return this.sntLastLine.lidx_1;
   }
   /**

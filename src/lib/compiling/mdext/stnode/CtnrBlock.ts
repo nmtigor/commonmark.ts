@@ -3,13 +3,15 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { uint } from "@fe-lib/alias.ts";
+import type { lnum_t, uint } from "@fe-lib/alias.ts";
 import type { Loc } from "../../Loc.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { Block } from "./Block.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { SortedStnod_id } from "../../Stnode.ts";
+import type { Inline } from "./Inline.ts";
+import { fail } from "@fe-lib/util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class CtnrBlock extends Block {
@@ -159,6 +161,18 @@ export abstract class CtnrBlock extends Block {
         );
       }
     }
+  }
+
+  override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] | undefined {
+    for (const c of this.children) {
+      const frstLidx = c.sntFrstLidx_1;
+      const lastLidx = c.sntLastLidx_1;
+      if (frstLidx <= lidx_x && lidx_x <= lastLidx) {
+        return c.reuseLine(lidx_x);
+      }
+      if (frstLidx > lidx_x) break;
+    }
+    return undefined;
   }
 
   /**

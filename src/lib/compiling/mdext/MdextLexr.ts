@@ -4,7 +4,7 @@
  ******************************************************************************/
 
 import { INOUT } from "@fe-src/global.ts";
-import type { lcol_t, loff_t, uint, uint16 } from "../../alias.ts";
+import type { lcol_t, lnum_t, loff_t, uint, uint16 } from "../../alias.ts";
 import {
   isASCIIControl,
   isDecimalDigit,
@@ -46,7 +46,6 @@ import {
   lastNonblankIn,
   lastNonhashIn,
 } from "./util.ts";
-import { LOG_cssc } from "@fe-src/alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 const enum Ctx_ {
@@ -61,19 +60,15 @@ const enum BlockStrt_ {
   /** no match */
   continue = 1,
   /** matched something, next token */
-  matchedPart,
-  /** */
-  matchedFull,
+  matched,
   //jjjj TOCLEANUP
   // /**
   //  * matched branch (non-leaf container), keep going
   //  * @deprecated Use `matchedPart` or `matchedFull`
   //  */
   // matchedBran,
-  /**
-   * matched leaf, no more block starts
-   */
-  matchedLeaf,
+  /** matched leaf, no more block starts */
+  break,
 }
 type BlockStrtCheckr_ = (ctnr_x: Block) => BlockStrt_;
 
@@ -409,9 +404,10 @@ export class MdextLexr extends Lexr<MdextTok> {
     );
     pazr.unrelSn_sa_$.add(newSn);
 
-    this.unrelSnt_sa_$.add_O(this.takldSnt_sa_$);
-    this.takldSnt_sa_$.reset();
-    this.#gathrUnrelSntIn(this.#pazr.drtSn);
+    //jjjj TOCLEANUP
+    // this.unrelSnt_sa_$.add_O(this.takldSnt_sa_$);
+    // this.takldSnt_sa_$.reset();
+    // this.#gathrUnrelSntIn(this.#pazr.drtSn);
 
     this.strtLexTk$ = this.strtLexTk_0$; //!
     this.lex(valve_x);
@@ -441,23 +437,37 @@ export class MdextLexr extends Lexr<MdextTok> {
   }
 
   /**
-   * Assign `#outTk`\
-   * Move `curLoc$` to eol
-   * @headconst @param para_x
+   * Based on `curLoc$`. Assign `#outTk`. Move `curLoc$` to eol.
+   * @headconst @param sn_x
+   * @const @param force_x
    */
-  #reuseParaline(para_x: Paragraph, i_x?: uint): boolean {
-    const snt_a = para_x.snt_a_$;
-    if (i_x === undefined) {
-      i_x = snt_a.findIndex((snt) => this.curLoc$.posE(snt.sntStrtLoc));
-    }
-    if (i_x < 0) return false;
+  @out((ret, _, args) => {
+    if (args[1]) assert(ret);
+  })
+  private _reuseLine(sn_x: Block, _force_x?: "force"): boolean {
+    const lidx = sn_x.lidxOf(this.curLoc$);
+    if (lidx < 0) return false;
 
-    const ln_ = this.curLoc$.line_$;
-    let j_ = i_x + 1;
-    for (; j_ < snt_a.length && snt_a[j_].sntLastLine === ln_; ++j_);
-    this.curLoc$.toEol();
-    this.#outTk = this.scanBypassSnt$(...snt_a.slice(i_x, j_));
-    return true;
+    const snt_a = sn_x.reuseLine(lidx as lnum_t);
+    if (snt_a?.length) {
+      this.curLoc$.toEol();
+      this.#outTk = this.scanBypassSnt$(...snt_a);
+    }
+    return !!snt_a?.length;
+
+    //jjjj TOCLEANUP
+    // const snt_a = sn_x.snt_a_$;
+    // if (i_x === undefined) {
+    //   i_x = snt_a.findIndex((snt) => this.curLoc$.posE(snt.sntStrtLoc));
+    // }
+    // if (i_x < 0) return false;
+
+    // const ln_ = this.curLoc$.line_$;
+    // let j_ = i_x + 1;
+    // for (; j_ < snt_a.length && snt_a[j_].sntLastLine === ln_; ++j_);
+    // this.curLoc$.toEol();
+    // this.#outTk = this.scanBypassSnt$(...snt_a.slice(i_x, j_));
+    // return true;
   }
 
   #blockStrtCheckr_a: BlockStrtCheckr_[] = [
@@ -468,6 +478,39 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
 
       this.#closeUnmatchedBlocks();
+
+      /* In case compiling ... */
+      for (const sn of this.#pazr.unrelSn_sa_$) {
+        if (sn instanceof BlockQuote && this.curLoc$.posE(sn.sntStrtLoc)) {
+          this.#pazr.unrelSn_sa_$.delete(sn);
+          this.#pazr.takldSn_sa_$.add(sn);
+
+          /* This is the case of newly added at the end of `sn`, so `sn` can
+          not be reused, but Token in `sn` may still be reused. */
+          if (!sn.sntStopLoc.atEol) {
+            this.#gathrUnrelSntIn(sn);
+            break;
+          }
+
+          let sn_: BlockQuote;
+          const snLastLidx = sn.sntLastLidx_1;
+          const drtFrstLidx = this.#drtFrstLine.lidx_1;
+          if (
+            this.#tip.isAncestorOf(sn) &&
+            snLastLidx !== drtFrstLidx && snLastLidx !== drtFrstLidx - 1
+          ) {
+            this.curLoc$.become(sn.sntStopLoc);
+            this.#outTk = this.scanBypassSnt$(sn);
+            sn_ = sn.ensureAllBdry();
+          } else {
+            this._reuseLine(sn, "force");
+            sn_ = sn.reuse();
+          }
+          this.#addChild(sn_);
+          this.#toNextLine();
+          return BlockStrt_.matched;
+        }
+      }
 
       for (const snt of this.unrelSnt_sa_$) {
         if (
@@ -482,6 +525,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           break;
         }
       }
+      /* ~ */
 
       if (!this.#outTk) {
         this._outTk.setStrtLoc(this.#poc);
@@ -496,25 +540,25 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
 
       this.#ctx = Ctx_.BlockQuote;
-      return BlockStrt_.matchedPart;
+      return BlockStrt_.matched;
     },
     /** ATX heading */
     () => {
       if (this.#indented) return BlockStrt_.continue;
 
-      using loc = this.#poc.using();
+      using poc = this.#poc.using();
       let level = 0;
       /** reATXHeadingMarker = /^#{1,6}(?:[ \t]+|$)/ */
       const lexATXHead = (): boolean => {
         let ucod: uint16;
         for (; level < 6; ++level) {
-          ucod = loc.ucod;
+          ucod = poc.ucod;
           if (ucod !== /* "#" */ 0x23) {
             return level > 0 && (isSpaceOrTab(ucod) || isLFOr0(ucod));
           }
-          loc.forw();
+          poc.forw();
         }
-        ucod = loc.ucod;
+        ucod = poc.ucod;
         return isSpaceOrTab(ucod) || isLFOr0(ucod);
       };
       if (!lexATXHead()) return BlockStrt_.continue;
@@ -522,51 +566,123 @@ export class MdextLexr extends Lexr<MdextTok> {
       this.#closeUnmatchedBlocks();
 
       this._outTk.setStrtLoc(this.#poc);
-      this.curLoc$.become(loc);
+      this.curLoc$.become(poc);
       this.setTok$(MdextTok.atx_heading, this._outTk);
       this.#addChild(new ATXHeading(this._outTk));
 
       this.#ctx = Ctx_.ATXHeading;
-      return BlockStrt_.matchedPart;
+      return BlockStrt_.matched;
     },
-    /** Fenced code block */
+    /**
+     * Fenced code block
+     * @const `#poc`
+     */
     () => {
       if (this.#indented) return BlockStrt_.continue;
 
-      using loc = this.#poc.using();
+      using poc = this.#poc.using();
+
+      /* In case compiling ... */
+      for (const sn of this.#pazr.unrelSn_sa_$) {
+        if (sn instanceof FencedCodeBlock && this.curLoc$.posE(sn.sntStrtLoc)) {
+          this.#pazr.unrelSn_sa_$.delete(sn);
+          this.#pazr.takldSn_sa_$.add(sn);
+
+          /* This is the case of newly added at the end of `sn`, so `sn` can
+          not be reused, but Token in `sn` may still be reused. */
+          if (!sn.sntStopLoc.atEol) {
+            this.#gathrUnrelSntIn(sn);
+            break;
+          }
+
+          this.#closeUnmatchedBlocks();
+
+          let sn_: FencedCodeBlock;
+          const snLastLidx = sn.sntLastLidx_1;
+          const drtFrstLidx = this.#drtFrstLine.lidx_1;
+          if (
+            this.#tip.isAncestorOf(sn) &&
+            snLastLidx !== drtFrstLidx && snLastLidx !== drtFrstLidx - 1
+          ) {
+            this.curLoc$.become(sn.sntStopLoc);
+            this.#outTk = this.scanBypassSnt$(sn);
+            sn_ = sn.ensureAllBdry();
+          } else {
+            this._reuseLine(sn, "force");
+            sn_ = sn.reuse();
+          }
+          this.#addChild(sn_);
+          this.#toNextLine();
+          return BlockStrt_.matched;
+        }
+      }
+
+      /**
+       * Based on `poc`
+       * @const `poc`
+       * @const @param ucod_y 0x60 or  0x7E
+       */
+      const validInfoStr = (ucod_y: uint16): boolean => {
+        if (ucod_y === /* "~" */ 0x7E) return true;
+
+        const ln_ = poc.line_$;
+        for (let i = poc.loff_$, iI = ln_.uchrLen; i < iI; ++i) {
+          if (ln_.ucodAt(i) === /* "`" */ 0x60) return false;
+        }
+        return true;
+      };
+
+      for (const snt of this.unrelSnt_sa_$) {
+        if (
+          snt instanceof MdextTk &&
+          snt.sntStrtLoc.posE(this.curLoc$) &&
+          snt.value === MdextTok.code_fence
+        ) {
+          this.unrelSnt_sa_$.delete(snt);
+          this.takldSnt_sa_$.add(snt);
+
+          poc.loff = snt.sntStopLoff;
+          if (validInfoStr(this.#poc.ucod)) {
+            this.curLoc$.become(snt.sntStopLoc);
+            this.#outTk = snt;
+          }
+
+          break;
+        }
+      }
+      /* ~ */
+
       /** reCodeFence = /^`{3,}(?!.*`)|^~{3,}/ */
       const lexFencedCBHead = (): boolean => {
-        const ucod_0 = loc.ucod;
+        const ucod_0 = poc.ucod;
         if (ucod_0 !== /* "`" */ 0x60 && ucod_0 !== /* "~" */ 0x7E) {
           return false;
         }
 
-        const ln_ = loc.line_$;
-        let i_ = loc.loff_$ + 1;
+        const ln_ = poc.line_$;
+        let i_ = poc.loff_$ + 1;
         const iI = ln_.uchrLen;
         for (; i_ < iI; ++i_) if (ln_.ucodAt(i_) !== ucod_0) break;
-        if (i_ - loc.loff_$ < 3) return false;
+        if (i_ - poc.loff_$ < 3) return false;
 
-        loc.loff = i_;
-        if (ucod_0 === /* "`" */ 0x60) {
-          for (++i_; i_ < iI; ++i_) {
-            if (ln_.ucodAt(i_) === /* "`" */ 0x60) return false;
-          }
-        }
-        return true;
+        poc.loff = i_;
+        return validInfoStr(ucod_0);
       };
-      if (!lexFencedCBHead()) return BlockStrt_.continue;
+      if (!this.#outTk && !lexFencedCBHead()) return BlockStrt_.continue;
 
       this.#closeUnmatchedBlocks();
 
-      this._outTk.setStrtLoc(this.#poc);
-      this.curLoc$.become(loc);
-      this.setTok$(MdextTok.code_fence, this._outTk);
-      this._outTk.lexdInfo = new FencedCBHead_LI(this.#indent);
-      this.#addChild(new FencedCodeBlock(this._outTk));
+      if (!this.#outTk) {
+        this._outTk.setStrtLoc(this.#poc);
+        this.curLoc$.become(poc);
+        this.setTok$(MdextTok.code_fence, this._outTk);
+        this._outTk.lexdInfo = new FencedCBHead_LI(this.#indent);
+      }
+
+      this.#addChild(new FencedCodeBlock(this.#outTk!));
 
       this.#ctx = Ctx_.FencedCodeBlock;
-      return BlockStrt_.matchedPart;
+      return BlockStrt_.matched;
     },
     /** HTML block */
     (ctnr_x: Block) => {
@@ -609,7 +725,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       `closeBlock()` there if needed. */
       this.#addChild(new HTMLBlock(mode));
 
-      return BlockStrt_.matchedLeaf;
+      return BlockStrt_.break;
     },
     /** Setext heading */
     (ctnr_x: Block) => {
@@ -617,21 +733,21 @@ export class MdextLexr extends Lexr<MdextTok> {
         return BlockStrt_.continue;
       }
 
-      using loc = this.#poc.using();
+      using poc = this.#poc.using();
       /** reSetextHeadingLine = /^(?:=+|-+)[ \t]*$/ */
       const lexSetextTail = (): boolean => {
-        const ucod_0 = loc.ucod;
+        const ucod_0 = poc.ucod;
         if (ucod_0 !== /* "=" */ 0x3D && ucod_0 !== /* "-" */ 0x2D) {
           return false;
         }
 
-        const ln_ = loc.line_$;
-        let i_ = loc.loff_$ + 1;
+        const ln_ = poc.line_$;
+        let i_ = poc.loff_$ + 1;
         const iI = ln_.uchrLen;
         for (; i_ < iI; ++i_) if (ln_.ucodAt(i_) !== ucod_0) break;
 
-        loc.loff = i_;
-        return blankEnd(loc);
+        poc.loff = i_;
+        return blankEnd(poc);
       };
       if (!lexSetextTail()) return BlockStrt_.continue;
 
@@ -640,36 +756,36 @@ export class MdextLexr extends Lexr<MdextTok> {
       ctnr_x.removeSelf();
 
       this._outTk.setStrtLoc(this.#poc);
-      this.curLoc$.become(loc);
+      this.curLoc$.become(poc);
       this.setTok$(MdextTok.setext_heading, this._outTk);
       this.#addChild(new SetextHeading(ctnr_x, this._outTk));
 
       this.#toNextLine();
-      return BlockStrt_.matchedFull;
+      return BlockStrt_.matched;
     },
     /** Thematic break */
     () => {
       if (this.#indented) return BlockStrt_.continue;
 
-      using loc = this.#poc.using();
-      const ln_ = loc.line_$;
+      using poc = this.#poc.using();
+      const ln_ = poc.line_$;
       /** reThematicBreak = /^(?:\*[ \t]*){3,}$|^(?:_[ \t]*){3,}$|^(?:-[ \t]*){3,}$/ */
       const lexThematicBreak = (): boolean => {
-        const ucod_0 = loc.ucod;
+        const ucod_0 = poc.ucod;
         if (
           ucod_0 !== /* "*" */ 0x2A && ucod_0 !== /* "_" */ 0x5F &&
           ucod_0 !== /* "-" */ 0x2D
         ) return false;
 
         let count = 1;
-        let i_ = loc.loff_$ + 1;
+        let i_ = poc.loff_$ + 1;
         const iI = ln_.uchrLen;
         for (; i_ < iI; ++i_) {
           const ucod = ln_.ucodAt(i_);
           if (ucod === ucod_0) ++count;
           else if (!isSpaceOrTab(ucod)) break;
         }
-        loc.loff = i_;
+        poc.loff = i_;
         return i_ === iI && count >= 3;
       };
       if (!lexThematicBreak()) return BlockStrt_.continue;
@@ -677,19 +793,19 @@ export class MdextLexr extends Lexr<MdextTok> {
       this.#closeUnmatchedBlocks();
 
       this._outTk.setStrtLoc(this.#poc);
-      loc.loff = lastNonblankIn(ln_, 0, loc.loff_$) + 1;
-      this.curLoc$.become(loc);
+      poc.loff = lastNonblankIn(ln_, 0, poc.loff_$) + 1;
+      this.curLoc$.become(poc);
       this.setTok$(MdextTok.thematic_break, this._outTk);
       this.#addChild(new ThematicBreak(this._outTk));
 
       this.#toNextLine();
-      return BlockStrt_.matchedFull;
+      return BlockStrt_.matched;
     },
     /** List item */
     (ctnr_x: Block) => {
       if (this.#indented) return BlockStrt_.continue;
 
-      using loc = this.#poc.using();
+      using poc = this.#poc.using();
       /** ucod of one of  "*", "+", "-", ")", "." */
       let sign = 0 as uint16;
       /** For ordered list item only */
@@ -699,7 +815,7 @@ export class MdextLexr extends Lexr<MdextTok> {
        * reOrderedListMarker = /^(\d{1,9})([.)])/
        */
       const lexListMrkr = (): boolean => {
-        let ucod = loc.ucod;
+        let ucod = poc.ucod;
         if (
           ucod !== /* "*" */ 0x2A && ucod !== /* "+" */ 0x2B &&
           ucod !== /* "-" */ 0x2D
@@ -708,23 +824,23 @@ export class MdextLexr extends Lexr<MdextTok> {
           for (; i_ < 10; ++i_) {
             if (!isDecimalDigit(ucod)) break;
 
-            loc.forw();
-            ucod = loc.ucod;
+            poc.forw();
+            ucod = poc.ucod;
           }
           if (
             i_ === 0 || i_ === 10 ||
             ucod !== /* ")" */ 0x29 && ucod !== /* "." */ 0x2E
           ) return false;
 
-          start = parseInt(loc.getText(this.#poc.loff_$, loc.loff_$));
+          start = parseInt(poc.getText(this.#poc.loff_$, poc.loff_$));
           if (ctnr_x instanceof Paragraph && start !== 1) return false;
         }
         sign = ucod;
-        ucod = loc.forw_ucod();
+        ucod = poc.forw_ucod();
         /* make sure we have spaces after */
         if (!isSpaceOrTab(ucod) && !isLFOr0(ucod)) return false;
         /* if it interrupts paragraph, make sure first line isn't blank */
-        if (ctnr_x instanceof Paragraph && blankEnd(loc)) return false;
+        if (ctnr_x instanceof Paragraph && blankEnd(poc)) return false;
 
         return true;
       };
@@ -732,25 +848,25 @@ export class MdextLexr extends Lexr<MdextTok> {
 
       this.#closeUnmatchedBlocks();
 
-      const mrkrSize = loc.loff_$ - this.#poc.loff_$;
+      const mrkrSize = poc.loff_$ - this.#poc.loff_$;
       this._outTk.setStrtLoc(this.#poc);
-      this.curLoc$.become(loc);
+      this.curLoc$.become(poc);
       this.setTok$(
         mrkrSize === 1
           ? MdextTok.bullet_list_marker
           : MdextTok.ordered_list_marker,
         this._outTk,
       );
-      this.curLoc$.loff = frstNonblankIn(loc.line_$, loc.loff_$);
+      this.curLoc$.loff = frstNonblankIn(poc.line_$, poc.loff_$);
       /** spaces_after_marker */
-      // let lcol = this.curLoc$.loff_$ - loc.loff_$;
-      let lcol: lcol_t = -loc.lcol_1() + this.curLoc$.lcolBy(loc);
+      // let lcol = this.curLoc$.loff_$ - poc.loff_$;
+      let lcol: lcol_t = -poc.lcol_1() + this.curLoc$.lcolBy(poc);
       if (
         lcol === 0 || lcol >= IndentedCodeBlock.indent + 1 ||
         this.curLoc$.reachEol
       ) {
         lcol = 1;
-        this.curLoc$.become(loc);
+        this.curLoc$.become(poc);
         if (isSpaceOrTab(this.curLoc$.ucod)) this.curLoc$.forwnCol(1);
       }
       this._outTk.lexdInfo = new ListMrkr_LI(this.#indent, mrkrSize + lcol);
@@ -770,7 +886,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       );
 
       this.#ctx = Ctx_.ListItem;
-      return BlockStrt_.matchedPart;
+      return BlockStrt_.matched;
     },
     /** Indented code block */
     () => {
@@ -785,7 +901,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       this.#addChild(new IndentedCodeBlock(this._outTk));
 
       this.#toNextLine();
-      return BlockStrt_.matchedFull;
+      return BlockStrt_.matched;
     },
   ];
 
@@ -831,14 +947,13 @@ export class MdextLexr extends Lexr<MdextTok> {
         let i_ = 0;
         L_0: for (; i_ < strtsLen; ++i_) {
           switch (strts[i_](ctnr_x)) {
-            case BlockStrt_.matchedPart:
-            case BlockStrt_.matchedFull:
+            case BlockStrt_.matched:
               return;
               //jjjj TOCLEANUP
               // case BlockStrt_.matchedBran:
               //   ctnr_x = this.#tip;
               //   break L_0;
-            case BlockStrt_.matchedLeaf:
+            case BlockStrt_.break:
               break L_0;
           }
         }
@@ -868,12 +983,9 @@ export class MdextLexr extends Lexr<MdextTok> {
       if (
         this.#tip instanceof Paragraph &&
         this.#pazr.takldSn_sa_$.includes(this.#tip) &&
-        this.#reuseParaline(this.#tip)
+        this._reuseLine(this.#tip)
       ) {
         /* The current line of `#tip` is successfully reused. */
-        // /*#static*/ if (INOUT) {
-        //   assert(!this.#pazr.drtSn.isAncestorOf(this.#tip));
-        // }
       } else if (this.#tip.acceptsLines) {
         const loff_0 = this.curLoc$.loff_$;
         this.#chunkEnd();
@@ -889,6 +1001,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           ) this.#tip = this.#tip.closeBlock();
         }
       } else if (this.#tip instanceof CtnrBlock && this.#tip.isCompiling) {
+        /* 3113 */
         // console.log(`%crun here: `, `color:${LOG_cssc.runhere}`);
         /* Will add a Paragraph into `#tip` in the next branch. But if
         `#tip.isCompiling`, means `drtSn_$` is _shortened_. Need to lex
@@ -896,12 +1009,9 @@ export class MdextLexr extends Lexr<MdextTok> {
         this.#relex = true;
         this.#outTk = this.stopLexTk$;
       } else if (!this.#blank) {
-        let para: Paragraph | undefined;
+        let sn_: Paragraph | undefined;
         for (const sn of this.#pazr.unrelSn_sa_$) {
-          if (
-            sn instanceof Paragraph &&
-            this.curLoc$.posE(sn.sntStrtLoc)
-          ) {
+          if (sn instanceof Paragraph && this.curLoc$.posE(sn.sntStrtLoc)) {
             this.#pazr.unrelSn_sa_$.delete(sn);
             this.#pazr.takldSn_sa_$.add(sn);
 
@@ -912,7 +1022,7 @@ export class MdextLexr extends Lexr<MdextTok> {
               break;
             }
 
-            const snLastLidx = sn.snLastLidx_1;
+            const snLastLidx = sn.sntLastLidx_1;
             const drtFrstLidx = this.#drtFrstLine.lidx_1;
             if (
               this.#tip.isAncestorOf(sn) &&
@@ -921,23 +1031,23 @@ export class MdextLexr extends Lexr<MdextTok> {
               // console.log(`%crun here: 1`, `color:${LOG_cssc.runhere}`);
               this.curLoc$.become(sn.sntStopLoc);
               this.#outTk = this.scanBypassSnt$(sn);
-              para = sn.ensureAllBdry();
+              sn_ = sn.ensureAllBdry();
             } else {
               // console.log(`%crun here: 2`, `color:${LOG_cssc.runhere}`);
-              this.#reuseParaline(sn, 0);
-              para = sn.reuse();
+              this._reuseLine(sn, "force");
+              sn_ = sn.reuse();
             }
             //jjjj TOCLEANUP
-            // this.#reuseParaline(sn, 0);
-            // para = sn.reuse();
+            // this._reuseLine(sn, 0);
+            // sn_ = sn.reuse();
             break;
           }
         }
-        if (!para) {
+        if (!sn_) {
           this.#chunkEnd();
-          para = new Paragraph(this._outTk);
+          sn_ = new Paragraph(this._outTk);
         }
-        this.#addChild(para);
+        this.#addChild(sn_);
       }
     }
     this.#toNextLine();
@@ -983,8 +1093,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     ) {
       this.#peekNextNonspaceSoc();
       switch (curChild.continue(this)) {
-        case BlockCont.matchedPart:
-        case BlockCont.matchedFull:
+        case BlockCont.matched:
           return;
         case BlockCont.break:
           /*  we've failed to match a block */
@@ -1118,10 +1227,17 @@ export class MdextLexr extends Lexr<MdextTok> {
       return BlockCont.break;
     }
 
-    /* In case `_x` is a reused BlockQuote ... */
+    /* In case compiling ... */
+    if (this.#pazr.takldSn_sa_$.includes(_x) && this._reuseLine(_x)) {
+      /* The current line of `_x` is successfully reused. */
+      this.#toNextLine();
+      return BlockCont.matched;
+    }
+
+    /* 2 In case `_x` is a reused BlockQuote ... */
     this.#outTk = _x.lcolCntStrt(this.curLoc$);
 
-    /* In case `_x` is a new BlockQuote but ">" is in `unrelSnt_sa_$` ... */
+    /* 2 In case `_x` is a new BlockQuote but ">" is in `unrelSnt_sa_$` ... */
     if (!this.#outTk) {
       for (const snt of this.unrelSnt_sa_$) {
         if (
@@ -1142,6 +1258,7 @@ export class MdextLexr extends Lexr<MdextTok> {
         }
       }
     }
+    /* ~ */
 
     if (!this.#outTk) {
       this._outTk.setStrtLoc(this.#poc);
@@ -1156,7 +1273,7 @@ export class MdextLexr extends Lexr<MdextTok> {
 
     this.#ctx = Ctx_.sol;
     this.#ctnr = _x;
-    return BlockCont.matchedPart;
+    return BlockCont.matched;
   }
 
   continueListItem_$(_x: ListItem): BlockCont {
@@ -1188,36 +1305,97 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
   }
 
+  /**
+   * @const `#poc`
+   */
   continueFencedCodeBlock_$(_x: FencedCodeBlock): BlockCont {
-    using loc = this.#poc.using();
+    /* In case compiling ... */
+    if (this.#pazr.takldSn_sa_$.includes(_x) && this._reuseLine(_x)) {
+      /* The current line of `_x` is successfully reused. */
+      if (this.curLoc$.line_$ === _x.sntLastLine) {
+        this.#tip = _x.closeBlock();
+      }
+      this.#toNextLine();
+      return BlockCont.matched;
+    }
+
+    if (this.#poc.posE(_x.sntStrtLoc)) {
+      this.curLoc$.become(_x.frstToken.sntStopLoc);
+      this.#outTk = _x.frstToken;
+
+      this.#ctx = Ctx_.FencedCodeBlock;
+      return BlockCont.matched;
+    }
+
+    /* 2 reuse fence tail */
+    if (!this.#indented) {
+      for (const snt of this.unrelSnt_sa_$) {
+        if (
+          snt instanceof MdextTk &&
+          snt.sntStrtLoc.posE(this.#poc) &&
+          snt.value === MdextTok.code_fence
+        ) {
+          this.unrelSnt_sa_$.delete(snt);
+          this.takldSnt_sa_$.add(snt);
+
+          if (
+            snt.sntStrtLoc.ucod === _x.headUCod &&
+            snt.length_1 >= _x.headSize &&
+            blankEnd(snt.sntStopLoc)
+          ) {
+            _x.setTail(snt);
+            this.#outTk = snt;
+
+            this.#tip = _x.closeBlock();
+
+            this.#toNextLine();
+            return BlockCont.matched;
+          }
+
+          break;
+        }
+      }
+    }
+
+    for (const sn of this.#pazr.unrelSn_sa_$) {
+      if (this.#poc.posE(sn.sntStrtLoc)) {
+        this.#pazr.unrelSn_sa_$.delete(sn);
+        this.#pazr.takldSn_sa_$.add(sn);
+        this.#gathrUnrelSntIn(sn as MdextSN);
+        break;
+      }
+    }
+    /* ~ */
+
+    using poc = this.#poc.using();
     /** reClosingCodeFence = /^(?:`{3,}|~{3,})(?=[ \t]*$)/ */
     const lexFenceTail = (): boolean => {
       if (this.#indented) return false;
 
       const headUCod = _x.headUCod;
       const headSize = _x.headSize;
-      let i_ = loc.loff_$;
-      const ln_ = loc.line_$;
+      let i_ = poc.loff_$;
+      const ln_ = poc.line_$;
       for (const iI = ln_.uchrLen; i_ < iI; ++i_) {
         if (ln_.ucodAt(i_) !== headUCod) break;
       }
-      if (i_ - loc.loff_$ < headSize) return false;
+      if (i_ - poc.loff_$ < headSize) return false;
 
-      loc.loff = i_;
-      if (!blankEnd(loc)) return false;
+      poc.loff = i_;
+      if (!blankEnd(poc)) return false;
 
       return true;
     };
     if (lexFenceTail()) {
       this._outTk.setStrtLoc(this.#poc);
-      this.curLoc$.become(loc);
+      this.curLoc$.become(poc);
       this.setTok$(MdextTok.code_fence, this._outTk);
       _x.setTail(this._outTk);
 
       this.#tip = _x.closeBlock();
 
       this.#toNextLine();
-      return BlockCont.matchedFull;
+      return BlockCont.matched;
     } else {
       for (let i = _x.headIndent; i--;) {
         if (!isSpaceOrTab(this.curLoc$.ucod)) break;
