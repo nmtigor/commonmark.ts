@@ -549,11 +549,19 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
       return sn_sa_x[0];
     }
 
-    const sn_0_a = unrelSn_sa ? sn_sa_x.slice() : undefined;
-
     sn_sa_x.forEach((sn) => sn.depth_1);
     sn_sa_x.resort();
     if (debug) debug.a = sn_sa_x.slice();
+
+    const sn2del_sa = unrelSn_sa ? new SortedStnod_id(sn_sa_x) : undefined;
+    sn2del_sa?.resort()
+      .slice()
+      .forEach((sn) => {
+        while (sn.parent_$) {
+          sn = sn.parent_$;
+          sn2del_sa.add(sn);
+        }
+      });
 
     let swapSn;
     const swap = (i_y: uint, j_y: uint): void => {
@@ -663,7 +671,7 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
 
     floatupAll();
 
-    unrelSn_sa?.delete_O(sn_0_a);
+    unrelSn_sa?.delete_O(sn2del_sa);
     unrelSn_sa?.add_O(unrelSn_a);
 
     /* `sn_sa_x[0]` may be `hasErr` */

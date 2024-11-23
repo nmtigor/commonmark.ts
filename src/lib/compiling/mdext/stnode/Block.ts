@@ -106,7 +106,7 @@ export abstract class Block extends MdextSN {
   /**
    * @const @param loc_x
    */
-  lidxOf(loc_x: Loc): lnum_t | -1 {
+  lidxOf(_loc_x: Loc): lnum_t | -1 {
     return -1;
   }
 

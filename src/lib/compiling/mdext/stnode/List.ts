@@ -97,8 +97,8 @@ export abstract class List extends CtnrBlock {
   }
 
   /** @implement */
-  lcolCntStrt(_loc_x: Loc): MdextTk | undefined {
-    fail("Not implemented");
+  lcolCntStrt(_loc_x: Loc) {
+    return null;
   }
 }
 /*80--------------------------------------------------------------------------*/

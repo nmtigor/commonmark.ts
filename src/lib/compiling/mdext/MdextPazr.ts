@@ -11,6 +11,7 @@ import type { MdextLexr } from "./MdextLexr.ts";
 import type { MdextTok } from "./MdextTok.ts";
 import { Block } from "./stnode/Block.ts";
 import { Document } from "./stnode/Document.ts";
+import { ListItem } from "./stnode/ListItem.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -62,6 +63,9 @@ export class MdextPazr extends Pazr<MdextTok> {
           assert(sn_);
         }
         this.enlargeBdriesTo_$(sn_!);
+      }
+      if (drtSn.parent_$ instanceof ListItem) {
+        this.enlargeBdriesTo_$(drtSn.parent_$);
       }
     } else {
       //jjjj TOCLEANUP

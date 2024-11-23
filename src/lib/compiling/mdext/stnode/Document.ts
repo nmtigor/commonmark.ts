@@ -54,9 +54,9 @@ export class Document extends CtnrBlock {
     fail("Disabled");
   }
 
-  override lcolCntStrt(loc_x: Loc): undefined {
-    loc_x.toSol();
-    return undefined;
+  /** @implement */
+  lcolCntStrt(_loc_x: Loc) {
+    return null;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

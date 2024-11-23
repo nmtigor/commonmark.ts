@@ -148,9 +148,6 @@ export abstract class CtnrBlock extends Block {
     unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
   ): void {
-    //jjjj TOCLEANUP
-    // /* Functinal Token (e.g. ">" in BlockQuote) are not gathered. They are
-    // skipped (reused) by `lcolCntStrt()` */
     for (const c of this.children) {
       if (!unrelSn_sa_x.includes(c)) {
         c.gathrUnrelSnt(
@@ -176,8 +173,9 @@ export abstract class CtnrBlock extends Block {
   }
 
   /**
+   * Bdries of `this` is clear.
    * @headconst @param _loc_x
    */
-  abstract lcolCntStrt(_loc_x: Loc): MdextTk | undefined;
+  abstract lcolCntStrt(_loc_x: Loc): MdextTk | null | undefined;
 }
 /*80--------------------------------------------------------------------------*/

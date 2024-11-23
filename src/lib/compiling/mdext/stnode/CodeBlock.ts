@@ -256,9 +256,6 @@ export class FencedCodeBlock extends CodeBlock {
     }
   }
 
-  /**
-   * @const @param loc_x
-   */
   override lidxOf(loc_x: Loc): lnum_t | -1 {
     if (
       loc_x.posE(this.#headTk.sntStrtLoc) ||

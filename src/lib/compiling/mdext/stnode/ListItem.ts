@@ -8,12 +8,15 @@ import type { MdextTk } from "../../Token.ts";
 import type { ListMrkr_LI, MdextLexr } from "../MdextLexr.ts";
 import type { BlockCont } from "../alias.ts";
 import { Block } from "./Block.ts";
-import type { lcol_t } from "@fe-lib/alias.ts";
+import type { lcol_t, lnum_t } from "@fe-lib/alias.ts";
 import { _toHTML } from "../util.ts";
 import type { List } from "./List.ts";
 import { Paragraph } from "./Paragraph.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import type { Loc } from "../../Loc.ts";
+import { Inline } from "./Inline.ts";
+import { SortedSnt_id } from "../../Snt.ts";
+import { SortedStnod_id } from "../../Stnode.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class ListItem extends CtnrBlock {
@@ -71,13 +74,50 @@ export abstract class ListItem extends CtnrBlock {
   }
 
   override reset(): this {
-    fail("Not implemented");
+    return super.reset();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    super.gathrUnrelSnt(
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      unrelSn_sa_x,
+      unrelSnt_sa_x,
+    );
+    const tk = this.#mrkrTk;
+    if (
+      tk.sntStopLoc.posSE(drtStrtLoc_x) ||
+      tk.sntStrtLoc.posGE(drtStopLoc_x)
+    ) unrelSnt_sa_x.add(tk);
+  }
+
+  override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] {
+    const ret = super.reuseLine(lidx_x) ?? [];
+    if (this.sntFrstLidx_1 === lidx_x) {
+      ret.unshift(this.#mrkrTk);
+    }
+    return ret;
+  }
+
   /** @implement */
-  lcolCntStrt(_loc_x: Loc): MdextTk | undefined {
-    fail("Not implemented");
+  lcolCntStrt(loc_x: Loc): MdextTk | null | undefined {
+    let ret: MdextTk | null | undefined;
+    if (this.#mrkrTk.sntFrstLine === loc_x.line_$) {
+      loc_x.become(this.#mrkrTk.sntStrtLoc)
+        .forwnCol((this.#mrkrTk.lexdInfo as ListMrkr_LI).padding);
+      ret = this.#mrkrTk;
+    } else if (
+      this.sntFrstLidx_1 <= loc_x.lidx_1 && loc_x.lidx_1 <= this.sntLastLidx_1
+    ) {
+      ret = null;
+    }
+    return ret;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

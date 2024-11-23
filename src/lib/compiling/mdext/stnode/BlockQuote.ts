@@ -89,7 +89,8 @@ export class BlockQuote extends CtnrBlock {
     ];
   }
 
-  override lcolCntStrt(loc_x: Loc): MdextTk | undefined {
+  /** @implement */
+  lcolCntStrt(loc_x: Loc): MdextTk | undefined {
     let ret: MdextTk | undefined;
     const ln_ = loc_x.line_$;
     for (const tk of this.#mrkrTk_a) {
