@@ -62,7 +62,11 @@ export abstract class CodeBlock extends Block {
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {
-    const i_ = this.chunkTk_a$.findIndex((tk) => loc_x.posE(tk.sntStrtLoc));
+    //jjjj TOCLEANUP
+    // const i_ = this.chunkTk_a$.findIndex((tk) => loc_x.posE(tk.sntStrtLoc));
+    const i_ = this.chunkTk_a$.findIndex((tk) =>
+      loc_x.line_$ === (tk.sntFrstLine)
+    );
     return i_ >= 0 ? this.chunkTk_a$[i_].sntFrstLidx_1 : -1;
   }
 
@@ -257,12 +261,20 @@ export class FencedCodeBlock extends CodeBlock {
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {
-    if (
-      loc_x.posE(this.#headTk.sntStrtLoc) ||
-      this.#headChunkTk?.sntStrtLoc.posE(loc_x)
-    ) return this.#headTk.sntFrstLidx_1;
+    //jjjj TOCLEANUP
+    // if (
+    //   loc_x.posE(this.#headTk.sntStrtLoc) ||
+    //   this.#headChunkTk?.sntStrtLoc.posE(loc_x)
+    // ) return this.#headTk.sntFrstLidx_1;
+    if (loc_x.line_$ === this.#headTk.sntFrstLine) {
+      return this.#headTk.sntFrstLidx_1;
+    }
 
-    if (this.#tailTk?.sntStrtLoc.posE(loc_x)) {
+    //jjjj TOCLEANUP
+    // if (this.#tailTk?.sntStrtLoc.posE(loc_x)) {
+    //   return this.#tailTk.sntFrstLidx_1;
+    // }
+    if (loc_x.line_$ === this.#tailTk?.sntFrstLine) {
       return this.#tailTk.sntFrstLidx_1;
     }
 

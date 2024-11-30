@@ -111,7 +111,7 @@ export abstract class Block extends MdextSN {
   }
 
   /**
-   * @const @param _lidx_x
+   * @const @param _lidx_x already valid, i.e., within the line-range of `this`
    */
   reuseLine(_lidx_x?: lnum_t): (MdextTk | Inline)[] | undefined {
     return undefined;

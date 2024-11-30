@@ -78,7 +78,11 @@ export class BlockQuote extends CtnrBlock {
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {
-    const i_ = this.#mrkrTk_a.findIndex((tk) => loc_x.posE(tk.sntStrtLoc));
+    //jjjj TOCLEANUP
+    // const i_ = this.#mrkrTk_a.findIndex((tk) => loc_x.posE(tk.sntStrtLoc));
+    const i_ = this.#mrkrTk_a.findIndex((tk) =>
+      loc_x.line_$ === tk.sntFrstLine
+    );
     return i_ >= 0 ? this.#mrkrTk_a[i_].sntFrstLidx_1 : -1;
   }
 

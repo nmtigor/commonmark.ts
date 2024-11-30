@@ -4,19 +4,16 @@
  ******************************************************************************/
 
 import {
-  assert,
   assertEquals,
-  assertNotEquals,
   assertNotStrictEquals,
   assertStrictEquals,
 } from "@std/assert";
-import { after, afterEach, describe, it } from "@std/testing/bdd";
+import { afterEach, describe, it } from "@std/testing/bdd";
 import type { id_t, uint } from "../../alias.ts";
-import { MdextBufr } from "./MdextBufr.ts";
 import type { TestO } from "../_test.ts";
 import { ran, repl, rv, test_o, undo } from "../_test.ts";
+import { MdextBufr } from "./MdextBufr.ts";
 import { MdextLexr } from "./MdextLexr.ts";
-import { Paragraph } from "@fe-src/lib/compiling/mdext/stnode/Paragraph.ts";
 import type { List } from "./stnode/List.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -154,11 +151,11 @@ describe("Compiling Paragraph", () => {
     repl(ran(3)._rv, "4");
     /*
     p
-
+    ⏎
     abc
     1234
     xyz
-
+    ⏎
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -191,11 +188,11 @@ describe("Compiling Paragraph", () => {
     repl(rv(2, 1, 2, 2), "");
     /*
     p
-
+    ⏎
     ac
     1234
     xyz
-
+    ⏎
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -239,11 +236,11 @@ describe("Compiling Paragraph", () => {
     repl(ran(4)._rv, "4");
     /*
     p
-
+    ⏎
     abc
     123
     xyz4
-
+    ⏎
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -283,11 +280,11 @@ describe("Compiling Paragraph", () => {
     undo();
     /*
     p
-
+    ⏎
     abc
     123
     xyz
-
+    ⏎
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -323,11 +320,11 @@ describe("Compiling Paragraph", () => {
     repl(rv(2, 0), "4");
     /*
     p
-
+    ⏎
     4abc
     123
     xyz
-
+    ⏎
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -364,11 +361,11 @@ describe("Compiling Paragraph", () => {
     undo();
     /*
     p
-
+    ⏎
     abc
     123
     xyz
-
+    ⏎
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -408,7 +405,7 @@ describe("Compiling Paragraph", () => {
 
     repl(rv(0, 0), "\n");
     /*
-
+    ⏎
     p
     n
      */
@@ -454,7 +451,7 @@ describe("Compiling Paragraph", () => {
     repl(rv(1, 0), "\n");
     /*
     p
-
+    ⏎
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -503,7 +500,7 @@ describe("Compiling Paragraph", () => {
     /*
     p
     n
-
+    ⏎
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
       ["strtBdry[0-0)", "text[0-0,0-1)", "text[1-0,1-1)"],
@@ -1113,10 +1110,10 @@ describe("Compiling IndentedCodeBlock", () => {
     repl(ran(3)._rv, "4");
     /*
     p
-
-        abc
-        1234
-        xyz
+    ⏎
+    ····abc
+    ····1234
+    ····xyz
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1149,10 +1146,10 @@ describe("Compiling IndentedCodeBlock", () => {
     repl(rv(2, 5, 2, 6), "");
     /*
     p
-
-        ac
-        1234
-        xyz
+    ⏎
+    ····ac
+    ····1234
+    ····xyz
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1195,10 +1192,10 @@ describe("Compiling IndentedCodeBlock", () => {
     repl(ran(4)._rv, "4");
     /*
     p
-
-        abc
-        123
-        xyz4
+    ⏎
+    ····abc
+    ····123
+    ····xyz4
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1238,10 +1235,10 @@ describe("Compiling IndentedCodeBlock", () => {
     undo();
     /*
     p
-
-        abc
-        123
-        xyz
+    ⏎
+    ····abc
+    ····123
+    ····xyz
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1279,10 +1276,10 @@ describe("Compiling IndentedCodeBlock", () => {
     repl(rv(2, 4), "4");
     /*
     p
-
-        4abc
-        123
-        xyz
+    ⏎
+    ····4abc
+    ····123
+    ····xyz
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1321,10 +1318,10 @@ describe("Compiling IndentedCodeBlock", () => {
     undo();
     /*
     p
-
-        abc
-        123
-        xyz
+    ⏎
+    ····abc
+    ····123
+    ····xyz
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1370,7 +1367,7 @@ describe("Compiling FencedCodeBlock", () => {
     /*
     p
     ```
-
+    ⏎
     ```
     n
      */
@@ -1400,7 +1397,7 @@ describe("Compiling FencedCodeBlock", () => {
     /*
     p
     ```
-
+    ⏎
     abc
     ```
     n
@@ -1437,7 +1434,7 @@ describe("Compiling FencedCodeBlock", () => {
     /*
     p
     ```xyz
-
+    ⏎
     abc
     ```
     n
@@ -1511,7 +1508,7 @@ describe("Compiling FencedCodeBlock", () => {
     repl(rv(1, 0), "\n");
     /*
     p
-
+    ⏎
     ````
     ```
     n
@@ -1546,7 +1543,7 @@ describe("Compiling FencedCodeBlock", () => {
     repl(ran(3)._rv, "`"); // 3113
     /*
     p
-
+    ⏎
     ````
     ````
     n
@@ -1584,7 +1581,7 @@ describe("Compiling FencedCodeBlock", () => {
     repl(ran(3)._rv, "`");
     /*
     p
-
+    ⏎
     ````
     `````
     n
@@ -1631,13 +1628,13 @@ describe("Compiling ListItem", () => {
       tkId_a = lexr._tkId_a;
       repl(ran(3)._rv, "4");
       /*
-        * p
-
-          abc
-       1234
-          xyz
-
-          n
+      ··* p
+      ⏎
+      ····abc
+      ·1234
+      ····xyz
+      ⏎
+      ····n
        */
       assertEquals(lexr.strtLexTk_$._Repr(), [
         /* deno-fmt-ignore */ [
@@ -1686,10 +1683,10 @@ describe("Compiling ListItem", () => {
     tkId_a = lexr._tkId_a;
     repl(ran(2)._rv, "4");
     /*
-     * p
-      * abc
-     1234
-        xyz
+    ·* p
+    ··* abc
+    ·1234
+    ····xyz
     * n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1732,10 +1729,10 @@ describe("Compiling ListItem", () => {
     tkId_a = lexr._tkId_a;
     repl(ran(3)._rv, "4"); // 👍
     /*
-     * p
-      * abc
-     123
-        xyz4
+    ·* p
+    ··* abc
+    ·123
+    ····xyz4
     * n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1785,10 +1782,10 @@ describe("Compiling ListItem", () => {
     tkId_a = lexr._tkId_a;
     undo();
     /*
-     * p
-      * abc
-     123
-        xyz
+    ·* p
+    ··* abc
+    ·123
+    ····xyz
     * n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1834,10 +1831,10 @@ describe("Compiling ListItem", () => {
     tkId_a = lexr._tkId_a;
     repl(rv(1, 1, 1, 2), "");
     /*
-     * p
-     * abc
-     123
-        xyz
+    ·* p
+    ·* abc
+    ·123
+    ····xyz
     * n
      */
     assertEquals(lexr.strtLexTk_$._Repr(), [
@@ -1876,6 +1873,183 @@ describe("Compiling ListItem", () => {
     assertStrictEquals(pazr.takldSn_sa_$.at(2), list_._c(2));
     assertEquals(lexr.unrelSnt_sa_$._repr(), []);
     assertEquals(lexr.reusdSnt_sa_$._repr(), ["bullet_list_marker[1-2,1-3)"]);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+  });
+});
+
+describe("Compiling ThematicBreak", () => {
+  it("edits ThematicBreak", () => {
+    init(["p", "  ***", "n"]);
+
+    repl(ran(1)._rv, " ");
+    /*
+    p
+    ··***·
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "thematic_break[1-2,1-5)",
+        "text[2-0,2-1)",
+      ],
+      "stopBdry[2-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<hr />", "<p>n</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Paragraph(1)[ text[0-0,0-1) ]",
+      "ThematicBreak(1)[ thematic_break[1-2,1-5) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0));
+    assertNotStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), [
+      "thematic_break[1-2,1-5)",
+      "text[2-0,2-1)",
+    ]);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+
+    repl(ran(1)._rv, "*");
+    /*
+    p
+    ··*** *
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "thematic_break[1-2,1-7)",
+        "text[2-0,2-1)",
+      ],
+      "stopBdry[2-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<hr />", "<p>n</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Paragraph(1)[ text[0-0,0-1) ]",
+      "ThematicBreak(1)[ thematic_break[1-2,1-5) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0));
+    assertNotStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), ["text[2-0,2-1)"]);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), ["thematic_break[1-2,1-5)"]);
+
+    repl(rv(1, 0), " ");
+    /*
+    p
+    ···*** *
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "thematic_break[1-3,1-8)",
+        "text[2-0,2-1)",
+      ],
+      "stopBdry[2-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<hr />", "<p>n</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Paragraph(1)[ text[0-0,0-1) ]",
+      "Paragraph(1)[ text[2-0,2-1) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0));
+    assertStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(2));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), ["thematic_break[1-2,1-7)"]);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+
+    repl(rv(1, 0), " ");
+    /*
+    p
+    ····*** *
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "emphasis_delimiter[1-4,1-7)", "thematic_break[1-7,1-9)",
+        "text[2-0,2-1)",
+      ],
+      "stopBdry[2-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p", "*** *", "n</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Paragraph(1)[ text[0-0,0-1), text[2-0,2-1) ]",
+      "Paragraph(1)[ text[2-0,2-1) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0));
+    assertNotStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(2));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), [
+      "text[2-0,2-1)",
+      "thematic_break[1-3,1-8)",
+    ]);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+  });
+
+  it("feeds lines", () => {
+    init(["p", "  ***", "n"]);
+
+    repl(ran(1)._rv, "\n");
+    /*
+    p
+    ··***
+    ⏎
+    n
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-1)",
+        "thematic_break[1-2,1-5)",
+        "text[3-0,3-1)",
+      ],
+      "stopBdry[3-1)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>p</p>", "<hr />", "<p>n</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Paragraph(1)[ text[0-0,0-1) ]",
+      "ThematicBreak(1)[ thematic_break[1-2,1-5) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0));
+    assertStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), ["text[2-0,2-1)"]);
     assertEquals(lexr.abadnSnt_sa_$._repr(), []);
   });
 });

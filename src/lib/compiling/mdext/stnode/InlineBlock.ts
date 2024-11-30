@@ -832,7 +832,11 @@ export abstract class InlineBlock extends Block {
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {
-    const i_ = this.snt_a_$.findIndex((snt) => loc_x.posE(snt.sntStrtLoc));
+    //jjjj TOCLEANUP
+    // const i_ = this.snt_a_$.findIndex((snt) => loc_x.posE(snt.sntStrtLoc));
+    const i_ = this.snt_a_$.findIndex((snt) =>
+      loc_x.line_$ === snt.sntFrstLine
+    );
     return i_ >= 0 ? this.snt_a_$[i_].sntFrstLidx_1 : -1;
   }
 

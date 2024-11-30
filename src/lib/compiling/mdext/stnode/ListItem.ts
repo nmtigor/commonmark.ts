@@ -90,11 +90,11 @@ export abstract class ListItem extends CtnrBlock {
       unrelSn_sa_x,
       unrelSnt_sa_x,
     );
-    const tk = this.#mrkrTk;
+    const tk_ = this.#mrkrTk;
     if (
-      tk.sntStopLoc.posSE(drtStrtLoc_x) ||
-      tk.sntStrtLoc.posGE(drtStopLoc_x)
-    ) unrelSnt_sa_x.add(tk);
+      tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+      tk_.sntStrtLoc.posGE(drtStopLoc_x)
+    ) unrelSnt_sa_x.add(tk_);
   }
 
   override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] {
