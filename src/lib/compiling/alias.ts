@@ -78,5 +78,8 @@ export const enum Err {
   lack_of_rel_rel = "Lack of Rel rel",
   lack_of_rel_tgt = "Lack of Rel tgt",
   lack_of_rel_2nd = 'Lack of Rel 2nd joiner ">"',
+
+  /* SetextHeading */
+  unexpected_close = "Unexpected close",
 }
 /*80--------------------------------------------------------------------------*/

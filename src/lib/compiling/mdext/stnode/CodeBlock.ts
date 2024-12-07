@@ -20,6 +20,7 @@ import type { lcol_t, lnum_t, loff_t, uint16 } from "@fe-lib/alias.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedStnod_id } from "../../Stnode.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
+import { BaseTok } from "../../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class CodeBlock extends Block {
@@ -42,8 +43,9 @@ export abstract class CodeBlock extends Block {
   }
 
   override reset(): this {
+    super.reset();
     this.chunkTk_a$.length = 0;
-    return super.reset();
+    return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -55,8 +57,9 @@ export abstract class CodeBlock extends Block {
   ): void {
     for (const tk of this.chunkTk_a$) {
       if (
-        tk.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk.sntStrtLoc.posGE(drtStopLoc_x)
+        tk.value !== BaseTok.unknown &&
+        (tk.sntStopLoc.posSE(drtStrtLoc_x) ||
+          tk.sntStrtLoc.posGE(drtStopLoc_x))
       ) unrelSnt_sa_x.add(tk);
     }
   }
@@ -70,14 +73,12 @@ export abstract class CodeBlock extends Block {
     return i_ >= 0 ? this.chunkTk_a$[i_].sntFrstLidx_1 : -1;
   }
 
-  override reuseLine(lidx_x: lnum_t): MdextTk[] {
-    const ret: MdextTk[] = [];
+  override reuseLine(lidx_x: lnum_t, snt_a_x: MdextTk[]) {
     for (const tk of this.chunkTk_a$) {
       const lidx = tk.sntFrstLidx_1;
       if (lidx > lidx_x) break;
-      if (lidx === lidx_x) ret.push(tk);
+      if (lidx === lidx_x) snt_a_x.push(tk);
     }
-    return ret;
   }
 }
 /*80--------------------------------------------------------------------------*/
@@ -213,9 +214,10 @@ export class FencedCodeBlock extends CodeBlock {
   }
 
   override reset(): this {
+    super.reset();
     this.#headChunkTk = undefined;
     this.#tailTk = undefined;
-    return super.reset();
+    return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -232,15 +234,17 @@ export class FencedCodeBlock extends CodeBlock {
   ): void {
     let tk_ = this.#headTk;
     if (
-      tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-      tk_.sntStrtLoc.posGE(drtStopLoc_x)
+      tk_.value !== BaseTok.unknown &&
+      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk_.sntStrtLoc.posGE(drtStopLoc_x))
     ) unrelSnt_sa_x.add(tk_);
 
     if (this.#headChunkTk) {
       tk_ = this.#headChunkTk;
       if (
-        tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk_.sntStrtLoc.posGE(drtStopLoc_x)
+        tk_.value !== BaseTok.unknown &&
+        (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+          tk_.sntStrtLoc.posGE(drtStopLoc_x))
       ) unrelSnt_sa_x.add(tk_);
     }
 
@@ -254,8 +258,9 @@ export class FencedCodeBlock extends CodeBlock {
     if (this.#tailTk) {
       tk_ = this.#tailTk;
       if (
-        tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk_.sntStrtLoc.posGE(drtStopLoc_x)
+        tk_.value !== BaseTok.unknown &&
+        (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+          tk_.sntStrtLoc.posGE(drtStopLoc_x))
       ) unrelSnt_sa_x.add(tk_);
     }
   }
@@ -281,18 +286,15 @@ export class FencedCodeBlock extends CodeBlock {
     return super.lidxOf(loc_x);
   }
 
-  override reuseLine(lidx_x: lnum_t): MdextTk[] {
+  override reuseLine(lidx_x: lnum_t, snt_a_x: MdextTk[]) {
     if (this.sntFrstLidx_1 === lidx_x) {
-      return this.#headChunkTk
-        ? [this.#headTk, this.#headChunkTk]
-        : [this.#headTk];
+      snt_a_x.push(this.#headTk);
+      if (this.#headChunkTk) snt_a_x.push(this.#headChunkTk);
+    } else if (this.#tailTk && this.sntLastLidx_1 === lidx_x) {
+      snt_a_x.push(this.#tailTk);
+    } else {
+      super.reuseLine(lidx_x, snt_a_x);
     }
-
-    if (this.#tailTk && this.sntLastLidx_1 === lidx_x) {
-      return [this.#tailTk];
-    }
-
-    return super.reuseLine(lidx_x);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

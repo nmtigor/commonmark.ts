@@ -273,12 +273,18 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * @const @param strtLoc_x
    * @const @param stopLoc_x
    */
-  reset(value_x: T, strtLoc_x?: Loc, stopLoc_x?: Loc) {
+  reset(
+    value_x = BaseTok.unknown as T,
+    strtLoc_x?: Loc,
+    stopLoc_x?: Loc,
+  ): this {
     if (strtLoc_x) this.setStrtLoc(strtLoc_x);
     if (stopLoc_x) this.setStopLoc(stopLoc_x);
     this.value = value_x;
-    this.clrErr();
-    this.stnod_$ = undefined;
+    if (this.isErr) this.clrErr();
+    /* `markPazRegion_$()` needs `stnod_$` of Token in dirty region. */
+    // this.stnod_$ = undefined;
+    return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

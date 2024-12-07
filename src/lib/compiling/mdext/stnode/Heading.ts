@@ -3,14 +3,18 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "@fe-src/global.ts";
-import type { loff_t, uint8 } from "@fe-lib/alias.ts";
+import type { lnum_t, loff_t, uint8 } from "@fe-lib/alias.ts";
 import { assert } from "@fe-lib/util/trace.ts";
+import { INOUT } from "@fe-src/global.ts";
+import { BaseTok } from "../../BaseTok.ts";
+import type { Loc } from "../../Loc.ts";
+import type { SortedSnt_id } from "../../Snt.ts";
+import type { SortedStnod_id } from "../../Stnode.ts";
 import { MdextTk } from "../../Token.ts";
+import { Err } from "../../alias.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
 import { _toHTML } from "../util.ts";
-import type { CtnrBlock } from "./CtnrBlock.ts";
 import { Inline } from "./Inline.ts";
 import { ILoc, InlineBlock } from "./InlineBlock.ts";
 import { Paragraph } from "./Paragraph.ts";
@@ -37,11 +41,6 @@ class HLoc_ extends ILoc {
 /*80--------------------------------------------------------------------------*/
 
 export abstract class Heading extends InlineBlock {
-  override continue(): BlockCont {
-    return BlockCont.break;
-  }
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
-
   abstract get level(): uint8;
 
   #hloc: HLoc_ | undefined;
@@ -81,10 +80,12 @@ export const enum ATXHeadingSt {
 
 /** @final */
 export class ATXHeading extends Heading {
-  #st;
-  get st() {
-    return this.#st;
+  override continue(lexr_x: MdextLexr): BlockCont {
+    return lexr_x.continueATX_$(this);
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  st;
 
   /* #headTk */
   readonly #headTk;
@@ -98,25 +99,25 @@ export class ATXHeading extends Heading {
   setChunk(_x: MdextTk) {
     /*#static*/ if (INOUT) {
       assert(!this.snt_a_$.length);
-      assert(this.#st === ATXHeadingSt.head);
+      assert(this.st === ATXHeadingSt.head);
     }
     this.snt_a_$.push(_x);
-    this.#st = ATXHeadingSt.chunk;
+    this.st = ATXHeadingSt.chunk;
 
     this.invalidateBdry();
   }
   /* ~ */
 
   /* #tailTk */
-  #tailTk?: MdextTk;
+  #tailTk: MdextTk | undefined;
   tailStrt_$: loff_t = 0;
   tailStop_$: loff_t = 0;
   setTail(_x: MdextTk) {
     /*#static*/ if (INOUT) {
-      assert(!this.#tailTk && this.#st !== ATXHeadingSt.tail);
+      assert(!this.#tailTk && this.st !== ATXHeadingSt.tail);
     }
     this.#tailTk = _x;
-    this.#st = ATXHeadingSt.tail;
+    this.st = ATXHeadingSt.tail;
 
     this.invalidateBdry();
   }
@@ -139,7 +140,59 @@ export class ATXHeading extends Heading {
   constructor(headTk_x: MdextTk) {
     super();
     this.#headTk = headTk_x;
-    this.#st = ATXHeadingSt.head;
+    this.st = ATXHeadingSt.head;
+  }
+
+  override reset(): this {
+    super.reset();
+    this.#tailTk = undefined;
+    return this;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  //jjjj TOCLEANUP
+  // protected override closeBlock_impl$(): void {
+  //   if (this.parent?.inCompiling) {
+  //     this.setErr(Err.unexpected_close);
+  //     /* then will be re`lex()` */
+  //   }
+  // }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    let tk_ = this.#headTk;
+    if (
+      tk_.value !== BaseTok.unknown &&
+      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk_.sntStrtLoc.posGE(drtStopLoc_x))
+    ) unrelSnt_sa_x.add(tk_);
+
+    super.gathrUnrelSnt(
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      unrelSn_sa_x,
+      unrelSnt_sa_x,
+    );
+
+    if (this.#tailTk) {
+      tk_ = this.#tailTk;
+      if (
+        tk_.value !== BaseTok.unknown &&
+        (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+          tk_.sntStrtLoc.posGE(drtStopLoc_x))
+      ) unrelSnt_sa_x.add(tk_);
+    }
+  }
+
+  override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {
+    snt_a_x.push(this.#headTk);
+    super.reuseLine(lidx_x, snt_a_x);
+    if (this.#tailTk) snt_a_x.push(this.#tailTk);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -152,11 +205,31 @@ export class ATXHeading extends Heading {
 
 /** @final */
 export class SetextHeading extends Heading {
+  override continue(lexr_x: MdextLexr): BlockCont {
+    return lexr_x.continueSetext_$(this);
+  }
+
+  override appendLine(_x: MdextTk): void {
+    this.snt_a_$.push(_x);
+
+    this.invalidateBdry();
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
   /* #headTk */
-  readonly #tailTk;
+  #tailTk;
   /** @implement */
   get level() {
     return this.#tailTk.sntStrtLoc.ucod === /* "=" */ 0x3D ? 1 : 2;
+  }
+
+  setTail(_x: MdextTk) {
+    /*#static*/ if (INOUT) {
+      assert(this.parent?.inCompiling);
+    }
+    this.#tailTk = _x;
+
+    this.invalidateBdry();
   }
   /* ~ */
 
@@ -179,6 +252,13 @@ export class SetextHeading extends Heading {
     this.#tailTk = tailTk_x;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  protected override closeBlock_impl$(): void {
+    if (this.parent?.inCompiling) {
+      this.setErr(Err.unexpected_close);
+      /* then will be re`lex()` */
+    }
+  }
 
   override reference(lexr_x: MdextLexr): this {
     const iloc = this.iloc;
@@ -216,6 +296,41 @@ export class SetextHeading extends Heading {
       }
     }
     return this;
+  }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    super.gathrUnrelSnt(
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      unrelSn_sa_x,
+      unrelSnt_sa_x,
+    );
+
+    const tk_ = this.#tailTk;
+    if (
+      tk_.value !== BaseTok.unknown &&
+      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk_.sntStrtLoc.posGE(drtStopLoc_x))
+    ) unrelSnt_sa_x.add(tk_);
+  }
+
+  override lidxOf(loc_x: Loc): lnum_t | -1 {
+    if (loc_x.line_$ === this.#tailTk.sntFrstLine) {
+      return this.#tailTk.sntFrstLidx_1;
+    }
+
+    return super.lidxOf(loc_x);
+  }
+
+  override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {
+    if (this.sntLastLidx_1 === lidx_x) snt_a_x.push(this.#tailTk);
+    else super.reuseLine(lidx_x, snt_a_x);
   }
 }
 /*80--------------------------------------------------------------------------*/

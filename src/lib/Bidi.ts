@@ -121,7 +121,7 @@ function getEmbeddingLevels(
   /** init->pdi and pdi->init */
   const isolationPairs = new Map<uint, uint>();
 
-  /* === 3.3.1 The Paragraph_ Level === */
+  /* === 3.3.1 The Paragraph Level === */
 
   /* 3.3.1 P1. Split the text into paragraphs */
   const paragraphs: Paragraph_[] = [];

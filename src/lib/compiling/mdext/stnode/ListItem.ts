@@ -17,6 +17,7 @@ import type { Loc } from "../../Loc.ts";
 import { Inline } from "./Inline.ts";
 import { SortedSnt_id } from "../../Snt.ts";
 import { SortedStnod_id } from "../../Stnode.ts";
+import { BaseTok } from "../../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class ListItem extends CtnrBlock {
@@ -74,7 +75,8 @@ export abstract class ListItem extends CtnrBlock {
   }
 
   override reset(): this {
-    return super.reset();
+    super.reset();
+    return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -92,17 +94,15 @@ export abstract class ListItem extends CtnrBlock {
     );
     const tk_ = this.#mrkrTk;
     if (
-      tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-      tk_.sntStrtLoc.posGE(drtStopLoc_x)
+      tk_.value !== BaseTok.unknown &&
+      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk_.sntStrtLoc.posGE(drtStopLoc_x))
     ) unrelSnt_sa_x.add(tk_);
   }
 
-  override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] {
-    const ret = super.reuseLine(lidx_x) ?? [];
-    if (this.sntFrstLidx_1 === lidx_x) {
-      ret.unshift(this.#mrkrTk);
-    }
-    return ret;
+  override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {
+    if (this.sntFrstLidx_1 === lidx_x) snt_a_x.push(this.#mrkrTk);
+    super.reuseLine(lidx_x, snt_a_x);
   }
 
   /** @implement */

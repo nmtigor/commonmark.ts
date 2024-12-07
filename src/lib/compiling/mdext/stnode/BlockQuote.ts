@@ -17,6 +17,7 @@ import { CtnrBlock } from "./CtnrBlock.ts";
 import type { Inline } from "./Inline.ts";
 import { ListItem } from "./ListItem.ts";
 import { isSpaceOrTab } from "@fe-lib/util/general.ts";
+import { BaseTok } from "../../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -52,8 +53,9 @@ export class BlockQuote extends CtnrBlock {
   }
 
   override reset(): this {
+    super.reset();
     this.#mrkrTk_a.length = 0;
-    return super.reset();
+    return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -71,8 +73,9 @@ export class BlockQuote extends CtnrBlock {
     );
     for (const tk of this.#mrkrTk_a) {
       if (
-        tk.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk.sntStrtLoc.posGE(drtStopLoc_x)
+        tk.value !== BaseTok.unknown &&
+        (tk.sntStopLoc.posSE(drtStrtLoc_x) ||
+          tk.sntStrtLoc.posGE(drtStopLoc_x))
       ) unrelSnt_sa_x.add(tk);
     }
   }
@@ -86,11 +89,9 @@ export class BlockQuote extends CtnrBlock {
     return i_ >= 0 ? this.#mrkrTk_a[i_].sntFrstLidx_1 : -1;
   }
 
-  override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] {
-    return [
-      this.#mrkrTk_a[lidx_x - this.sntFrstLidx_1],
-      ...super.reuseLine(lidx_x) ?? [],
-    ];
+  override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {
+    snt_a_x.push(this.#mrkrTk_a[lidx_x - this.sntFrstLidx_1]);
+    super.reuseLine(lidx_x, snt_a_x);
   }
 
   /** @implement */

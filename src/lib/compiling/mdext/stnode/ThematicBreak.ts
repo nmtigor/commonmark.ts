@@ -9,6 +9,7 @@ import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { SortedStnod_id } from "../../Stnode.ts";
 import type { lnum_t } from "@fe-lib/alias.ts";
+import { BaseTok } from "../../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -41,8 +42,9 @@ export class ThematicBreak extends Block {
   ): void {
     const tk_ = this.#tk;
     if (
-      tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-      tk_.sntStrtLoc.posGE(drtStopLoc_x)
+      tk_.value !== BaseTok.unknown &&
+      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
+        tk_.sntStrtLoc.posGE(drtStopLoc_x))
     ) unrelSnt_sa_x.add(tk_);
   }
 
@@ -50,8 +52,8 @@ export class ThematicBreak extends Block {
     return loc_x.line_$ === this.#tk.sntFrstLine ? this.#tk.sntFrstLidx_1 : -1;
   }
 
-  override reuseLine(_lidx_x: lnum_t): MdextTk[] {
-    return [this.#tk];
+  override reuseLine(_lidx_x: lnum_t, snt_a_x: MdextTk[]) {
+    snt_a_x.push(this.#tk);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

@@ -3,15 +3,16 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { assert, fail } from "@fe-lib/util/trace.ts";
+import type { lnum_t } from "@fe-lib/alias.ts";
+import { assert, fail, out } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
-import { MdextSN } from "../MdextSN.ts";
-import type { MdextTk } from "../../Token.ts";
-import type { MdextLexr } from "../MdextLexr.ts";
-import type { CtnrBlock } from "./CtnrBlock.ts";
-import { BlockCont } from "../alias.ts";
-import type { lnum_t, uint } from "@fe-lib/alias.ts";
 import type { Loc } from "../../Loc.ts";
+import type { MdextTk } from "../../Token.ts";
+import { Err } from "../../alias.ts";
+import type { MdextLexr } from "../MdextLexr.ts";
+import { MdextSN } from "../MdextSN.ts";
+import { BlockCont } from "../alias.ts";
+import type { CtnrBlock } from "./CtnrBlock.ts";
 import type { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -53,6 +54,14 @@ export abstract class Block extends MdextSN {
     return this.#complete;
   }
 
+  /**
+   * For compiling only
+   */
+  #oldLastLidx: lnum_t | -1 = -1;
+  get oldLastLidx() {
+    return this.#oldLastLidx;
+  }
+
   /** @final */
   reuse(): this {
     this.#open = true;
@@ -60,21 +69,39 @@ export abstract class Block extends MdextSN {
     this.invalidateBdry();
     return this;
   }
+  /**
+   * Will be invoked FIRSTLY by subclasses
+   */
   reset(): this {
+    this.#oldLastLidx = this.parent?.isCompiling(this)
+      ? this.sntLastLidx_1
+      : -1;
     return this.reuse();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  protected closeBlock_impl$() {}
-  /** @final */
-  closeBlock(): CtnrBlock {
+  protected closeBlock_impl$() {
+  }
+  /**
+   * @final
+   * @const @param curLidx_x
+   * @const @param _x
+   */
+  @out((_, self: Block, args) => {
+    if (!args[1]) assert(!self.isErr);
+  })
+  closeBlock(curLidx_x: lnum_t, _x?: "may_err"): CtnrBlock {
     if (this.#complete) return this.parent!;
 
     /*#static*/ if (INOUT) {
       assert(this.#open);
       assert(this.parent_$);
     }
-    this.closeBlock_impl$();
+    if (curLidx_x < this.oldLastLidx) {
+      this.setErr(Err.unexpected_close);
+    } else {
+      this.closeBlock_impl$();
+    }
     this.#open = false;
     return this.parent!;
   }
@@ -112,9 +139,8 @@ export abstract class Block extends MdextSN {
 
   /**
    * @const @param _lidx_x already valid, i.e., within the line-range of `this`
+   * @out @param _snt_a_x
    */
-  reuseLine(_lidx_x?: lnum_t): (MdextTk | Inline)[] | undefined {
-    return undefined;
-  }
+  reuseLine(_lidx_x: lnum_t, _snt_a_x: (MdextTk | Inline)[]): void {}
 }
 /*80--------------------------------------------------------------------------*/

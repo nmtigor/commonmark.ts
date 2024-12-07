@@ -216,17 +216,22 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   // }
   /**
    * [`strtTk_x`, `stopTk_x`)
+   * @headconst @param fn_x
    * @headconst @param strtTk_x
    * @headconst @param stopTk_x
    */
-  saveRanvalForw_$(strtTk_x?: Token<T>, stopTk_x?: Token<T>): void {
+  batchForw_$(
+    fn_x: (tk: Token<T>) => void,
+    strtTk_x?: Token<T>,
+    stopTk_x?: Token<T>,
+  ): void {
     if (!strtTk_x) return;
 
     let tk_: Token<T> | undefined = strtTk_x;
     const VALVE = 10_000;
     let valve = VALVE;
     while (tk_ && tk_ !== stopTk_x && --valve) {
-      tk_.saveRanval_$();
+      fn_x(tk_);
       tk_ = tk_.nextToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
@@ -234,15 +239,19 @@ export abstract class Lexr<T extends Tok = BaseTok> {
       assert(tk_);
     }
   }
-  /** @see {@linkcode saveRanvalForw_$()} */
-  saveRanvalBack_$(strtTk_x?: Token<T>, stopTk_x?: Token<T>): void {
+  /** @see {@linkcode batchForw_$()} */
+  batchBack_$(
+    fn_x: (tk: Token<T>) => void,
+    strtTk_x?: Token<T>,
+    stopTk_x?: Token<T>,
+  ): void {
     if (!strtTk_x) return;
 
     let tk_: Token<T> | undefined = strtTk_x;
     const VALVE = 10_000;
     let valve = VALVE;
     while (tk_ && tk_ !== stopTk_x && --valve) {
-      tk_.saveRanval_$();
+      fn_x(tk_);
       tk_ = tk_.prevToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
@@ -380,7 +389,11 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     //   this.stopLexTk$ = this.stopLexTk$.nextToken_$;
     // }
 
-    this.saveRanvalForw_$(this.strtLexTk$.nextToken_$, this.stopLexTk$);
+    this.batchForw_$(
+      (tk) => tk.reset().saveRanval_$(),
+      this.strtLexTk$.nextToken_$,
+      this.stopLexTk$,
+    );
     this.sufmark$();
     return this;
   }
@@ -605,9 +618,8 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     if (!retTk_x || retTk_x === this.stopLexTk$) {
       retTk_x = new Token(this, new TokRan(this.curLoc$.dup()));
     } else if (retTk_x instanceof Token) {
-      retTk_x.clrErr();
-      retTk_x.value = BaseTok.unknown as T;
-      retTk_x.setStrtLoc(this.curLoc$);
+      retTk_x //jjjj TOCLEANUP.reset()
+        .setStrtLoc(this.curLoc$);
     }
     return this.scan_impl$(retTk_x);
   }

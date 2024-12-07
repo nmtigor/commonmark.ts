@@ -17,7 +17,7 @@ import type { LexdInfo } from "../../Lexr.ts";
 import type { Loc } from "../../Loc.ts";
 import { TokRan } from "../../TokRan.ts";
 import { TokLoc } from "../../TokLoc.ts";
-import { MdextTk } from "../../Token.ts";
+import { MdextTk, Token } from "../../Token.ts";
 import type { BrktOpen_LI, EmphDelim_LI, MdextLexr } from "../MdextLexr.ts";
 import { MdextTok } from "../MdextTok.ts";
 import { Autolink } from "./Autolink.ts";
@@ -32,6 +32,7 @@ import type { TokenSN } from "./TokenSN.ts";
 import { Linkdef } from "./Linkdef.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { SortedStnod_id } from "../../Stnode.ts";
+import { BaseTok } from "../../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**
@@ -493,8 +494,9 @@ export abstract class InlineBlock extends Block {
   }
 
   override reset(): this {
+    super.reset();
     this.snt_a_$.length = 0;
-    return super.reset();
+    return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -825,8 +827,9 @@ export abstract class InlineBlock extends Block {
   ): void {
     for (const snt of this.snt_a_$) {
       if (
-        snt.sntStopLoc.posSE(drtStrtLoc_x) ||
-        snt.sntStrtLoc.posGE(drtStopLoc_x)
+        (!(snt instanceof Token) || snt.value !== BaseTok.unknown) &&
+        (snt.sntStopLoc.posSE(drtStrtLoc_x) ||
+          snt.sntStrtLoc.posGE(drtStopLoc_x))
       ) unrelSnt_sa_x.add(snt);
     }
   }
@@ -840,14 +843,12 @@ export abstract class InlineBlock extends Block {
     return i_ >= 0 ? this.snt_a_$[i_].sntFrstLidx_1 : -1;
   }
 
-  override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] {
-    const ret: (MdextTk | Inline)[] = [];
+  override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {
     for (const snt of this.snt_a_$) {
       const lidx = snt.sntFrstLidx_1;
       if (lidx > lidx_x) break;
-      if (lidx === lidx_x) ret.push(snt);
+      if (lidx === lidx_x) snt_a_x.push(snt);
     }
-    return ret;
   }
 }
 /*80--------------------------------------------------------------------------*/

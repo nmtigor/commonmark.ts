@@ -190,8 +190,16 @@ export abstract class Pazr<T extends Tok = BaseTok> {
       assert(this.strtPazTk$.posSE(strtTk_x));
       assert(this.stopPazTk$.posGE(stopTk_x));
     }
-    this.lexr$.saveRanvalBack_$(strtTk_x, this.strtPazTk$);
-    this.lexr$.saveRanvalForw_$(stopTk_x, this.stopPazTk$);
+    this.lexr$.batchBack_$(
+      (tk) => tk.saveRanval_$(),
+      strtTk_x,
+      this.strtPazTk$,
+    );
+    this.lexr$.batchForw_$(
+      (tk) => tk.saveRanval_$(),
+      stopTk_x,
+      this.stopPazTk$,
+    );
     this.invalidateBdries$();
   }
 

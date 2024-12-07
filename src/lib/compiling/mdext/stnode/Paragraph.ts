@@ -15,6 +15,7 @@ import { Inline } from "./Inline.ts";
 import { ILoc, InlineBlock } from "./InlineBlock.ts";
 import { List } from "./List.ts";
 import type { int } from "@fe-lib/alias.ts";
+import { Err } from "../../alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */

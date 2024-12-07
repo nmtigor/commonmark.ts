@@ -34,14 +34,14 @@ export abstract class CtnrBlock extends Block {
   #iCurChild: -1 | uint = -1;
   //jjjj TOCLEANUP
   // private set _iCurChild(_x: -1 | uint) {
-  //   this.#wasCompiling = this.isCompiling;
+  //   this.#wasCompiling = this.inCompiling;
   //   this.#iCurChild = _x;
   // }
   override get curChild(): Block | undefined {
     return this.children.at(this.#iCurChild);
   }
 
-  compiling(child_x: Block | null): void {
+  compil(child_x: Block | null): void {
     if (child_x) {
       /* `#iCurChild` won't change to other non-negatives after setting to a
       non-negative. */
@@ -53,8 +53,12 @@ export abstract class CtnrBlock extends Block {
     }
   }
 
-  get isCompiling() {
+  get inCompiling() {
     return this.#iCurChild >= 0;
+  }
+
+  isCompiling(child_x: Block): boolean {
+    return this.inCompiling && this.curChild === child_x;
   }
 
   //jjjj TOCLEANUP
@@ -70,11 +74,10 @@ export abstract class CtnrBlock extends Block {
   }
 
   override reset(): this {
+    super.reset();
     this.children.length = 0;
     this.#iCurChild = -1;
-    //jjjj TOCLEANUP
-    // this.#wasCompiling = false;
-    return super.reset();
+    return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -160,16 +163,15 @@ export abstract class CtnrBlock extends Block {
     }
   }
 
-  override reuseLine(lidx_x: lnum_t): (MdextTk | Inline)[] | undefined {
+  override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {
     for (const c of this.children) {
       const frstLidx = c.sntFrstLidx_1;
       const lastLidx = c.sntLastLidx_1;
       if (frstLidx <= lidx_x && lidx_x <= lastLidx) {
-        return c.reuseLine(lidx_x);
+        return c.reuseLine(lidx_x, snt_a_x);
       }
       if (frstLidx > lidx_x) break;
     }
-    return undefined;
   }
 
   /**
