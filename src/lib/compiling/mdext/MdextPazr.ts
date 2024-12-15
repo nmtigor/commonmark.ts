@@ -67,9 +67,9 @@ export class MdextPazr extends Pazr<MdextTok> {
       if (drtSn.parent_$ instanceof ListItem) {
         this.enlargeBdriesTo_$(drtSn.parent_$);
       }
-    } else {
       //jjjj TOCLEANUP
-      // this.#pazr.maximizeBdries_$();
+      // } else {
+      //   this.#pazr.maximizeBdries_$();
     }
 
     const drtStopLoc = this.tailBdryClrTk_$!.sntStrtLoc;

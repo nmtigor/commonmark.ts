@@ -80,8 +80,7 @@ export abstract class Block extends MdextSN {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  protected closeBlock_impl$() {
-  }
+  protected closeBlock_impl$() {}
   /**
    * @final
    * @const @param curLidx_x

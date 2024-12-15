@@ -253,16 +253,17 @@ export class SetextHeading extends Heading {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  protected override closeBlock_impl$(): void {
-    if (this.parent?.inCompiling) {
-      this.setErr(Err.unexpected_close);
-      /* then will be re`lex()` */
-    }
-  }
+  //jjjj TOCLEANUP
+  // protected override closeBlock_impl$(): void {
+  //   if (this.parent?.inCompiling) {
+  //     this.setErr(Err.unexpected_close);
+  //     /* then will be re`lex()` */
+  //   }
+  // }
 
   override reference(lexr_x: MdextLexr): this {
     const iloc = this.iloc;
-    iloc.reset_O(this.snt_a_$[0] as MdextTk);
+    iloc.reset_O(this.snt_a_$[0]);
 
     const VALVE = 10_000;
     let valve = VALVE;

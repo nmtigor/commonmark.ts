@@ -31,6 +31,7 @@ import { CtnrBlock } from "./stnode/CtnrBlock.ts";
 import { HTMLBlock, HTMLMode } from "./stnode/HTMLBlock.ts";
 import { HTMLInline } from "./stnode/HTMLInline.ts";
 import { ATXHeading, ATXHeadingSt, SetextHeading } from "./stnode/Heading.ts";
+import type { Inline } from "./stnode/Inline.ts";
 import type { ILoc } from "./stnode/InlineBlock.ts";
 import { LinkMode } from "./stnode/Link.ts";
 import { BulletList, List, OrderdList } from "./stnode/List.ts";
@@ -46,7 +47,7 @@ import {
   lastNonblankIn,
   lastNonhashIn,
 } from "./util.ts";
-import type { Inline } from "./stnode/Inline.ts";
+import type { Linkdef } from "./stnode/Linkdef.ts";
 /*80--------------------------------------------------------------------------*/
 
 const enum Ctx_ {
@@ -216,20 +217,13 @@ export class MdextLexr extends Lexr<MdextTok> {
     this.reachRigtBdry$() === LocCompared.yes
       ? this.stopLexTk$
       : new Token(this, new TokRan(this.curLoc$.dup()));
-  #outTk: MdextTk | undefined;
-  private get _outTk(): MdextTk {
+  private _outTk: MdextTk | undefined;
+  private get _outTk_1(): MdextTk {
     //kkkk optimize
-    return this.#outTk ??= this.#genOutTk();
+    return this._outTk ??= this.#genOutTk();
   }
 
-  readonly refmap: Record<
-    string,
-    {
-      labelTk_a: MdextTk[];
-      destTk_a: MdextTk[];
-      titleTk_a: MdextTk[] | undefined;
-    }
-  > = {};
+  readonly linkdef_m_$ = new Map<string, Linkdef>();
 
   _enableTags = true;
 
@@ -240,9 +234,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     super(bufr_x);
     this.#poc = this.curLoc$.dup();
   }
-  /**
-   * @headconst @param bufr_x
-   */
+  /** @headconst @param bufr_x */
   static create(bufr_x: MdextBufr) {
     const lexr = new MdextLexr(bufr_x);
     const pazr = new MdextPazr(bufr_x, lexr);
@@ -262,7 +254,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     this.#pazr.drtSn_$ = undefined;
     this.#tip = this.#pazr.drtSn;
 
-    (this as any).refmap = {}; //!
+    this.linkdef_m_$.clear();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -302,9 +294,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     return drtSn;
   }
 
-  /**
-   * Reassign `strtLexTk$`, `stopLexTk$`, and assign `curLoc$`
-   */
+  /** Reassign `strtLexTk$`, `stopLexTk$`, and assign `curLoc$` */
   @out((_, self: MdextLexr) => {
     assert(self.strtLexTk$ === self.pazr_$.strtPazTk_$);
     assert(self.stopLexTk$ === self.pazr_$.stopPazTk_$);
@@ -395,40 +385,98 @@ export class MdextLexr extends Lexr<MdextTok> {
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
-   * Assign `#outTk` a `MdextTok.chunk` token up from `curLoc$` to eol\
-   * Move `curLoc$` to eol
+   * For compiling only\
+   * Based on `curLoc$`, which is primaryconst if return false\
+   * Assign `_outTk` if return true
+   * @const @param stop_y
    */
-  #chunkEnd(): void {
+  @out((ret, self: MdextLexr) => {
+    if (ret) assert(self._outTk);
+  })
+  private _reuseChunk(stop_x = this.curLoc$.line_$.uchrLen): boolean {
+    const snt_a: (MdextTk | Inline)[] = [];
+    const loc = this.curLoc$;
+    const ln_ = loc.line_$;
     for (const snt of this.unrelSnt_sa_$) {
-      if (snt.sntStrtLoc.posE(this.curLoc$)) {
-        this.unrelSnt_sa_$.delete(snt);
-        if (snt.sntStopLoc.atEol) {
-          //kkkk `snt` can be a `thematic_break` Token. But is this a problem?
-          this.reusdSnt_sa_$.add(snt);
-          this.curLoc$.toEol();
-          this.#outTk = this.scanBypassSnt$(snt as MdextTk | Inline);
-          return;
+      if (
+        loc.posSE(snt.sntStrtLoc) &&
+        snt.sntFrstLine === ln_ && snt.sntStopLoff <= stop_x
+      ) {
+        let i_ = snt_a.length;
+        for (; i_--;) {
+          if (snt_a[i_].sntStopLoc.posSE(snt.sntStrtLoc)) {
+            snt_a.splice(i_ + 1, 0, snt as MdextTk | Inline);
+          }
         }
-
-        this.abadnSnt_sa_$.add(snt);
-        break;
+        if (i_ < 0) snt_a.unshift(snt as MdextTk | Inline);
       }
     }
 
-    this._outTk.setStrtLoc(this.curLoc$);
-    this.curLoc$.toEol();
-    this.setTok$(MdextTok.chunk, this.#outTk!);
+    let ret = false;
+    if (snt_a.at(0)?.sntStrtLoc.posE(this.curLoc$)) {
+      ret = this.#pazr.tailClr(this.curLoc$);
+      if (!ret) {
+        using poc = this.curLoc$.using();
+        poc.loff = stop_x;
+        ret = this.#pazr.headClr(poc);
+      }
+    }
+
+    this.unrelSnt_sa_$.delete_O(snt_a);
+    if (ret) {
+      this.reusdSnt_sa_$.add_O(snt_a);
+      this.curLoc$.loff = stop_x;
+      this._outTk = this.scanBypassSnt$(...snt_a);
+    } else {
+      this.abadnSnt_sa_$.add_O(snt_a);
+    }
+    return ret;
   }
 
   /**
-   * Based on `curLoc$`. Assign `#outTk`. Move `curLoc$` to eol.
+   * Assign `_outTk` a `MdextTok.chunk` token up from `curLoc$` to eol\
+   * Move `curLoc$` to eol
+   */
+  #chunkEnd(): void {
+    //jjjj TOCLEANUP
+    // for (const snt of this.unrelSnt_sa_$) {
+    //   if (snt.sntStrtLoc.posE(this.curLoc$)) {
+    //     this.unrelSnt_sa_$.delete(snt);
+    //     if (snt.sntStopLoc.atEol) {
+    //       //kkkk should support `(MdextTk | Inline)[]`
+    //       //kkkk `snt` can be a `thematic_break` Token. But is this a problem?
+    //       this.reusdSnt_sa_$.add(snt);
+    //       this.curLoc$.toEol();
+    //       this._outTk = this.scanBypassSnt$(snt as MdextTk | Inline);
+    //       return;
+    //     }
+
+    //     this.abadnSnt_sa_$.add(snt);
+    //     break;
+    //   }
+    // }
+    if (this._reuseChunk()) return;
+
+    this._outTk_1.setStrtLoc(this.curLoc$);
+    this.curLoc$.toEol();
+    this.setTok$(MdextTok.chunk, this._outTk!);
+  }
+
+  /**
+   * `sn_x` can be lengthened.\
+   * If lengthened, MUST be "may_fail".
+   *
+   * If no change of `sn_x`, `sn_x.parent` can still be a new one, in which case
+   * this is used to correct `sn_x`'s token chain.
+   *
+   * Based on `curLoc$`. Assign `_outTk`. Move `curLoc$` to eol.
    * @headconst @param sn_x
-   * @const @param force_x
+   * @const @param _x
    */
   @out((ret, _, args) => {
-    if (args[1]) assert(ret);
+    if (!args[1]) assert(ret);
   })
-  private _reuseLine(sn_x: Block, _force_x?: "force"): boolean {
+  private _reuseLine(sn_x: Block, _x?: "may_fail"): boolean {
     const lidx = sn_x.lidxOf(this.curLoc$);
     if (lidx < 0) return false;
 
@@ -436,14 +484,12 @@ export class MdextLexr extends Lexr<MdextTok> {
     sn_x.reuseLine(lidx as lnum_t, snt_a);
     if (snt_a.length) {
       this.curLoc$.toEol();
-      this.#outTk = this.scanBypassSnt$(...snt_a);
+      this._outTk = this.scanBypassSnt$(...snt_a);
     }
     return !!snt_a.length;
   }
 
-  /**
-   * @const `#poc`
-   */
+  /** @const `#poc` */
   #blockStrtCheckr_a: BlockStrtCheckr_[] = [
     /** Block quote */
     () => {
@@ -474,10 +520,10 @@ export class MdextLexr extends Lexr<MdextTok> {
             snLastLidx !== drtFrstLidx && snLastLidx !== drtFrstLidx - 1
           ) {
             this.curLoc$.become(sn.sntStopLoc);
-            this.#outTk = this.scanBypassSnt$(sn);
+            this._outTk = this.scanBypassSnt$(sn);
             sn_ = sn.ensureAllBdry();
           } else {
-            this._reuseLine(sn, "force");
+            this._reuseLine(sn);
             sn_ = sn.reuse();
           }
           this._addChild(sn_);
@@ -495,19 +541,19 @@ export class MdextLexr extends Lexr<MdextTok> {
           this.unrelSnt_sa_$.delete(snt);
           this.reusdSnt_sa_$.add(snt);
           this.curLoc$.become(snt.sntStopLoc);
-          this.#outTk = snt;
+          this._outTk = snt;
           break;
         }
       }
       /* ~ */
 
-      if (!this.#outTk) {
-        this._outTk.setStrtLoc(this.#poc);
+      if (!this._outTk) {
+        this._outTk_1.setStrtLoc(this.#poc);
         this.curLoc$.loff = this.#poc.loff_$ + 1;
-        this.setTok$(MdextTok.block_quote_marker, this.#outTk!);
+        this.setTok$(MdextTok.block_quote_marker, this._outTk!);
       }
 
-      this._addChild(new BlockQuote(this.#outTk!));
+      this._addChild(new BlockQuote(this._outTk!));
       /* optional following space */
       if (isSpaceOrTab(this.curLoc$.ucod)) {
         this.curLoc$.forwnCol(1);
@@ -538,10 +584,10 @@ export class MdextLexr extends Lexr<MdextTok> {
           let sn_: ATXHeading;
           if (this.#tip.isAncestorOf(sn)) {
             this.curLoc$.become(sn.sntStopLoc);
-            this.#outTk = this.scanBypassSnt$(sn);
+            this._outTk = this.scanBypassSnt$(sn);
             sn_ = sn.ensureAllBdry();
           } else {
-            this._reuseLine(sn, "force");
+            this._reuseLine(sn);
             sn_ = sn.reuse();
           }
           this._addChild(sn_);
@@ -561,7 +607,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           if (isSpaceOrTab(ucod) || isLFOr0(ucod)) {
             this.reusdSnt_sa_$.add(snt);
             this.curLoc$.become(snt.sntStopLoc);
-            this.#outTk = snt;
+            this._outTk = snt;
           } else {
             this.abadnSnt_sa_$.add(snt);
           }
@@ -585,16 +631,16 @@ export class MdextLexr extends Lexr<MdextTok> {
         ucod = poc.ucod;
         return isSpaceOrTab(ucod) || isLFOr0(ucod);
       };
-      if (!this.#outTk && !lexATXHead()) return BlockStrt_.continue;
+      if (!this._outTk && !lexATXHead()) return BlockStrt_.continue;
 
       this._closeUnmatchedBlocks();
 
-      if (!this.#outTk) {
-        this._outTk.setStrtLoc(this.#poc);
+      if (!this._outTk) {
+        this._outTk_1.setStrtLoc(this.#poc);
         this.curLoc$.become(poc);
-        this.setTok$(MdextTok.atx_heading, this.#outTk!);
+        this.setTok$(MdextTok.atx_heading, this._outTk!);
       }
-      this._addChild(new ATXHeading(this.#outTk!));
+      this._addChild(new ATXHeading(this._outTk!));
 
       this.#ctx = Ctx_.ATXHeading;
       return BlockStrt_.matched;
@@ -628,10 +674,10 @@ export class MdextLexr extends Lexr<MdextTok> {
             snLastLidx !== drtFrstLidx
           ) {
             this.curLoc$.become(sn.sntStopLoc);
-            this.#outTk = this.scanBypassSnt$(sn);
+            this._outTk = this.scanBypassSnt$(sn);
             sn_ = sn.ensureAllBdry();
           } else {
-            this._reuseLine(sn, "force");
+            this._reuseLine(sn);
             sn_ = sn.reuse();
           }
           this._addChild(sn_);
@@ -666,7 +712,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           if (validInfoString(this.#poc.ucod)) {
             this.reusdSnt_sa_$.add(snt);
             this.curLoc$.become(snt.sntStopLoc);
-            this.#outTk = snt;
+            this._outTk = snt;
           } else {
             this.abadnSnt_sa_$.add(snt);
           }
@@ -691,17 +737,17 @@ export class MdextLexr extends Lexr<MdextTok> {
         poc.loff = i_;
         return validInfoString(ucod_0);
       };
-      if (!this.#outTk && !lexFencedCBHead()) return BlockStrt_.continue;
+      if (!this._outTk && !lexFencedCBHead()) return BlockStrt_.continue;
 
       this._closeUnmatchedBlocks();
 
-      if (!this.#outTk) {
-        this._outTk.setStrtLoc(this.#poc);
+      if (!this._outTk) {
+        this._outTk_1.setStrtLoc(this.#poc);
         this.curLoc$.become(poc);
-        this.setTok$(MdextTok.code_fence, this.#outTk!);
-        this.#outTk!.lexdInfo = new FencedCBHead_LI(this.#indent);
+        this.setTok$(MdextTok.code_fence, this._outTk!);
+        this._outTk!.lexdInfo = new FencedCBHead_LI(this.#indent);
       }
-      this._addChild(new FencedCodeBlock(this.#outTk!));
+      this._addChild(new FencedCodeBlock(this._outTk!));
 
       this.#ctx = Ctx_.FencedCodeBlock;
       return BlockStrt_.matched;
@@ -713,6 +759,66 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
 
       let mode!: HTMLMode;
+
+      /* In case compiling ... */
+      for (const sn of this.#pazr.unrelSn_sa_$) {
+        if (sn instanceof HTMLBlock && this.#poc.posE(sn.sntStrtLoc)) {
+          this.#pazr.unrelSn_sa_$.delete(sn);
+          this.#pazr.takldSn_sa_$.add(sn);
+
+          /* This is the case of newly added at the end of `sn`, so `sn` can
+          not be reused, but Token in `sn` may still be reused. */
+          if (!sn.sntStopLoc.atEol) {
+            this.#gathrUnrelSntIn(sn);
+            break;
+          }
+
+          this._closeUnmatchedBlocks();
+
+          let sn_: HTMLBlock;
+          const snLastLidx = sn.sntLastLidx_1;
+          const drtFrstLidx = this.#drtFrstLine.lidx_1;
+          if (
+            this.#tip.isAncestorOf(sn) &&
+            snLastLidx !== drtFrstLidx
+          ) {
+            this.curLoc$.become(sn.sntStopLoc);
+            this._outTk = this.scanBypassSnt$(sn);
+            sn_ = sn.ensureAllBdry();
+          } else {
+            this._reuseLine(sn);
+            sn_ = sn.reuse();
+          }
+          this._addChild(sn_);
+
+          this.#toNextLine();
+          return BlockStrt_.matched;
+        }
+      }
+
+      let hasHead = false;
+      for (const snt of this.unrelSnt_sa_$) {
+        if (
+          snt.sntStrtLoc.posE(this.#poc) &&
+          snt instanceof MdextTk && snt.value === MdextTok.chunk
+        ) {
+          if (
+            snt.sntStopLoc.atEol &&
+            snt.lexdInfo instanceof RawHTML_LI &&
+            snt.lexdInfo.mode && snt.lexdInfo.hasHead
+          ) {
+            mode = snt.lexdInfo.mode;
+            hasHead = true;
+            /* reuse `snt` not here, but later by `#chunkEnd()` */
+          } else {
+            this.abadnSnt_sa_$.add(snt);
+            hasHead = false;
+          }
+          break;
+        }
+      }
+      /* ~ */
+
       /** reHtmlBlockOpen */
       const lexHTMLBlockHead = (): boolean => {
         const s_ = this.#poc.getText();
@@ -738,7 +844,7 @@ export class MdextLexr extends Lexr<MdextTok> {
 
         return false;
       };
-      if (!lexHTMLBlockHead()) return BlockStrt_.continue;
+      if (!hasHead && !lexHTMLBlockHead()) return BlockStrt_.continue;
 
       this._closeUnmatchedBlocks();
 
@@ -770,7 +876,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           if (blankEnd(snt.sntStopLoc)) {
             this.reusdSnt_sa_$.add(snt);
             this.curLoc$.become(snt.sntStopLoc);
-            this.#outTk = snt;
+            this._outTk = snt;
           } else {
             this.abadnSnt_sa_$.add(snt);
           }
@@ -794,7 +900,7 @@ export class MdextLexr extends Lexr<MdextTok> {
         poc.loff = i_;
         return blankEnd(poc);
       };
-      if (!this.#outTk && !lexSetextTail()) return BlockStrt_.continue;
+      if (!this._outTk && !lexSetextTail()) return BlockStrt_.continue;
 
       this._closeUnmatchedBlocks();
 
@@ -802,15 +908,15 @@ export class MdextLexr extends Lexr<MdextTok> {
         ctnr_x.removeSelf();
       }
 
-      if (!this.#outTk) {
-        this._outTk.setStrtLoc(this.#poc);
+      if (!this._outTk) {
+        this._outTk_1.setStrtLoc(this.#poc);
         this.curLoc$.become(poc);
-        this.setTok$(MdextTok.setext_heading, this.#outTk!);
+        this.setTok$(MdextTok.setext_heading, this._outTk!);
       }
       if (ctnr_x instanceof Paragraph) {
-        this._addChild(new SetextHeading(ctnr_x, this.#outTk!));
+        this._addChild(new SetextHeading(ctnr_x, this._outTk!));
       } else {
-        ctnr_x.setTail(this.#outTk!);
+        ctnr_x.setTail(this._outTk!);
       }
 
       this.#toNextLine();
@@ -846,10 +952,10 @@ export class MdextLexr extends Lexr<MdextTok> {
             snLastLidx !== drtFrstLidx
           ) {
             this.curLoc$.become(sn.sntStopLoc);
-            this.#outTk = this.scanBypassSnt$(sn);
+            this._outTk = this.scanBypassSnt$(sn);
             sn_ = sn.ensureAllBdry();
           } else {
-            this._reuseLine(sn, "force");
+            this._reuseLine(sn);
             sn_ = sn.reuse();
           }
           this._addChild(sn_);
@@ -869,7 +975,7 @@ export class MdextLexr extends Lexr<MdextTok> {
             this.reusdSnt_sa_$.add(snt);
             poc.loff = snt.sntStopLoff;
             this.curLoc$.become(snt.sntStopLoc);
-            this.#outTk = snt;
+            this._outTk = snt;
           } else {
             this.abadnSnt_sa_$.add(snt);
           }
@@ -897,24 +1003,24 @@ export class MdextLexr extends Lexr<MdextTok> {
         poc.loff = i_;
         return i_ === iI && count >= 3;
       };
-      if (!this.#outTk && !lexThematicBreak()) return BlockStrt_.continue;
+      if (!this._outTk && !lexThematicBreak()) return BlockStrt_.continue;
 
       this._closeUnmatchedBlocks();
       // if (this._relex) return BlockStrt_.matched;
 
-      if (!this.#outTk) {
-        this._outTk.setStrtLoc(this.#poc);
+      if (!this._outTk) {
+        this._outTk_1.setStrtLoc(this.#poc);
         this.curLoc$.become(poc);
-        this.setTok$(MdextTok.thematic_break, this.#outTk!);
+        this.setTok$(MdextTok.thematic_break, this._outTk!);
       }
       //jjjj TOCLEANUP
       // if (this.#compilingTip) {
-      //   this.unrelSnt_sa_$.add(this.#outTk!);
+      //   this.unrelSnt_sa_$.add(this._outTk!);
       //   this.#toRelex();
       // } else {
-      //   this._addChild(new ThematicBreak(this.#outTk!));
+      //   this._addChild(new ThematicBreak(this._outTk!));
       // }
-      this._addChild(new ThematicBreak(this.#outTk!));
+      this._addChild(new ThematicBreak(this._outTk!));
 
       this.#toNextLine();
       return BlockStrt_.matched;
@@ -951,10 +1057,10 @@ export class MdextLexr extends Lexr<MdextTok> {
             snLastLidx !== drtFrstLidx
           ) {
             this.curLoc$.become(sn.sntStopLoc);
-            this.#outTk = this.scanBypassSnt$(sn);
+            this._outTk = this.scanBypassSnt$(sn);
             sn_ = sn.ensureAllBdry();
           } else {
-            this._reuseLine(sn, "force");
+            this._reuseLine(sn);
             sn_ = sn.reuse();
           }
           this._addChild(sn_);
@@ -992,7 +1098,7 @@ export class MdextLexr extends Lexr<MdextTok> {
             sign = poc.peek_ucod(-1);
             mrkrSize = poc.loff_$ - this.#poc.loff_$;
             this.curLoc$.become(poc);
-            this.#outTk = snt;
+            this._outTk = snt;
           } else {
             this.abadnSnt_sa_$.add(snt);
           }
@@ -1032,19 +1138,19 @@ export class MdextLexr extends Lexr<MdextTok> {
         poc.forw();
         return validListMarker();
       };
-      if (!this.#outTk && !lexListItemMrkr()) return BlockStrt_.continue;
+      if (!this._outTk && !lexListItemMrkr()) return BlockStrt_.continue;
 
       this._closeUnmatchedBlocks();
 
-      if (!this.#outTk) {
+      if (!this._outTk) {
         mrkrSize = poc.loff_$ - this.#poc.loff_$;
-        this._outTk.setStrtLoc(this.#poc);
+        this._outTk_1.setStrtLoc(this.#poc);
         this.curLoc$.become(poc);
         this.setTok$(
           mrkrSize === 1
             ? MdextTok.bullet_list_marker
             : MdextTok.ordered_list_marker,
-          this.#outTk!,
+          this._outTk!,
         );
       }
       this.curLoc$.loff = frstNonblankIn(poc.line_$, poc.loff_$);
@@ -1061,10 +1167,10 @@ export class MdextLexr extends Lexr<MdextTok> {
       /*#static*/ if (INOUT) {
         assert(mrkrSize > 0);
       }
-      if (this.#outTk!.lexdInfo instanceof ListMrkr_LI) {
-        this.#outTk!.lexdInfo.reset(this.#indent, mrkrSize + lcol);
+      if (this._outTk!.lexdInfo instanceof ListMrkr_LI) {
+        this._outTk!.lexdInfo.reset(this.#indent, mrkrSize + lcol);
       } else {
-        this.#outTk!.lexdInfo = new ListMrkr_LI(this.#indent, mrkrSize + lcol);
+        this._outTk!.lexdInfo = new ListMrkr_LI(this.#indent, mrkrSize + lcol);
       }
 
       /* add the list if needed */
@@ -1077,8 +1183,8 @@ export class MdextLexr extends Lexr<MdextTok> {
       /* add the list item */
       this._addChild(
         mrkrSize === 1
-          ? new BulletListItem(this.#outTk!)
-          : new OrderdListItem(this.#outTk!),
+          ? new BulletListItem(this._outTk!)
+          : new OrderdListItem(this._outTk!),
       );
 
       this.#ctx = Ctx_.ListItem;
@@ -1113,10 +1219,10 @@ export class MdextLexr extends Lexr<MdextTok> {
             snLastLidx !== drtFrstLidx && snLastLidx !== drtFrstLidx - 1
           ) {
             this.curLoc$.become(sn.sntStopLoc);
-            this.#outTk = this.scanBypassSnt$(sn);
+            this._outTk = this.scanBypassSnt$(sn);
             sn_ = sn.ensureAllBdry();
           } else {
-            this._reuseLine(sn, "force");
+            this._reuseLine(sn);
             sn_ = sn.reuse();
           }
           this._addChild(sn_);
@@ -1135,7 +1241,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           if (snt.sntStopLoc.atEol) {
             this.reusdSnt_sa_$.add(snt);
             this.curLoc$.become(snt.sntStopLoc);
-            this.#outTk = snt;
+            this._outTk = snt;
           } else {
             this.abadnSnt_sa_$.add(snt);
           }
@@ -1144,11 +1250,11 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
       /* ~ */
 
-      if (!this.#outTk) {
+      if (!this._outTk) {
         this.curLoc$.forwnCol(IndentedCodeBlock.indent);
         this.#chunkEnd();
       }
-      this._addChild(new IndentedCodeBlock(this.#outTk!));
+      this._addChild(new IndentedCodeBlock(this._outTk!));
 
       this.#toNextLine();
       return BlockStrt_.matched;
@@ -1187,9 +1293,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     this.#ctx = Ctx_.sol;
   }
 
-  /**
-   * @headconst @param closdBloc_x
-   */
+  /** @headconst @param closdBloc_x */
   #toRelex(closdBloc_x?: Block): void {
     if (closdBloc_x) {
       /* `drtSn_$.lastToken` is required in `enlargeBdriesTo_$()` */
@@ -1200,13 +1304,13 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
     this._relex = true;
     this._relexd = true;
-    this.#outTk = this.stopLexTk$;
+    this._outTk = this.stopLexTk$;
   }
 
   /**
    * For compiling only\
    * Based on `curLoc$`\
-   * Assign `#outTk` if successfully reused
+   * Assign `_outTk` if successfully reused
    * @const @param stop_y
    */
   #tryReuseTail(stop_y: loff_t): void {
@@ -1219,7 +1323,7 @@ export class MdextLexr extends Lexr<MdextTok> {
         ) {
           this.reusdSnt_sa_$.add(snt);
           this.curLoc$.loff = stop_y;
-          this.#outTk = snt;
+          this._outTk = snt;
         } else {
           this.abadnSnt_sa_$.add(snt);
         }
@@ -1227,28 +1331,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
     }
   }
-  /** @see {@linkcode #tryReuseTail()} */
-  #tryReuseChunk(stop_y: loff_t): void {
-    for (const snt of this.unrelSnt_sa_$) {
-      if (snt.sntStrtLoc.posE(this.curLoc$)) {
-        this.unrelSnt_sa_$.delete(snt);
-        if (
-          snt.sntStopLoff === stop_y &&
-          snt instanceof MdextTk
-        ) {
-          this.reusdSnt_sa_$.add(snt);
-          this.curLoc$.loff = stop_y;
-          this.#outTk = snt;
-        } else {
-          this.abadnSnt_sa_$.add(snt);
-        }
-        break;
-      }
-    }
-  }
-  /**
-   * @headconst @param ctnr_x
-   */
+  /** @headconst @param ctnr_x */
   #lexATX(ctnr_x: ATXHeading) {
     if (ctnr_x.st === ATXHeadingSt.head) {
       const ln_ = this.curLoc$.line_$;
@@ -1265,12 +1348,12 @@ export class MdextLexr extends Lexr<MdextTok> {
             /* no `ATXHeading.#text` */
             this.curLoc$.loff = tailStrt;
             this.#tryReuseTail(tailStop);
-            if (!this.#outTk) {
-              this._outTk.setStrtLoc(this.curLoc$);
+            if (!this._outTk) {
+              this._outTk_1.setStrtLoc(this.curLoc$);
               this.curLoc$.loff = tailStop;
-              this.setTok$(MdextTok.atx_heading, this.#outTk!);
+              this.setTok$(MdextTok.atx_heading, this._outTk!);
             }
-            ctnr_x.setTail(this.#outTk!);
+            ctnr_x.setTail(this._outTk!);
 
             this.#toNextLine();
           } else {
@@ -1285,23 +1368,25 @@ export class MdextLexr extends Lexr<MdextTok> {
                 strt + 1,
                 lastNonhash,
               ) + 1;
-              this.#tryReuseChunk(chunkStop);
-              if (!this.#outTk) {
-                this._outTk.setStrtLoc(this.curLoc$);
+              //jjjj TOCLEANUP
+              // this.#tryReuseChunk(chunkStop);
+              if (!this._reuseChunk(chunkStop)) {
+                this._outTk_1.setStrtLoc(this.curLoc$);
                 this.curLoc$.loff = chunkStop;
-                this.setTok$(MdextTok.chunk, this.#outTk!);
+                this.setTok$(MdextTok.chunk, this._outTk!);
               }
-              ctnr_x.setChunk(this.#outTk!);
+              ctnr_x.setChunk(this._outTk!);
             } else {
               /* no valid `ATXHeading.#tail` */
               this.curLoc$.loff = frstNonblankIn(ln_, strt + 1);
-              this.#tryReuseChunk(tailStop);
-              if (!this.#outTk) {
-                this._outTk.setStrtLoc(this.curLoc$);
+              //jjjj TOCLEANUP
+              // this.#tryReuseChunk(tailStop);
+              if (!this._reuseChunk(tailStop)) {
+                this._outTk_1.setStrtLoc(this.curLoc$);
                 this.curLoc$.loff = tailStop;
-                this.setTok$(MdextTok.chunk, this.#outTk!);
+                this.setTok$(MdextTok.chunk, this._outTk!);
               }
-              ctnr_x.setChunk(this.#outTk!);
+              ctnr_x.setChunk(this._outTk!);
 
               this.#toNextLine();
             }
@@ -1309,13 +1394,14 @@ export class MdextLexr extends Lexr<MdextTok> {
         } else {
           /* has `ATXHeading.#text` only */
           this.curLoc$.loff = frstNonblankIn(ln_, strt + 1);
-          this.#tryReuseChunk(lastNonspace + 1);
-          if (!this.#outTk) {
-            this._outTk.setStrtLoc(this.curLoc$);
+          //jjjj TOCLEANUP
+          // this.#tryReuseChunk(lastNonspace + 1);
+          if (!this._reuseChunk(lastNonspace + 1)) {
+            this._outTk_1.setStrtLoc(this.curLoc$);
             this.curLoc$.loff = lastNonspace + 1;
-            this.setTok$(MdextTok.chunk, this.#outTk!);
+            this.setTok$(MdextTok.chunk, this._outTk!);
           }
-          ctnr_x.setChunk(this.#outTk!);
+          ctnr_x.setChunk(this._outTk!);
 
           this.#toNextLine();
         }
@@ -1326,12 +1412,12 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
       this.curLoc$.loff = ctnr_x.tailStrt_$;
       this.#tryReuseTail(ctnr_x.tailStop_$);
-      if (!this.#outTk) {
-        this._outTk.setStrtLoc(this.curLoc$);
+      if (!this._outTk) {
+        this._outTk_1.setStrtLoc(this.curLoc$);
         this.curLoc$.loff = ctnr_x.tailStop_$;
-        this.setTok$(MdextTok.atx_heading, this.#outTk!);
+        this.setTok$(MdextTok.atx_heading, this._outTk!);
       }
-      ctnr_x.setTail(this.#outTk!);
+      ctnr_x.setTail(this._outTk!);
 
       this.#toNextLine();
     } else {
@@ -1342,9 +1428,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
   }
 
-  /**
-   * @headconst @param ctnr_x
-   */
+  /** @headconst @param ctnr_x */
   #lexBlock(ctnr_x: Block): void {
     //jjjj TOCLEANUP
     // this.#compilingTip = this.#tip instanceof CtnrBlock &&
@@ -1386,14 +1470,11 @@ export class MdextLexr extends Lexr<MdextTok> {
       !this.#allClosed && !this.#blank && this.#tip instanceof Paragraph
     ) {
       /* lazy paragraph continuation */
-      if (
-        this.#pazr.takldSn_sa_$.includes(this.#tip) &&
-        this._reuseLine(this.#tip)
-      ) {
-        /* The current line of `#tip` is successfully reused. */
+      if (this.#pazr.takldSn_sa_$.includes(this.#tip)) {
+        this._reuseLine(this.#tip);
       } else {
         this.#chunkEnd();
-        this.#tip.appendLine(this.#outTk!);
+        this.#tip.appendLine(this._outTk!);
       }
     } else {
       /* not a lazy continuation */
@@ -1401,9 +1482,9 @@ export class MdextLexr extends Lexr<MdextTok> {
       if (this._relex) return;
 
       if (
-        this.#tip instanceof Paragraph &&
+        (this.#tip instanceof Paragraph || this.#tip instanceof HTMLBlock) &&
         this.#pazr.takldSn_sa_$.includes(this.#tip) &&
-        this._reuseLine(this.#tip)
+        this._reuseLine(this.#tip, "may_fail")
       ) {
         /* The current line of `#tip` is successfully reused. */
       } else if (
@@ -1422,19 +1503,8 @@ export class MdextLexr extends Lexr<MdextTok> {
         }
         /* ~ */
 
-        const loff_0 = this.curLoc$.loff_$;
         this.#chunkEnd();
-        this.#tip.appendLine(this.#outTk!);
-
-        if (this.#tip instanceof HTMLBlock) {
-          const mode = this.#tip.mode;
-          if (
-            (mode === HTMLMode.cm_1 || mode === HTMLMode.cm_2 ||
-              mode === HTMLMode.cm_3 || mode === HTMLMode.cm_4 ||
-              mode === HTMLMode.cm_5) &&
-            HTMLBlock.Cloz_re[mode].test(this.curLoc$.getText(loff_0))
-          ) this.#tip = this.#tip.closeBlock(this.curLoc$.lidx_1);
-        }
+        this.#tip.appendLine(this._outTk!);
         //jjjj TOCLEANUP
         // } else if (this.#tip instanceof CtnrBlock && this.#tip.inCompiling) {
         //   /* 3113 */
@@ -1470,11 +1540,11 @@ export class MdextLexr extends Lexr<MdextTok> {
             ) {
               // console.log(`%crun here: 1`, `color:${LOG_cssc.runhere}`);
               this.curLoc$.become(sn.sntStopLoc);
-              this.#outTk = this.scanBypassSnt$(sn);
+              this._outTk = this.scanBypassSnt$(sn);
               sn_ = sn.ensureAllBdry();
             } else {
               // console.log(`%crun here: 2`, `color:${LOG_cssc.runhere}`);
-              this._reuseLine(sn, "force");
+              this._reuseLine(sn);
               sn_ = sn.reuse();
             }
             break;
@@ -1482,9 +1552,16 @@ export class MdextLexr extends Lexr<MdextTok> {
         }
         if (!sn_) {
           this.#chunkEnd();
-          sn_ = new Paragraph(this.#outTk!);
+          sn_ = new Paragraph(this._outTk!);
         }
         this._addChild(sn_);
+      }
+
+      if (
+        this.#tip instanceof HTMLBlock &&
+        (this._outTk!.lexdInfo as RawHTML_LI).hasTail(this.#tip.mode)
+      ) {
+        this.#tip = this.#tip.closeBlock(this.curLoc$.lidx_1);
       }
     }
     this.#toNextLine();
@@ -1553,7 +1630,7 @@ export class MdextLexr extends Lexr<MdextTok> {
 
   /** @implement */
   protected scan_impl$(_retTk_x: () => MdextTk): MdextTk | undefined {
-    this.#outTk = undefined;
+    this._outTk = undefined;
     /* final switch */ ({
       [Ctx_.sol]: () => {
         this.#lexLine();
@@ -1582,13 +1659,13 @@ export class MdextLexr extends Lexr<MdextTok> {
         }
         if (!blankEnd(this.curLoc$)) {
           this.#chunkEnd();
-          (this.#tip as FencedCodeBlock).setHeadChunk(this.#outTk!);
+          (this.#tip as FencedCodeBlock).setHeadChunk(this._outTk!);
         }
 
         this.#toNextLine();
       },
     }[this.#ctx])();
-    return this.#outTk;
+    return this._outTk;
   }
 
   continueBlockQuote_$(_x: BlockQuote): BlockCont {
@@ -1597,17 +1674,19 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
 
     /* In case compiling ... */
-    if (this.#pazr.takldSn_sa_$.includes(_x) && this._reuseLine(_x)) {
+    if (
+      this.#pazr.takldSn_sa_$.includes(_x) && this._reuseLine(_x, "may_fail")
+    ) {
       /* The current line of `_x` is successfully reused. */
       this.#toNextLine();
       return BlockCont.matched;
     }
 
     /* 2 In case `_x` is a reused BlockQuote ... */
-    this.#outTk = _x.lcolCntStrt(this.curLoc$);
+    this._outTk = _x.lcolCntStrt(this.curLoc$);
 
     /* 2 In case `_x` is a new BlockQuote but ">" is in `unrelSnt_sa_$` ... */
-    if (!this.#outTk) {
+    if (!this._outTk) {
       for (const snt of this.unrelSnt_sa_$) {
         if (snt.sntStrtLoc.posE(this.curLoc$)) {
           this.unrelSnt_sa_$.delete(snt);
@@ -1616,7 +1695,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           ) {
             this.reusdSnt_sa_$.add(snt);
             this.curLoc$.become(snt.sntStopLoc);
-            this.#outTk = snt;
+            this._outTk = snt;
             _x.addMrkr(snt);
             /* optional following space */
             if (isSpaceOrTab(this.curLoc$.ucod)) {
@@ -1631,11 +1710,11 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
     /* ~ */
 
-    if (!this.#outTk) {
-      this._outTk.setStrtLoc(this.#poc);
+    if (!this._outTk) {
+      this._outTk_1.setStrtLoc(this.#poc);
       this.curLoc$.loff = this.#poc.loff_$ + 1;
-      this.setTok$(MdextTok.block_quote_marker, this.#outTk!);
-      _x.addMrkr(this.#outTk!);
+      this.setTok$(MdextTok.block_quote_marker, this._outTk!);
+      _x.addMrkr(this._outTk!);
       /* optional following space */
       if (isSpaceOrTab(this.curLoc$.ucod)) {
         this.curLoc$.forwnCol(1);
@@ -1650,13 +1729,13 @@ export class MdextLexr extends Lexr<MdextTok> {
   continueListItem_$(_x: ListItem): BlockCont {
     /* In case compiling ... */
     if (this.#poc.posE(_x.sntStrtLoc)) {
-      this.#outTk = _x.lcolCntStrt(this.curLoc$)!;
+      this._outTk = _x.lcolCntStrt(this.curLoc$)!;
       /*#static*/ if (INOUT) {
-        assert(this.#outTk);
+        assert(this._outTk);
       }
-      if (this.unrelSnt_sa_$.includes(this.#outTk)) {
-        this.unrelSnt_sa_$.delete(this.#outTk);
-        this.reusdSnt_sa_$.add(this.#outTk);
+      if (this.unrelSnt_sa_$.includes(this._outTk)) {
+        this.unrelSnt_sa_$.delete(this._outTk);
+        this.reusdSnt_sa_$.add(this._outTk);
       }
       /* `curLoc$` is now at the right place of the first line of `_x` */
 
@@ -1693,9 +1772,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
   }
 
-  /**
-   * @const `#poc`
-   */
+  /** @const `#poc` */
   continueFencedCodeBlock_$(_x: FencedCodeBlock): BlockCont {
     const curLidx = this.curLoc$.lidx_1;
 
@@ -1711,10 +1788,10 @@ export class MdextLexr extends Lexr<MdextTok> {
 
     if (this.#poc.posE(_x.sntStrtLoc)) {
       this.curLoc$.become(_x.frstToken.sntStopLoc);
-      this.#outTk = _x.frstToken;
-      if (this.unrelSnt_sa_$.includes(this.#outTk)) {
-        this.unrelSnt_sa_$.delete(this.#outTk);
-        this.reusdSnt_sa_$.add(this.#outTk);
+      this._outTk = _x.frstToken;
+      if (this.unrelSnt_sa_$.includes(this._outTk)) {
+        this.unrelSnt_sa_$.delete(this._outTk);
+        this.reusdSnt_sa_$.add(this._outTk);
       }
 
       this.#ctx = Ctx_.FencedCodeBlock;
@@ -1736,7 +1813,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           ) {
             this.reusdSnt_sa_$.add(snt);
             _x.setTail(snt);
-            this.#outTk = snt;
+            this._outTk = snt;
 
             this.#tip = _x.closeBlock(curLidx, "may_err");
             if (_x.isErr) this.#toRelex(_x);
@@ -1780,10 +1857,10 @@ export class MdextLexr extends Lexr<MdextTok> {
       return true;
     };
     if (lexFenceTail()) {
-      this._outTk.setStrtLoc(this.#poc);
+      this._outTk_1.setStrtLoc(this.#poc);
       this.curLoc$.become(poc);
-      this.setTok$(MdextTok.code_fence, this.#outTk!);
-      _x.setTail(this.#outTk!);
+      this.setTok$(MdextTok.code_fence, this._outTk!);
+      _x.setTail(this._outTk!);
 
       this.#tip = _x.closeBlock(curLidx, "may_err");
       if (_x.isErr) this.#toRelex(_x);
@@ -1799,6 +1876,20 @@ export class MdextLexr extends Lexr<MdextTok> {
   }
 
   continueHTMLBlock_$(_x: HTMLBlock): BlockCont {
+    /* In case compiling ... */
+    // if (this.#poc.posE(_x.sntStrtLoc)) {
+    //   this.curLoc$.become(_x.frstToken.sntStopLoc);
+    //   this._outTk = _x.frstToken;
+    //   if (this.unrelSnt_sa_$.includes(this._outTk)) {
+    //     this.unrelSnt_sa_$.delete(this._outTk);
+    //     this.reusdSnt_sa_$.add(this._outTk);
+    //   }
+
+    //   this.#toNextLine();
+    //   return BlockCont.matched;
+    // }
+    /* ~ */
+
     return this.#blank &&
         (_x.mode === HTMLMode.cm_6 || _x.mode === HTMLMode.cm_7)
       ? BlockCont.break
@@ -1809,10 +1900,10 @@ export class MdextLexr extends Lexr<MdextTok> {
     /* In case compiling ... */
     if (this.#poc.posE(_x.sntStrtLoc)) {
       this.curLoc$.become(_x.frstToken.sntStopLoc);
-      this.#outTk = _x.frstToken;
-      if (this.unrelSnt_sa_$.includes(this.#outTk)) {
-        this.unrelSnt_sa_$.delete(this.#outTk);
-        this.reusdSnt_sa_$.add(this.#outTk);
+      this._outTk = _x.frstToken;
+      if (this.unrelSnt_sa_$.includes(this._outTk)) {
+        this.unrelSnt_sa_$.delete(this._outTk);
+        this.reusdSnt_sa_$.add(this._outTk);
       }
       _x.st = ATXHeadingSt.head;
 
@@ -1826,7 +1917,9 @@ export class MdextLexr extends Lexr<MdextTok> {
 
   continueSetext_$(_x: SetextHeading): BlockCont {
     /* In case compiling ... */
-    if (this.#pazr.takldSn_sa_$.includes(_x) && this._reuseLine(_x)) {
+    if (
+      this.#pazr.takldSn_sa_$.includes(_x) && this._reuseLine(_x, "may_fail")
+    ) {
       /* The current line of `_x` is successfully reused. */
       this.#toNextLine();
       return BlockCont.matched;
@@ -2242,8 +2335,9 @@ export class MdextLexr extends Lexr<MdextTok> {
   }
 
   /**
-   * ! Make sure no holes in token chain, because this is called before
-   * `lexInline_$()`
+  //jjjj TOCLEANUP
+  //  * ! Make sure no holes in token chain, because this is called before
+  //  * `lexInline_$()`
    * @headconst @param iloc_x
    */
   lexReference_$(iloc_x: ILoc): boolean {
@@ -2292,7 +2386,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
     }
 
-    const normlabel = labelTk_a
+    const normdLabel = labelTk_a
       .slice(1, -1)
       .map((tk) => tk.getText())
       .join(" ")
@@ -2301,17 +2395,16 @@ export class MdextLexr extends Lexr<MdextTok> {
       .toLowerCase()
       .toUpperCase();
     /*#static*/ if (INOUT) {
-      assert(normlabel);
+      assert(normdLabel);
     }
-    this.refmap[normlabel] ??= { labelTk_a, destTk_a, titleTk_a };
-
-    iloc_x.host.addLinkdef(labelTk_a, destTk_a, titleTk_a);
+    const linkdef = iloc_x.host.addLinkdef(labelTk_a, destTk_a, titleTk_a);
+    if (!this.linkdef_m_$.has(normdLabel)) {
+      this.linkdef_m_$.set(normdLabel, linkdef);
+    }
     return true;
   }
 
-  /**
-   * @headconst @param iloc_x
-   */
+  /** @headconst @param iloc_x */
   lexInline_$(iloc_x: ILoc): boolean {
     const ucod = iloc_x.ucod;
     if (!ucod) return false;
@@ -2460,8 +2553,9 @@ export class MdextLexr extends Lexr<MdextTok> {
       //   break;
       case /* "[" */ 0x5B: {
         const tk_ = iloc_x.setCurTk(this, 1, MdextTok.bracket_open);
-        tk_.lexdInfo = new BrktOpen_LI(tk_, false, iloc_x.tailEmphDelim);
-        iloc_x.tailBrktOpen = tk_.lexdInfo as BrktOpen_LI;
+        tk_.lexdInfo =
+          iloc_x.tailBrktOpen =
+            new BrktOpen_LI(tk_, false, iloc_x.tailEmphDelim);
         handled = true;
         break;
       }
@@ -2683,8 +2777,9 @@ export class MdextLexr extends Lexr<MdextTok> {
       return;
     }
 
-    /* If we got here, open is a potential opener */
-    let linkmode, textClozTk, lastTk, destTk_a, titleTk_a;
+    /* If we got here, `opener` is a potential opener */
+    let linkMode: LinkMode, normdLabel: string | undefined;
+    let textClozTk, lastTk, destTk_a, titleTk_a;
     const is_image = opener.is_image;
 
     /* Check to see if we have a link/image */
@@ -2694,7 +2789,7 @@ export class MdextLexr extends Lexr<MdextTok> {
 
     /* Inline link? */
     if (loc_fb.peek_ucod(1) === /* "(" */ 0x28) {
-      linkmode = LinkMode.inline;
+      linkMode = LinkMode.inline;
       /* "]" and "(" must not have been seperated yet. */
       textClozTk = iloc_x.setCurTk(this, 2, MdextTok.bracket_paren);
       this.#lexSpnl(iloc_x);
@@ -2716,6 +2811,8 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
 
     if (!matched) {
+      destTk_a = titleTk_a = undefined; //!
+
       /* Next, see if there's a link label */
       iloc_x.toLoc(loc_fb);
       let label: string | undefined;
@@ -2751,18 +2848,18 @@ export class MdextLexr extends Lexr<MdextTok> {
         ];
         if (loc_fb.peek_ucod(2) === /* "]" */ 0x5D) {
           /* [...][] */
-          linkmode = LinkMode.ref_collapsed;
+          linkMode = LinkMode.ref_collapsed;
           lastTk = iloc_x.setCurTk(this, 1, MdextTok.bracket_cloz);
           label = openerLabel(textClozTk);
         } else if (this._lexLinkLabel(iloc_x, labelTk_a)) {
           /* [...][...] */
-          linkmode = LinkMode.ref_full;
+          linkMode = LinkMode.ref_full;
           lastTk = iloc_x.setCurTk(this, 1, MdextTok.bracket_cloz);
           labelTk_a.push(lastTk);
           label = openerLabel(labelTk_a.at(-1)!, labelTk_a[1]);
         } else if (!opener.prev) {
           /* [...] */
-          linkmode = LinkMode.ref_shortcut;
+          linkMode = LinkMode.ref_shortcut;
           lastTk = iloc_x.toTk("strt", textClozTk)
             .setCurTk(this, 1, MdextTok.bracket_cloz);
           textClozTk.value = MdextTok.bracket_open;
@@ -2771,22 +2868,19 @@ export class MdextLexr extends Lexr<MdextTok> {
         }
       } else {
         /* [...] */
-        linkmode = LinkMode.ref_shortcut;
+        linkMode = LinkMode.ref_shortcut;
         textClozTk = lastTk = iloc_x.setCurTk(this, 1, MdextTok.bracket_cloz);
         label = openerLabel(lastTk);
       }
       if (label) {
-        const normlabel = label
+        normdLabel = label
           .trim()
           .replace(LLabelNormr_re_, " ")
           .toLowerCase()
           .toUpperCase();
-        const link = this.refmap[normlabel];
-        if (link) {
-          destTk_a = link.destTk_a;
-          titleTk_a = link.titleTk_a;
-          matched = true;
-        }
+        /* For reference link, get LAZILY `destTk_a`, `titleTk_a` from
+        `linkdef_m_$`. */
+        if (this.linkdef_m_$.has(normdLabel)) matched = true;
       }
     }
 
@@ -2798,7 +2892,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
 
     /*#static*/ if (INOUT) {
-      assert(linkmode && textClozTk && lastTk);
+      assert(linkMode! && textClozTk && lastTk);
       assert(
         textClozTk!.value === MdextTok.bracket_paren ||
           textClozTk!.value === MdextTok.bracket_cloz,
@@ -2812,7 +2906,8 @@ export class MdextLexr extends Lexr<MdextTok> {
     iloc_x.toLoc(loc_save);
 
     iloc_x.host.addLink(
-      linkmode!,
+      linkMode!,
+      normdLabel,
       opener.host,
       textClozTk!,
       lastTk!,
@@ -2821,14 +2916,15 @@ export class MdextLexr extends Lexr<MdextTok> {
     );
 
     iloc_x.removeBrktOpen(opener);
-    /* We remove this bracket and processEmphasis will remove later delimiters.
+    /* We remove this bracket and `lexEmphasis_$()` will remove later
+    delimiters.
     Now, for a link, we also deactivate earlier link openers.
     (no links in links) */
     if (!is_image) {
       opener = iloc_x.tailBrktOpen;
       const VALVE = 100;
       let valve = VALVE;
-      while (opener !== undefined) {
+      while (opener !== undefined && --valve) {
         if (!opener.is_image) {
           opener.active = false; // deactivate this opener
         }
@@ -2979,6 +3075,7 @@ export class BrktOpen_LI extends LexdInfo {
   }
 }
 
+/** @final */
 export class LinkDest_LI extends LexdInfo {}
 
 /** @final */
@@ -3004,6 +3101,48 @@ export class ListMrkr_LI extends LexdInfo {
   reset(indent_x: lcol_t, padding_x: lcol_t) {
     this.indent = indent_x;
     this.padding = padding_x;
+  }
+}
+
+/** @final */
+export class RawHTML_LI extends LexdInfo {
+  readonly #host;
+
+  #mode: HTMLMode | undefined;
+  get mode() {
+    return this.#mode;
+  }
+
+  hasHead = false;
+
+  #hasTail = false;
+  /** @const @param mode_x */
+  hasTail(mode_x: HTMLMode): boolean {
+    if (this.#mode === mode_x) return this.#hasTail;
+
+    const m_ = this.#mode = mode_x;
+    if (
+      (m_ === HTMLMode.cm_1 || m_ === HTMLMode.cm_2 ||
+        m_ === HTMLMode.cm_3 || m_ === HTMLMode.cm_4 ||
+        m_ === HTMLMode.cm_5) &&
+      HTMLBlock.Cloz_re[m_].test(this.#host.getText())
+    ) this.#hasTail = true;
+    else this.#hasTail = false;
+
+    return this.#hasTail;
+  }
+
+  constructor(host_x: MdextTk) {
+    super();
+    this.#host = host_x;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  override toString(): string {
+    const ret_a: string[] = [];
+    if (this.hasHead) ret_a.push("hasHead");
+    if (this.#hasTail) ret_a.push("hasTail");
+    return ret_a.join(",");
   }
 }
 /*80--------------------------------------------------------------------------*/

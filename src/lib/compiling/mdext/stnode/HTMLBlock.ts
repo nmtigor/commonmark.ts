@@ -5,10 +5,15 @@
 
 import { assert, fail } from "@fe-lib/util/trace.ts";
 import { Block } from "./Block.ts";
-import type { MdextTk } from "../../Token.ts";
-import type { MdextLexr } from "../MdextLexr.ts";
+import { type MdextTk, Token } from "../../Token.ts";
+import { type MdextLexr, RawHTML_LI } from "../MdextLexr.ts";
 import type { BlockCont } from "../alias.ts";
 import { INOUT } from "@fe-src/global.ts";
+import { Loc } from "../../Loc.ts";
+import { SortedSnt_id } from "../../Snt.ts";
+import { SortedStnod_id } from "../../Stnode.ts";
+import { BaseTok } from "../../BaseTok.ts";
+import type { lnum_t } from "@fe-lib/alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 export const enum HTMLMode {
@@ -40,6 +45,9 @@ export class HTMLBlock extends Block {
 
   override readonly acceptsLines = true;
   override appendLine(_x: MdextTk): void {
+    _x.lexdInfo ??= new RawHTML_LI(_x);
+    (_x.lexdInfo as RawHTML_LI).hasHead = this.#chunkTk_a.length ? false : true;
+
     this.#chunkTk_a.push(_x);
 
     this.invalidateBdry();
@@ -72,6 +80,12 @@ export class HTMLBlock extends Block {
     return this.#mode;
   }
 
+  //jjjj TOCLEANUP
+  // #l1stText;
+  // get l1stText() {
+  //   return this.#l1stText;
+  // }
+
   #chunkTk_a: MdextTk[] = [];
 
   override get children() {
@@ -85,12 +99,49 @@ export class HTMLBlock extends Block {
     return this.lastToken$ ??= this.#chunkTk_a.at(-1)!;
   }
 
-  /**
-   * @const @param mode_x
-   */
+  /** @const @param mode_x */
   constructor(mode_x: HTMLMode) {
     super();
     this.#mode = mode_x;
+    //jjjj TOCLEANUP
+    // this.#l1stText = l1stText_x;
+  }
+
+  override reset(): this {
+    super.reset();
+    this.#chunkTk_a.length = 0;
+    return this;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    _unrelSn_sa_x: SortedStnod_id,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): void {
+    for (const snt of this.#chunkTk_a) {
+      if (
+        (!(snt instanceof Token) || snt.value !== BaseTok.unknown) &&
+        (snt.sntStopLoc.posSE(drtStrtLoc_x) ||
+          snt.sntStrtLoc.posGE(drtStopLoc_x))
+      ) unrelSnt_sa_x.add(snt);
+    }
+  }
+
+  override lidxOf(loc_x: Loc): lnum_t | -1 {
+    const i_ = this.#chunkTk_a.findIndex((tk) =>
+      loc_x.line_$ === (tk.sntFrstLine)
+    );
+    return i_ >= 0 ? this.#chunkTk_a[i_].sntFrstLidx_1 : -1;
+  }
+
+  override reuseLine(lidx_x: lnum_t, snt_a_x: MdextTk[]) {
+    for (const tk of this.#chunkTk_a) {
+      const lidx = tk.sntFrstLidx_1;
+      if (lidx > lidx_x) break;
+      if (lidx === lidx_x) snt_a_x.push(tk);
+    }
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

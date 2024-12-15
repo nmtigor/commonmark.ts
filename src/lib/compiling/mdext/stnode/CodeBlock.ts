@@ -221,9 +221,8 @@ export class FencedCodeBlock extends CodeBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** */
-  protected override closeBlock_impl$(): void {
-  }
+  //jjjj TOCLEANUP
+  // protected override closeBlock_impl$(): void {}
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   override gathrUnrelSnt(

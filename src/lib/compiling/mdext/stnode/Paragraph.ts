@@ -112,7 +112,7 @@ export class Paragraph extends InlineBlock {
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   override reference(lexr_x: MdextLexr): this {
-    this.iloc.reset_O(this.snt_a_$[0] as MdextTk);
+    this.iloc.reset_O(this.snt_a_$[0]);
 
     const VALVE = 10_000;
     let valve = VALVE;

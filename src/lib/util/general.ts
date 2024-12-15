@@ -18,7 +18,8 @@ export const byteSize = (_x: BlobPart) => new Blob([_x]).size;
 /**
  * [Line terminator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#line_terminators)
  */
-const lt_re_ = /\r\n|\n|\r|\u2028|\u2029/g;
+// const lt_re_ = /\r\n|\n|\r|\u2028|\u2029/g;
+const lt_re_ = /\r\n|\n|\r/g;
 /**
  * @const @param text_x
  */

@@ -99,13 +99,13 @@ export class ILoc extends TokLoc<MdextTok> {
    * @headconst @param tk_x MUST be valid with `iSnt_x`
    * @const @param iSnt_x MUST be valid
    */
-  getTokenBefo(tk_x: MdextTk, iSnt_x: uint): MdextTk | undefined {
-    const tk_ = tk_x.prevToken_$;
-    if (!tk_) return undefined;
+  #getTokenBefo(tk_x: MdextTk, iSnt_x: uint): MdextTk | undefined {
+    const retTk = tk_x.prevToken_$;
+    if (!retTk) return undefined;
 
     let snt = this.host$.snt_a_$[iSnt_x];
     const tk_0 = snt instanceof Inline ? snt.frstToken : snt;
-    if (tk_0.posSE(tk_)) return tk_;
+    if (tk_0.posSE(retTk)) return retTk;
 
     if (iSnt_x === 0) return undefined;
 
@@ -113,13 +113,13 @@ export class ILoc extends TokLoc<MdextTok> {
     return snt instanceof Inline ? snt.lastToken : snt;
   }
   /** @see {@linkcode prevTk())} */
-  getTokenAftr(tk_x: MdextTk, iSnt_x: uint): MdextTk | undefined {
-    const tk_ = tk_x.nextToken_$;
-    if (!tk_) return undefined;
+  #getTokenAftr(tk_x: MdextTk, iSnt_x: uint): MdextTk | undefined {
+    const retTk = tk_x.nextToken_$;
+    if (!retTk) return undefined;
 
     let snt = this.host$.snt_a_$[iSnt_x];
     const tk_1 = snt instanceof Inline ? snt.lastToken : snt;
-    if (tk_.posSE(tk_1)) return tk_;
+    if (retTk.posSE(tk_1)) return retTk;
 
     if (iSnt_x === this.host$.snt_a_$.length - 1) return undefined;
 
@@ -168,6 +168,7 @@ export class ILoc extends TokLoc<MdextTok> {
   }
   /* ~ */
 
+  /** @const @param _x */
   removeBrktOpen(_x: BrktOpen_LI): void {
     if (_x.prev) {
       _x.prev.next = _x.next;
@@ -180,9 +181,7 @@ export class ILoc extends TokLoc<MdextTok> {
     }
   }
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: InlineBlock) {
     super(host_x.sntFrstLine, host_x.sntStrtLoff);
     this.host$ = host_x;
@@ -193,8 +192,8 @@ export class ILoc extends TokLoc<MdextTok> {
   }
 
   /** @final */
-  reset_O(tk_x: MdextTk): this {
-    this.toTk("strt", tk_x);
+  reset_O(snt_x: MdextTk | Inline): this {
+    this.toTk("strt", snt_x instanceof MdextTk ? snt_x : snt_x.frstToken);
     this.tailEmphDelim$ = undefined;
     this.tailBrktOpen$ = undefined;
     return this;
@@ -202,9 +201,9 @@ export class ILoc extends TokLoc<MdextTok> {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
+   * "Start Of Host"
    * @final
    * @const
-   * "Start Of Host"
    */
   get aheadSoh(): boolean {
     if (this.host$.snt_a_$.length) {
@@ -244,7 +243,7 @@ export class ILoc extends TokLoc<MdextTok> {
         this.posG(oldTk.sntStopLoc) ||
         oldTk.sntLastLine === this.curTk_$.sntFrstLine
       ) {
-        this.toLoc(this.getTokenAftr(oldTk, this.iCurSnt_$)!.sntStrtLoc);
+        this.toLoc(this.#getTokenAftr(oldTk, this.iCurSnt_$)!.sntStrtLoc);
       }
     }
     return this;
@@ -256,7 +255,7 @@ export class ILoc extends TokLoc<MdextTok> {
     if (this.atEol || this.aheadSoh) return this;
 
     if (this.posS(oldTk.sntStrtLoc)) {
-      this.toLoc(this.getTokenBefo(oldTk, this.iCurSnt_$)!.sntStopLoc);
+      this.toLoc(this.#getTokenBefo(oldTk, this.iCurSnt_$)!.sntStopLoc);
       if (oldTk.sntFrstLine === this.curTk_$.sntLastLine) {
         super.back();
       }
@@ -324,20 +323,16 @@ export class ILoc extends TokLoc<MdextTok> {
     return this;
   }
 
-  /**
-   * @const @param endp_x
-   */
+  /** @const @param endp_x */
   toNextTk(endp_x: "strt" | "stop"): this {
-    const tk_ = this.getTokenAftr(this.curTk_$, this.iCurSnt_$);
+    const tk_ = this.#getTokenAftr(this.curTk_$, this.iCurSnt_$);
     if (tk_) this.toTk(endp_x, tk_);
     else this.toTk("stop");
     return this;
   }
-  /**
-   * @const @param endp_x
-   */
+  /** @const @param endp_x */
   toPrevTk(endp_x: "strt" | "stop"): this {
-    const tk_ = this.getTokenBefo(this.curTk_$, this.iCurSnt_$);
+    const tk_ = this.#getTokenBefo(this.curTk_$, this.iCurSnt_$);
     if (tk_) this.toTk(endp_x, tk_);
     else this.toTk("strt");
     return this;
@@ -404,14 +399,14 @@ export class ILoc extends TokLoc<MdextTok> {
       assert(size_t > 0);
     }
     /** @primaryconst */
-    using strtLoc = (strtLoc_x ?? this).using();
+    using tkStrtLoc = (strtLoc_x ?? this).using();
     using tkStopLoc = this.using();
-    tkStopLoc.loff += size_t;
+    tkStopLoc.loff = tkStrtLoc.loff_$ + size_t;
     /** @primaryconst */
     const stopLoc = stopLoc_x ?? tkStopLoc;
     let ret;
     const curTk = this.curTk_$;
-    if (curTk.sntStrtLoc.posE(strtLoc) && stopLoc.posE(curTk.sntStopLoc)) {
+    if (curTk.sntStrtLoc.posE(tkStrtLoc) && stopLoc.posE(curTk.sntStopLoc)) {
       curTk.reset(value_x, this, tkStopLoc);
       ret = curTk;
       this.become(stopLoc).refresh();
@@ -419,7 +414,7 @@ export class ILoc extends TokLoc<MdextTok> {
       ret = new MdextTk(lexr_x, new TokRan(this.dup()), value_x);
       ret.setStopLoc(tkStopLoc);
       this.become(stopLoc);
-      this.host$.splice_$(ret, strtLoc);
+      this.host$.splice_$(ret, tkStrtLoc);
     }
 
     if (lexdInfo_x !== undefined) ret.lexdInfo = lexdInfo_x;
@@ -514,7 +509,7 @@ export abstract class InlineBlock extends Block {
     // /*#static*/ if (INOUT) {
     //   assert(snt_a[i_] instanceof MdextTk);
     // }
-    iloc.reset_O(snt_a[i_] as MdextTk);
+    iloc.reset_O(snt_a[i_]);
 
     const VALVE = 1_000;
     let valve = VALVE;
@@ -546,7 +541,7 @@ export abstract class InlineBlock extends Block {
     labelTk_a: MdextTk[],
     destTk_a: MdextTk[],
     titleTk_a: MdextTk[] | undefined,
-  ): void {
+  ): Linkdef {
     const snt_a = this.snt_a_$;
     const frstTk = labelTk_a[0];
     const lastTk = titleTk_a?.at(-1) ?? destTk_a.at(-1)!;
@@ -567,6 +562,7 @@ export abstract class InlineBlock extends Block {
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
     this.children$ = undefined;
     this.#correct_iCurSnt(iFrstTk, iLastTk);
+    return sn_;
   }
 
   /**
@@ -642,7 +638,8 @@ export abstract class InlineBlock extends Block {
   /**
    * `in( this.snt_a_$.length )`
    * @final
-   * @const @param linkmode_x
+   * @const @param linkMode_x
+   * @const @param normdLabel_x
    * @headconst @param frstTk_x
    * @headconst @param textClozTk_x
    * @headconst @param lastTk_x
@@ -650,7 +647,8 @@ export abstract class InlineBlock extends Block {
    * @headconst @param titleTk_a_x
    */
   addLink(
-    linkmode_x: LinkMode,
+    linkMode_x: LinkMode,
+    normdLabel_x: string | undefined,
     frstTk_x: MdextTk,
     textClozTk_x: MdextTk,
     lastTk_x: MdextTk,
@@ -673,7 +671,8 @@ export abstract class InlineBlock extends Block {
     if (iFrstTk === 0 || iLastTk === snt_a.length - 1) this.invalidateBdry();
 
     const sn_ = new Link(
-      linkmode_x,
+      linkMode_x,
+      normdLabel_x,
       frstTk_x,
       snt_a.slice(iFrstTk + 1, iTextCloz),
       lastTk_x,
@@ -761,8 +760,12 @@ export abstract class InlineBlock extends Block {
     const curTk = stopILoc.curTk_$;
     const strtLoc = strtLoc_x ?? curTk.sntStrtLoc;
     /*#static*/ if (INOUT) {
-      assert(strtLoc.posSE(tk_x.sntStrtLoc) && tk_x.sntStopLoc.posSE(stopILoc));
-      assert(stopILoc.posSE(curTk.sntStopLoc));
+      assert(
+        curTk.sntStrtLoc.posSE(strtLoc) &&
+          strtLoc.posSE(tk_x.sntStrtLoc) &&
+          tk_x.sntStopLoc.posSE(stopILoc) &&
+          stopILoc.posSE(curTk.sntStopLoc),
+      );
       /* Handled in `ILoc.setToken()` */
       assert(
         !(curTk.sntStrtLoc.posE(strtLoc) && stopILoc.posE(curTk.sntStopLoc)),
