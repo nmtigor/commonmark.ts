@@ -84,6 +84,7 @@ export const enum Err {
   /* SetextHeading */
   unexpected_close = "Unexpected close",
   /* Link */
-  unrecognizable_linkdest = "The link destination is unrecognizable.",
+  //jjjj TOCLEANUP
+  // unrecognizable_linkdest = "The link destination is unrecognizable.",
 }
 /*80--------------------------------------------------------------------------*/

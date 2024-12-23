@@ -4,17 +4,19 @@
  ******************************************************************************/
 
 import { INOUT } from "@fe-src/global.ts";
-import type { loff_t, uint16 } from "../../alias.ts";
+import { Linkdef } from "@fe-src/lib/compiling/mdext/stnode/Linkdef.ts";
+import type { loff_t, uint, uint16 } from "../../alias.ts";
 import {
   domParser,
   isASCIILetter,
   isDecimalDigit,
   isHexDigit,
-  isSpaceOrTab,
 } from "../../util/general.ts";
-import { assert } from "../../util/trace.ts";
+import { assert, fail } from "../../util/trace.ts";
+import { BaseTok } from "../BaseTok.ts";
 import type { Line } from "../Line.ts";
 import type { Loc } from "../Loc.ts";
+import { Snt, SortedSnt_id } from "../Snt.ts";
 import { MdextTk } from "../Token.ts";
 import type { MdextLexr } from "./MdextLexr.ts";
 import { Block } from "./stnode/Block.ts";
@@ -193,25 +195,31 @@ export const _toHTML = (
   const s_a: string[] = [];
   let curLn = snt_a[0].sntFrstLine;
   let s_;
-  /** sum of `snt` Lengths before a line */
+  /** sum of `snt` Lengths in the front of a line */
   let sntL = 0;
   for (let i = 0, iI = snt_a.length; i < iI; ++i) {
-    const snt = snt_a[i];
-    const ln_ = snt.sntFrstLine;
-    if (ln_ !== curLn) {
-      // if (!(snt instanceof Block) && sntL) s_a.push("\n");
+    const snt_i = snt_a[i];
+    const ln_ = snt_i.sntFrstLine;
+    if (ln_ === curLn) {
+      let prevStop;
+      if (i > 0 && (prevStop = snt_a[i - 1].sntStopLoff) < snt_i.sntStrtLoff) {
+        sntL += snt_i.sntStrtLoff - prevStop;
+        s_a.push(ln_.text.slice(prevStop, snt_i.sntStrtLoff));
+      }
+    } else {
+      // if (!(snt_i instanceof Block) && sntL) s_a.push("\n");
       if (sntL) s_a.push("\n");
       sntL = 0;
     }
-    s_ = snt instanceof MdextTk
-      ? _escapeXml(snt.getText())
-      : snt._toHTML(lexr_x);
+    s_ = snt_i instanceof MdextTk
+      ? _escapeXml(snt_i.getText())
+      : snt_i._toHTML(lexr_x);
     if (s_) {
       sntL += s_.length;
       s_a.push(s_);
-      // if (snt instanceof Block && i !== iI - 1) s_a.push("\n");
+      // if (snt_i instanceof Block && i !== iI - 1) s_a.push("\n");
     }
-    curLn = snt.sntLastLine;
+    curLn = snt_i.sntLastLine;
   }
   if (s_a.at(-1) === "\n") s_a.pop();
   return s_a.join("");
@@ -254,4 +262,59 @@ export const _tag = (
   s_a.push(selfclosing ? " />" : ">");
   return s_a.join("");
 };
+/*64----------------------------------------------------------*/
+
+/**
+ * @primaryconst @param tk_x
+ * @primaryconst @param drtStrtLoc_x
+ * @primaryconst @param drtStopLoc_x
+ * @out @param unrelSnt_sa_x
+ * @return count of what's gathered
+ */
+export const gathrUnrelTk = (
+  tk_x: MdextTk,
+  drtStrtLoc_x: Loc,
+  drtStopLoc_x: Loc,
+  unrelSnt_sa_x: SortedSnt_id,
+): uint => {
+  let ret = 0;
+  if (
+    tk_x.value !== BaseTok.unknown &&
+    (tk_x.sntStopLoc.posSE(drtStrtLoc_x) ||
+      tk_x.sntStrtLoc.posGE(drtStopLoc_x))
+  ) {
+    unrelSnt_sa_x.add(tk_x);
+    ret = 1;
+  }
+  return ret;
+};
+/*64----------------------------------------------------------*/
+
+export class SortedMdextSnt_id extends SortedSnt_id {
+  #n_Linkdef = 0;
+  get n_Linkdef() {
+    return this.#n_Linkdef;
+  }
+
+  constructor() {
+    super();
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  override add(val_x: Snt): uint | -1 {
+    const ret = super.add(val_x);
+    if (val_x instanceof Linkdef) this.#n_Linkdef += 1;
+    return ret;
+  }
+
+  override deleteByIndex() {
+    fail("Disabled");
+    return -1;
+  }
+  override delete(val_x: Snt): uint | -1 {
+    const ret = super.delete(val_x);
+    if (val_x instanceof Linkdef) this.#n_Linkdef -= 1;
+    return ret;
+  }
+}
 /*80--------------------------------------------------------------------------*/

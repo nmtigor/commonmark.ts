@@ -3,13 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { Block } from "./Block.ts";
-import type { MdextTk } from "../../Token.ts";
+import type { lnum_t, uint } from "@fe-lib/alias.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
-import type { SortedStnod_id } from "../../Stnode.ts";
-import type { lnum_t } from "@fe-lib/alias.ts";
-import { BaseTok } from "../../BaseTok.ts";
+import type { MdextTk } from "../../Token.ts";
+import { gathrUnrelTk } from "../util.ts";
+import { Block } from "./Block.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -37,15 +36,9 @@ export class ThematicBreak extends Block {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    _unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
-    const tk_ = this.#tk;
-    if (
-      tk_.value !== BaseTok.unknown &&
-      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk_.sntStrtLoc.posGE(drtStopLoc_x))
-    ) unrelSnt_sa_x.add(tk_);
+  ): uint {
+    return gathrUnrelTk(this.#tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {

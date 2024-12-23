@@ -3,11 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { assert, fail } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
+import type { uint } from "@fe-lib/alias.ts";
+import { assert, fail } from "@fe-lib/util/trace.ts";
 import type { Loc } from "../../Loc.ts";
-import type { MdextTk } from "../../Token.ts";
-import { Err } from "../../alias.ts";
+import { SortedSnt_id } from "../../Snt.ts";
+import { MdextTk } from "../../Token.ts";
 import type { BrktOpen_LI, MdextLexr } from "../MdextLexr.ts";
 import {
   _escapeXml,
@@ -15,6 +16,7 @@ import {
   _tag,
   _toHTML,
   _unescapeString,
+  gathrUnrelTk,
 } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
@@ -39,11 +41,11 @@ export class Link extends Inline {
   get isImg() {
     return (this.#frstTk.lexdInfo as BrktOpen_LI).is_image;
   }
-  #destTk_a;
+  #textSnt_a;
   #lastTk;
 
-  #textSnt_a;
-  #titleTk_a;
+  #destTk_a;
+  #titlTk_a;
 
   override get children(): Inline[] {
     if (this.children$) return this.children$ as Inline[];
@@ -69,7 +71,7 @@ export class Link extends Inline {
    * @headconst @param textSnt_a_x
    * @headconst @param lastTk_x
    * @headconst @param destTk_a_x
-   * @headconst @param titleTk_a_x
+   * @headconst @param titlTk_a_x
    */
   constructor(
     mode_x: LinkMode,
@@ -78,23 +80,23 @@ export class Link extends Inline {
     textSnt_a_x: (MdextTk | Inline)[],
     lastTk_x: MdextTk,
     destTk_a_x?: MdextTk[],
-    titleTk_a_x?: MdextTk[],
+    titlTk_a_x?: MdextTk[],
   ) {
     /*#static*/ if (INOUT) {
       if (mode_x === LinkMode.inline) {
         assert(!normdLabel_x && destTk_a_x);
       } else {
-        assert(normdLabel_x && !destTk_a_x && !titleTk_a_x);
+        assert(normdLabel_x && !destTk_a_x && !titlTk_a_x);
       }
     }
     super();
     this.#mode = mode_x;
     this.#normdLabel = normdLabel_x;
     this.#frstTk = frstTk_x;
-    this.#lastTk = lastTk_x;
     this.#textSnt_a = textSnt_a_x;
+    this.#lastTk = lastTk_x;
     this.#destTk_a = destTk_a_x;
-    this.#titleTk_a = titleTk_a_x;
+    this.#titlTk_a = titlTk_a_x;
 
     this.ensureBdry();
   }
@@ -104,9 +106,9 @@ export class Link extends Inline {
   override tokenAt(loc_x: Loc): MdextTk {
     if (this.lastToken.touch(loc_x)) return this.lastToken;
 
-    if (this.#titleTk_a?.length) {
-      for (let i = this.#titleTk_a.length; i--;) {
-        const tk_ = this.#titleTk_a[i];
+    if (this.#titlTk_a?.length) {
+      for (let i = this.#titlTk_a.length; i--;) {
+        const tk_ = this.#titlTk_a[i];
         if (tk_.touch(loc_x)) return tk_;
       }
     }
@@ -127,6 +129,51 @@ export class Link extends Inline {
     if (this.frstToken.touch(loc_x)) return this.frstToken;
 
     return /*#static*/ INOUT ? fail("Should not run here!") : this.frstToken;
+  }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): uint {
+    let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+    if (ret) return ret;
+
+    ret += gathrUnrelTk(
+      this.#frstTk,
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      unrelSnt_sa_x,
+    );
+
+    for (const snt of this.#textSnt_a) {
+      if (snt instanceof MdextTk) {
+        ret += gathrUnrelTk(snt, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      } else {
+        ret += snt.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      }
+    }
+
+    ret += gathrUnrelTk(
+      this.#lastTk,
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      unrelSnt_sa_x,
+    );
+
+    if (this.#destTk_a) {
+      for (const tk of this.#destTk_a) {
+        ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      }
+    }
+
+    if (this.#titlTk_a) {
+      for (const tk of this.#titlTk_a) {
+        ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      }
+    }
+    return ret;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -156,7 +203,8 @@ export class Link extends Inline {
         attrs.push(["href", _escapeXml(dest_s)]);
       }
     } else {
-      this.setErr(Err.unrecognizable_linkdest);
+      //jjjj TOCLEANUP
+      // this.setErr(Err.unrecognizable_linkdest);
       if (isImg) {
         attrs.push(["src", ""]);
       } else {
@@ -170,10 +218,10 @@ export class Link extends Inline {
       lexr_x._enableTags = true;
     }
 
-    const titleTk_a = this.#titleTk_a ?? linkdef?.titleTk_a;
-    if (titleTk_a?.length) {
+    const titlTk_a = this.#titlTk_a ?? linkdef?.titlTk_a;
+    if (titlTk_a?.length) {
       const title_s = _unescapeString(
-        titleTk_a
+        titlTk_a
           .map((tk) => tk.getText())
           .join("\n")
           .slice(1, -1),

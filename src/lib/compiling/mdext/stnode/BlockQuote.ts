@@ -3,21 +3,20 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { lnum_t, uint } from "../../../alias.ts";
-import { fail } from "@fe-lib/util/trace.ts";
+import type { uint } from "@fe-lib/alias.ts";
+import { isSpaceOrTab } from "@fe-lib/util/general.ts";
+import type { lnum_t } from "../../../alias.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { SortedStnod_id } from "../../Stnode.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
-import { _toHTML } from "../util.ts";
+import { _toHTML, gathrUnrelTk } from "../util.ts";
 import { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import type { Inline } from "./Inline.ts";
 import { ListItem } from "./ListItem.ts";
-import { isSpaceOrTab } from "@fe-lib/util/general.ts";
-import { BaseTok } from "../../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -62,22 +61,20 @@ export class BlockQuote extends CtnrBlock {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
-    super.gathrUnrelSnt(
+    unrelSn_sa_x: SortedStnod_id,
+  ): uint {
+    let ret = super.gathrUnrelSnt(
       drtStrtLoc_x,
       drtStopLoc_x,
-      unrelSn_sa_x,
       unrelSnt_sa_x,
+      unrelSn_sa_x,
     );
+
     for (const tk of this.#mrkrTk_a) {
-      if (
-        tk.value !== BaseTok.unknown &&
-        (tk.sntStopLoc.posSE(drtStrtLoc_x) ||
-          tk.sntStrtLoc.posGE(drtStopLoc_x))
-      ) unrelSnt_sa_x.add(tk);
+      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
+    return ret;
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {

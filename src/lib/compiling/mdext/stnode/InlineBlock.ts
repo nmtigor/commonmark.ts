@@ -15,11 +15,13 @@ import { assert, fail, out } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
 import type { LexdInfo } from "../../Lexr.ts";
 import type { Loc } from "../../Loc.ts";
-import { TokRan } from "../../TokRan.ts";
+import type { SortedSnt_id } from "../../Snt.ts";
 import { TokLoc } from "../../TokLoc.ts";
-import { MdextTk, Token } from "../../Token.ts";
+import { TokRan } from "../../TokRan.ts";
+import { MdextTk } from "../../Token.ts";
 import type { BrktOpen_LI, EmphDelim_LI, MdextLexr } from "../MdextLexr.ts";
 import { MdextTok } from "../MdextTok.ts";
+import { gathrUnrelTk } from "../util.ts";
 import { Autolink } from "./Autolink.ts";
 import { Block } from "./Block.ts";
 import { IndentedCodeBlock } from "./CodeBlock.ts";
@@ -28,11 +30,8 @@ import { Emphasis } from "./Emphasis.ts";
 import { HTMLInline } from "./HTMLInline.ts";
 import { Inline } from "./Inline.ts";
 import { Link, type LinkMode } from "./Link.ts";
-import type { TokenSN } from "./TokenSN.ts";
 import { Linkdef } from "./Linkdef.ts";
-import type { SortedSnt_id } from "../../Snt.ts";
-import type { SortedStnod_id } from "../../Stnode.ts";
-import { BaseTok } from "../../BaseTok.ts";
+import type { TokenSN } from "./TokenSN.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**
@@ -99,7 +98,10 @@ export class ILoc extends TokLoc<MdextTok> {
    * @headconst @param tk_x MUST be valid with `iSnt_x`
    * @const @param iSnt_x MUST be valid
    */
-  #getTokenBefo(tk_x: MdextTk, iSnt_x: uint): MdextTk | undefined {
+  #getTokenBefo(
+    tk_x = this.curTk_$,
+    iSnt_x = this.iCurSnt_$,
+  ): MdextTk | undefined {
     const retTk = tk_x.prevToken_$;
     if (!retTk) return undefined;
 
@@ -112,8 +114,16 @@ export class ILoc extends TokLoc<MdextTok> {
     snt = this.host$.snt_a_$[iSnt_x - 1];
     return snt instanceof Inline ? snt.lastToken : snt;
   }
-  /** @see {@linkcode prevTk())} */
-  #getTokenAftr(tk_x: MdextTk, iSnt_x: uint): MdextTk | undefined {
+  /** @final */
+  get hasPrevTk(): boolean {
+    return !!this.#getTokenBefo();
+  }
+
+  /** @see {@linkcode prevTk()} */
+  #getTokenAftr(
+    tk_x = this.curTk_$,
+    iSnt_x = this.iCurSnt_$,
+  ): MdextTk | undefined {
     const retTk = tk_x.nextToken_$;
     if (!retTk) return undefined;
 
@@ -125,6 +135,10 @@ export class ILoc extends TokLoc<MdextTok> {
 
     snt = this.host$.snt_a_$[iSnt_x + 1];
     return snt instanceof Inline ? snt.frstToken : snt;
+  }
+  /** @final */
+  get hasNextTk(): boolean {
+    return !!this.#getTokenAftr();
   }
   /* ~ */
 
@@ -280,7 +294,7 @@ export class ILoc extends TokLoc<MdextTok> {
    * @primaryconst
    */
   refresh(): void {
-    let curTk = this.curTk_$;
+    const curTk = this.curTk_$;
     if (this.posE(curTk.sntStopLoc) && !this.reachEoh) {
       const nextSnt = this.host$.snt_a_$[this.iCurSnt_$ + 1];
       if (this.posE(nextSnt.sntStrtLoc)) {
@@ -324,17 +338,17 @@ export class ILoc extends TokLoc<MdextTok> {
   }
 
   /** @const @param endp_x */
-  toNextTk(endp_x: "strt" | "stop"): this {
-    const tk_ = this.#getTokenAftr(this.curTk_$, this.iCurSnt_$);
+  toPrevTk(endp_x: "strt" | "stop"): this {
+    const tk_ = this.#getTokenBefo();
     if (tk_) this.toTk(endp_x, tk_);
-    else this.toTk("stop");
+    else this.toTk("strt");
     return this;
   }
   /** @const @param endp_x */
-  toPrevTk(endp_x: "strt" | "stop"): this {
-    const tk_ = this.#getTokenBefo(this.curTk_$, this.iCurSnt_$);
+  toNextTk(endp_x: "strt" | "stop"): this {
+    const tk_ = this.#getTokenAftr();
     if (tk_) this.toTk(endp_x, tk_);
-    else this.toTk("strt");
+    else this.toTk("stop");
     return this;
   }
 
@@ -381,11 +395,8 @@ export class ILoc extends TokLoc<MdextTok> {
    * @primaryconst @param stopLoc_x
    */
   @out((ret, self: ILoc, args) => {
-    if (args[5]) {
-      assert(self.posE(args[5]));
-    } else {
-      assert(self.posE(ret.sntStopLoc));
-    }
+    if (args[5]) assert(self.posE(args[5]));
+    else assert(self.posE(ret.sntStopLoc));
   })
   setCurTk(
     lexr_x: MdextLexr,
@@ -406,13 +417,26 @@ export class ILoc extends TokLoc<MdextTok> {
     const stopLoc = stopLoc_x ?? tkStopLoc;
     let ret;
     const curTk = this.curTk_$;
-    if (curTk.sntStrtLoc.posE(tkStrtLoc) && stopLoc.posE(curTk.sntStopLoc)) {
-      curTk.reset(value_x, this, tkStopLoc);
+    if (curTk.sntStrtLoc.posE(tkStrtLoc) && curTk.sntStopLoc.posE(stopLoc)) {
+      let reusd = false;
+      if (lexr_x.reusdSnt_sa_$.includes(curTk)) {
+        lexr_x.reusdSnt_sa_$.delete(curTk);
+        if (curTk.value === value_x && curTk.sntStopLoc.posE(tkStopLoc)) {
+          lexr_x._reusdSnt_2_sa.add(curTk);
+          reusd = true;
+        } else {
+          lexr_x._abadnSnt_2_sa.add(curTk);
+        }
+      }
+      if (!reusd) {
+        curTk.reset(value_x, tkStrtLoc, tkStopLoc);
+      }
       ret = curTk;
       this.become(stopLoc).refresh();
     } else {
-      ret = new MdextTk(lexr_x, new TokRan(this.dup()), value_x);
-      ret.setStopLoc(tkStopLoc);
+      ret = new MdextTk(lexr_x, new TokRan(this.dup()), value_x)
+        .syncRanvalAnchr() //!
+        .setStop(tkStopLoc);
       this.become(stopLoc);
       this.host$.splice_$(ret, tkStrtLoc);
     }
@@ -505,10 +529,6 @@ export abstract class InlineBlock extends Block {
     for (; i_ < iI; ++i_) if (!(snt_a[i_] instanceof Linkdef)) break;
     if (i_ === iI) return;
 
-    //jjjj TOCLEANUP
-    // /*#static*/ if (INOUT) {
-    //   assert(snt_a[i_] instanceof MdextTk);
-    // }
     iloc.reset_O(snt_a[i_]);
 
     const VALVE = 1_000;
@@ -533,31 +553,35 @@ export abstract class InlineBlock extends Block {
 
   /**
    * @final
-   * @headconst @param labelTk_a
+   * @headconst @param lablTk_a
    * @headconst @param destTk_a
-   * @headconst @param titleTk_a
+   * @headconst @param titlTk_a
    */
   addLinkdef(
-    labelTk_a: MdextTk[],
+    lablTk_a: MdextTk[],
     destTk_a: MdextTk[],
-    titleTk_a: MdextTk[] | undefined,
+    titlTk_a: MdextTk[] | undefined,
   ): Linkdef {
     const snt_a = this.snt_a_$;
-    const frstTk = labelTk_a[0];
-    const lastTk = titleTk_a?.at(-1) ?? destTk_a.at(-1)!;
+    const frstTk = lablTk_a[0];
+    const lastTk = titlTk_a?.at(-1) ?? destTk_a.at(-1)!;
     let iLastTk = snt_a.length;
     for (; iLastTk--;) if (snt_a[iLastTk] === lastTk) break;
     let iFrstTk = iLastTk;
     for (; iFrstTk--;) if (snt_a[iFrstTk] === frstTk) break;
+    if (iFrstTk === 0 || iLastTk === snt_a.length - 1) this.invalidateBdry();
 
     for (let i = iFrstTk; i <= iLastTk; ++i) {
-      const tk_i = snt_a[i] as MdextTk;
-      if (tk_i.value === MdextTok.chunk && !tk_i.lexdInfo) {
-        tk_i.removeSelf();
+      const snt_i = snt_a[i];
+      if (
+        snt_i instanceof MdextTk &&
+        snt_i.value === MdextTok.chunk && !snt_i.lexdInfo
+      ) {
+        snt_i.removeSelf();
       }
     }
 
-    const sn_ = new Linkdef(labelTk_a, destTk_a, titleTk_a);
+    const sn_ = new Linkdef(lablTk_a, destTk_a, titlTk_a);
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
     this.children$ = undefined;
@@ -644,7 +668,7 @@ export abstract class InlineBlock extends Block {
    * @headconst @param textClozTk_x
    * @headconst @param lastTk_x
    * @headconst @param destTk_a_x
-   * @headconst @param titleTk_a_x
+   * @headconst @param titlTk_a_x
    */
   addLink(
     linkMode_x: LinkMode,
@@ -653,7 +677,7 @@ export abstract class InlineBlock extends Block {
     textClozTk_x: MdextTk,
     lastTk_x: MdextTk,
     destTk_a_x?: MdextTk[],
-    titleTk_a_x?: MdextTk[],
+    titlTk_a_x?: MdextTk[],
   ): void {
     const snt_a = this.snt_a_$;
     const iFrstTk = snt_a.indexOf(frstTk_x);
@@ -677,7 +701,7 @@ export abstract class InlineBlock extends Block {
       snt_a.slice(iFrstTk + 1, iTextCloz),
       lastTk_x,
       destTk_a_x,
-      titleTk_a_x,
+      titlTk_a_x,
     );
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
@@ -774,21 +798,22 @@ export abstract class InlineBlock extends Block {
     let ret: MdextTk;
     const snt_a = this.snt_a_$;
     if (curTk.sntStrtLoc.posE(strtLoc)) {
-      curTk.setStrtLoc(stopILoc);
+      curTk.setStrt(stopILoc);
       curTk.insertPrev(tk_x);
       snt_a.splice(stopILoc.iCurSnt_$, 0, tk_x);
       ret = tk_x;
       ++stopILoc.iCurSnt_$; //!
     } else if (stopILoc.posE(curTk.sntStopLoc)) {
-      curTk.setStopLoc(strtLoc);
+      curTk.setStop(strtLoc);
       curTk.insertNext(tk_x);
       snt_a.splice(stopILoc.iCurSnt_$ + 1, 0, tk_x);
       ret = tk_x;
       stopILoc.toTk("stop", tk_x); //!
     } else {
-      const tk_ = curTk.dup();
-      tk_.setStopLoc(strtLoc);
-      curTk.setStrtLoc(stopILoc);
+      const tk_ = curTk.dup()
+        .syncRanvalAnchr() //!
+        .setStop(strtLoc);
+      curTk.setStrt(stopILoc);
       curTk.insertPrev(tk_x).insertPrev(tk_);
       snt_a.splice(stopILoc.iCurSnt_$, 0, tk_, tk_x);
       ret = tk_x;
@@ -825,16 +850,17 @@ export abstract class InlineBlock extends Block {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    _unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
+  ): uint {
+    let ret = 0;
     for (const snt of this.snt_a_$) {
-      if (
-        (!(snt instanceof Token) || snt.value !== BaseTok.unknown) &&
-        (snt.sntStopLoc.posSE(drtStrtLoc_x) ||
-          snt.sntStrtLoc.posGE(drtStopLoc_x))
-      ) unrelSnt_sa_x.add(snt);
+      if (snt instanceof MdextTk) {
+        ret += gathrUnrelTk(snt, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      } else {
+        ret += snt.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      }
     }
+    return ret;
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {
@@ -853,5 +879,34 @@ export abstract class InlineBlock extends Block {
       if (lidx === lidx_x) snt_a_x.push(snt);
     }
   }
+
+  //jjjj TOCLEANUP
+  // /**
+  //  * If return true, `iloc` is moved to the end of Linkdef.\
+  //  * If return false, `iloc` is unchanged.
+  //  * @headconst @const lexr_x
+  //  */
+  // reuseLinkdef(lexr_x: MdextLexr): boolean {
+  //   if (lexr_x.reusdSnt_sa_$.n_Linkdef === 0) return false;
+
+  //   const iloc = this.iloc;
+  //   const curSnt = iloc.curSnt_$;
+  //   if (!(curSnt instanceof Linkdef)) return false;
+
+  //   let reusd = false;
+  //   using loc_fb = iloc.using();
+  //   if (lexr_x.reusdSnt_sa_$.includes(curSnt)) {
+  //     lexr_x.reusdSnt_sa_$.delete(curSnt);
+  //     iloc.toSnt("stop");
+  //     if (blankEnd(iloc)) {
+  //       lexr_x._reusdSnt_2_sa.add(curSnt);
+  //       reusd = true;
+  //     } else {
+  //       lexr_x.abadnSnt_sa_$.add(curSnt);
+  //       iloc.toLoc(loc_fb);
+  //     }
+  //   }
+  //   return reusd;
+  // }
 }
 /*80--------------------------------------------------------------------------*/

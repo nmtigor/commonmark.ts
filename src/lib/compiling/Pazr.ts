@@ -40,14 +40,15 @@ export abstract class Pazr<T extends Tok = BaseTok> {
   headBdryClrTk_$: Token<T> | undefined;
   tailBdryClrTk_$: Token<T> | undefined;
 
-  /** @primaryconst @param loc_x */
-  headClr(loc_x: Loc): boolean {
-    return !!this.headBdryClrTk_$?.sntStopLoc.posGE(loc_x);
-  }
-  /** @primaryconst @param loc_x */
-  tailClr(loc_x: Loc): boolean {
-    return !!this.tailBdryClrTk_$?.sntStrtLoc.posSE(loc_x);
-  }
+  //jjjj TOCLEANUP
+  // /** @primaryconst @param loc_x */
+  // headClr(loc_x: Loc): boolean {
+  //   return !!this.headBdryClrTk_$?.sntStopLoc.posGE(loc_x);
+  // }
+  // /** @primaryconst @param loc_x */
+  // tailClr(loc_x: Loc): boolean {
+  //   return !!this.tailBdryClrTk_$?.sntStrtLoc.posSE(loc_x);
+  // }
   /* ~ */
 
   protected root$: Stnode<T> | undefined;
@@ -87,6 +88,7 @@ export abstract class Pazr<T extends Tok = BaseTok> {
   /* ~ */
 
   readonly unrelSn_sa_$ = new SortedStnod_id();
+  /** reused, partially reuesed, or abandoned */
   readonly takldSn_sa_$ = new SortedStnod_id();
 
   protected strtPazTk$!: Token<T>;

@@ -3,17 +3,16 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { assert, fail } from "@fe-lib/util/trace.ts";
-import { Block } from "./Block.ts";
-import { type MdextTk, Token } from "../../Token.ts";
-import { type MdextLexr, RawHTML_LI } from "../MdextLexr.ts";
-import type { BlockCont } from "../alias.ts";
+import type { lnum_t, uint } from "@fe-lib/alias.ts";
+import { assert } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
+import { gathrUnrelTk } from "@fe-src/lib/compiling/mdext/util.ts";
 import { Loc } from "../../Loc.ts";
 import { SortedSnt_id } from "../../Snt.ts";
-import { SortedStnod_id } from "../../Stnode.ts";
-import { BaseTok } from "../../BaseTok.ts";
-import type { lnum_t } from "@fe-lib/alias.ts";
+import { type MdextTk } from "../../Token.ts";
+import { type MdextLexr, RawHTML_LI } from "../MdextLexr.ts";
+import type { BlockCont } from "../alias.ts";
+import { Block } from "./Block.ts";
 /*80--------------------------------------------------------------------------*/
 
 export const enum HTMLMode {
@@ -44,11 +43,12 @@ export class HTMLBlock extends Block {
   }
 
   override readonly acceptsLines = true;
-  override appendLine(_x: MdextTk): void {
-    _x.lexdInfo ??= new RawHTML_LI(_x);
-    (_x.lexdInfo as RawHTML_LI).hasHead = this.#chunkTk_a.length ? false : true;
+  override appendLine(_x: [MdextTk]): void {
+    const tk_ = _x[0];
+    ((tk_.lexdInfo ??= new RawHTML_LI(tk_)) as RawHTML_LI)
+      .hasHead = this.#chunkTk_a.length ? false : true;
 
-    this.#chunkTk_a.push(_x);
+    this.#chunkTk_a.push(tk_);
 
     this.invalidateBdry();
   }
@@ -86,6 +86,7 @@ export class HTMLBlock extends Block {
   //   return this.#l1stText;
   // }
 
+  /** chunk tokens, one line one token, may contain `empty` tokens */
   #chunkTk_a: MdextTk[] = [];
 
   override get children() {
@@ -117,16 +118,13 @@ export class HTMLBlock extends Block {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    _unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
-    for (const snt of this.#chunkTk_a) {
-      if (
-        (!(snt instanceof Token) || snt.value !== BaseTok.unknown) &&
-        (snt.sntStopLoc.posSE(drtStrtLoc_x) ||
-          snt.sntStrtLoc.posGE(drtStopLoc_x))
-      ) unrelSnt_sa_x.add(snt);
+  ): uint {
+    let ret = 0;
+    for (const tk of this.#chunkTk_a) {
+      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
+    return ret;
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {

@@ -3,21 +3,19 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { fail } from "@fe-lib/util/trace.ts";
+import type { lcol_t, lnum_t, uint } from "@fe-lib/alias.ts";
+import type { Loc } from "../../Loc.ts";
+import { SortedSnt_id } from "../../Snt.ts";
+import { SortedStnod_id } from "../../Stnode.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { ListMrkr_LI, MdextLexr } from "../MdextLexr.ts";
 import type { BlockCont } from "../alias.ts";
+import { _toHTML, gathrUnrelTk } from "../util.ts";
 import { Block } from "./Block.ts";
-import type { lcol_t, lnum_t } from "@fe-lib/alias.ts";
-import { _toHTML } from "../util.ts";
+import { CtnrBlock } from "./CtnrBlock.ts";
+import { Inline } from "./Inline.ts";
 import type { List } from "./List.ts";
 import { Paragraph } from "./Paragraph.ts";
-import { CtnrBlock } from "./CtnrBlock.ts";
-import type { Loc } from "../../Loc.ts";
-import { Inline } from "./Inline.ts";
-import { SortedSnt_id } from "../../Snt.ts";
-import { SortedStnod_id } from "../../Stnode.ts";
-import { BaseTok } from "../../BaseTok.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class ListItem extends CtnrBlock {
@@ -83,21 +81,23 @@ export abstract class ListItem extends CtnrBlock {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
-    super.gathrUnrelSnt(
+    unrelSn_sa_x: SortedStnod_id,
+  ): uint {
+    let ret = super.gathrUnrelSnt(
       drtStrtLoc_x,
       drtStopLoc_x,
+      unrelSnt_sa_x,
       unrelSn_sa_x,
+    );
+
+    ret += gathrUnrelTk(
+      this.#mrkrTk,
+      drtStrtLoc_x,
+      drtStopLoc_x,
       unrelSnt_sa_x,
     );
-    const tk_ = this.#mrkrTk;
-    if (
-      tk_.value !== BaseTok.unknown &&
-      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk_.sntStrtLoc.posGE(drtStopLoc_x))
-    ) unrelSnt_sa_x.add(tk_);
+    return ret;
   }
 
   override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {

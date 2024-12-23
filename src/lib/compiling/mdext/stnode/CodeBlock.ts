@@ -3,24 +3,22 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { assert, fail } from "@fe-lib/util/trace.ts";
-import { Block } from "./Block.ts";
+import type { lcol_t, lnum_t, loff_t, uint, uint16 } from "@fe-lib/alias.ts";
+import { assert } from "@fe-lib/util/trace.ts";
+import { INOUT } from "@fe-src/global.ts";
+import type { Loc } from "../../Loc.ts";
+import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
+import type { FencedCBHead_LI, MdextLexr } from "../MdextLexr.ts";
+import type { BlockCont } from "../alias.ts";
 import {
   _escapeXml,
   _tag,
-  _toHTML,
   _unescapeString,
+  gathrUnrelTk,
   lastNonblankIn,
 } from "../util.ts";
-import type { FencedCBHead_LI, MdextLexr } from "../MdextLexr.ts";
-import type { BlockCont } from "../alias.ts";
-import { INOUT } from "@fe-src/global.ts";
-import type { lcol_t, lnum_t, loff_t, uint16 } from "@fe-lib/alias.ts";
-import type { Loc } from "../../Loc.ts";
-import type { SortedStnod_id } from "../../Stnode.ts";
-import type { SortedSnt_id } from "../../Snt.ts";
-import { BaseTok } from "../../BaseTok.ts";
+import { Block } from "./Block.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class CodeBlock extends Block {
@@ -29,13 +27,14 @@ export abstract class CodeBlock extends Block {
    * @final
    * @headconst @param _x can be an empty token
    */
-  override appendLine(_x: MdextTk): void {
-    this.chunkTk_a$.push(_x);
+  override appendLine(_x: [MdextTk]): void {
+    this.chunkTk_a$.push(_x[0]);
 
     this.invalidateBdry();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
+  /** chunk tokens, one line one token, may contain `empty` tokens */
   protected readonly chunkTk_a$: MdextTk[] = [];
 
   override get children() {
@@ -52,16 +51,13 @@ export abstract class CodeBlock extends Block {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    _unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
+  ): uint {
+    let ret = 0;
     for (const tk of this.chunkTk_a$) {
-      if (
-        tk.value !== BaseTok.unknown &&
-        (tk.sntStopLoc.posSE(drtStrtLoc_x) ||
-          tk.sntStrtLoc.posGE(drtStopLoc_x))
-      ) unrelSnt_sa_x.add(tk);
+      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
+    return ret;
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {
@@ -228,40 +224,35 @@ export class FencedCodeBlock extends CodeBlock {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    _unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
-    let tk_ = this.#headTk;
-    if (
-      tk_.value !== BaseTok.unknown &&
-      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk_.sntStrtLoc.posGE(drtStopLoc_x))
-    ) unrelSnt_sa_x.add(tk_);
-
-    if (this.#headChunkTk) {
-      tk_ = this.#headChunkTk;
-      if (
-        tk_.value !== BaseTok.unknown &&
-        (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-          tk_.sntStrtLoc.posGE(drtStopLoc_x))
-      ) unrelSnt_sa_x.add(tk_);
-    }
-
-    super.gathrUnrelSnt(
+  ): uint {
+    let ret = gathrUnrelTk(
+      this.#headTk,
       drtStrtLoc_x,
       drtStopLoc_x,
-      _unrelSn_sa_x,
       unrelSnt_sa_x,
     );
 
-    if (this.#tailTk) {
-      tk_ = this.#tailTk;
-      if (
-        tk_.value !== BaseTok.unknown &&
-        (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-          tk_.sntStrtLoc.posGE(drtStopLoc_x))
-      ) unrelSnt_sa_x.add(tk_);
+    if (this.#headChunkTk) {
+      ret += gathrUnrelTk(
+        this.#headChunkTk,
+        drtStrtLoc_x,
+        drtStopLoc_x,
+        unrelSnt_sa_x,
+      );
     }
+
+    ret += super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+
+    if (this.#tailTk) {
+      ret += gathrUnrelTk(
+        this.#tailTk,
+        drtStrtLoc_x,
+        drtStopLoc_x,
+        unrelSnt_sa_x,
+      );
+    }
+    return ret;
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {

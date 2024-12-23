@@ -3,12 +3,14 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import type { uint } from "@fe-lib/alias.ts";
 import { assert, fail } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
 import type { Loc } from "../../Loc.ts";
+import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
-import { _escapeXml, _isSafeURL, _tag } from "../util.ts";
+import { _escapeXml, _isSafeURL, _tag, gathrUnrelTk } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -68,6 +70,35 @@ export class Autolink extends Inline {
     if (this.#frstTk.touch(loc_x)) return this.#frstTk;
 
     return /*#static*/ INOUT ? fail("Should not run here!") : this.frstToken;
+  }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  override gathrUnrelSnt(
+    drtStrtLoc_x: Loc,
+    drtStopLoc_x: Loc,
+    unrelSnt_sa_x: SortedSnt_id,
+  ): uint {
+    let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+    if (ret) return ret;
+
+    ret += gathrUnrelTk(
+      this.#frstTk,
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      unrelSnt_sa_x,
+    );
+
+    for (const tk of this.#destTk_a) {
+      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+    }
+
+    ret += gathrUnrelTk(
+      this.#lastTk,
+      drtStrtLoc_x,
+      drtStopLoc_x,
+      unrelSnt_sa_x,
+    );
+    return ret;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

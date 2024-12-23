@@ -3,18 +3,15 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { lnum_t, loff_t, uint8 } from "@fe-lib/alias.ts";
+import type { lnum_t, loff_t, uint, uint8 } from "@fe-lib/alias.ts";
 import { assert } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
-import { BaseTok } from "../../BaseTok.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
-import type { SortedStnod_id } from "../../Stnode.ts";
 import { MdextTk } from "../../Token.ts";
-import { Err } from "../../alias.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
-import { _toHTML } from "../util.ts";
+import { _toHTML, gathrUnrelTk } from "../util.ts";
 import { Inline } from "./Inline.ts";
 import { ILoc, InlineBlock } from "./InlineBlock.ts";
 import { Paragraph } from "./Paragraph.ts";
@@ -96,12 +93,12 @@ export class ATXHeading extends Heading {
   /* ~ */
 
   /* snt_a_$ */
-  setChunk(_x: MdextTk) {
+  setChunk(_x: (MdextTk | Inline)[]) {
     /*#static*/ if (INOUT) {
       assert(!this.snt_a_$.length);
       assert(this.st === ATXHeadingSt.head);
     }
-    this.snt_a_$.push(_x);
+    this.snt_a_$.push(..._x);
     this.st = ATXHeadingSt.chunk;
 
     this.invalidateBdry();
@@ -162,31 +159,26 @@ export class ATXHeading extends Heading {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
-    let tk_ = this.#headTk;
-    if (
-      tk_.value !== BaseTok.unknown &&
-      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk_.sntStrtLoc.posGE(drtStopLoc_x))
-    ) unrelSnt_sa_x.add(tk_);
-
-    super.gathrUnrelSnt(
+  ): uint {
+    let ret = gathrUnrelTk(
+      this.#headTk,
       drtStrtLoc_x,
       drtStopLoc_x,
-      unrelSn_sa_x,
       unrelSnt_sa_x,
     );
 
+    ret += super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+
     if (this.#tailTk) {
-      tk_ = this.#tailTk;
-      if (
-        tk_.value !== BaseTok.unknown &&
-        (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-          tk_.sntStrtLoc.posGE(drtStopLoc_x))
-      ) unrelSnt_sa_x.add(tk_);
+      ret += gathrUnrelTk(
+        this.#tailTk,
+        drtStrtLoc_x,
+        drtStopLoc_x,
+        unrelSnt_sa_x,
+      );
     }
+    return ret;
   }
 
   override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {
@@ -209,14 +201,14 @@ export class SetextHeading extends Heading {
     return lexr_x.continueSetext_$(this);
   }
 
-  override appendLine(_x: MdextTk): void {
-    this.snt_a_$.push(_x);
+  override appendLine(_x: (MdextTk | Inline)[]): void {
+    this.snt_a_$.push(..._x);
 
     this.invalidateBdry();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /* #headTk */
+  /* #tailTk */
   #tailTk;
   /** @implement */
   get level() {
@@ -276,9 +268,9 @@ export class SetextHeading extends Heading {
     if (iloc.reachEoh) {
       const ctnr = this.parent!;
       /* See `CtnrBlock.reference()` before change `ctnr` */
-      const para = new Paragraph(this.snt_a_$ as MdextTk[]);
+      const para = new Paragraph(this.snt_a_$);
       if (this.level === 1) {
-        para.appendLine(this.#tailTk);
+        para.appendLine([this.#tailTk]);
 
         const next = ctnr.getChildAftr(this);
         ctnr.replaceChild(this, para);
@@ -303,22 +295,17 @@ export class SetextHeading extends Heading {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
-    super.gathrUnrelSnt(
+  ): uint {
+    let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+
+    ret += gathrUnrelTk(
+      this.#tailTk,
       drtStrtLoc_x,
       drtStopLoc_x,
-      unrelSn_sa_x,
       unrelSnt_sa_x,
     );
-
-    const tk_ = this.#tailTk;
-    if (
-      tk_.value !== BaseTok.unknown &&
-      (tk_.sntStopLoc.posSE(drtStrtLoc_x) ||
-        tk_.sntStrtLoc.posGE(drtStopLoc_x))
-    ) unrelSnt_sa_x.add(tk_);
+    return ret;
   }
 
   override lidxOf(loc_x: Loc): lnum_t | -1 {

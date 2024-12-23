@@ -9,7 +9,6 @@ import type { Line } from "./Line.ts";
 import type { Loc } from "./Loc.ts";
 /*80--------------------------------------------------------------------------*/
 
-/** @final */
 export class SortedSnt_id extends SortedIdo<Snt> {
   _repr(): string[] {
     const ret: string[] = [];

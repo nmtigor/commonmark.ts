@@ -42,12 +42,12 @@ export class Token<T extends Tok = BaseTok> extends Snt {
 
   //jjjj TOCLEANUP
   // bakeRanval_$() {
-  //   this.ran_$.syncRanval_$();
+  //   this.syncRanval();
   // }
 
   saveRanval_$() {
     //jjjj TOCLEANUP
-    // this.ran_$.syncRanval_$();
+    // this.syncRanval();
 
     this.#oldRanval ??= new Ranval(0 as lnum_t, 0);
     this.#oldRanval.become(this.ran_$.ranval);
@@ -57,8 +57,22 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   /* ran_$ */
   readonly ran_$: TokRan<T>;
 
+  syncRanvalAnchr(): this {
+    this.ran_$.syncRanvalAnchr_$();
+    return this;
+  }
+  syncRanvalFocus(): this {
+    this.ran_$.syncRanvalFocus_$();
+    return this;
+  }
+  syncRanval(): this {
+    this.ran_$.syncRanval_$();
+    return this;
+  }
+
+  /* 2 "strt" */
   /**
-   * ! Do not use `sntStrtLoc.become()`. Use `setStrtLoc()` instead.
+   * ! Do not use `sntStrtLoc.become()`. Use `setStrt()` instead.
    * @implement
    */
   get sntStrtLoc() {
@@ -66,13 +80,13 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   }
   /**
    * @const @param loc_x
+   * @const @param tok_x
    */
-  setStrtLoc(loc_x: Loc): this {
-    this.ran_$.strtLoc.become(loc_x);
-    this.ran_$.syncRanvalAnchr_$();
-    return this;
+  setStrt(loc_x: Loc, tok_x?: T): this {
+    this.sntStrtLoc.become(loc_x);
+    if (tok_x) this.value = tok_x;
+    return this.syncRanvalAnchr();
   }
-
   /** @implement */
   get sntFrstLine() {
     return this.ran_$.frstLine;
@@ -85,9 +99,11 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   get sntStrtLoff(): loff_t {
     return this.ran_$.strtLoff;
   }
+  /* 2 ~ */
 
+  /* 2 "stop" */
   /**
-   * ! Do not use `sntStopLoc.become()`. Use `setStopLoc()` instead.
+   * ! Do not use `sntStopLoc.become()`. Use `setStop()` instead.
    * @implement
    */
   get sntStopLoc() {
@@ -95,11 +111,12 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   }
   /**
    * @const @param loc_x
+   * @const @param tok_x
    */
-  setStopLoc(loc_x: Loc): this {
-    this.ran_$.stopLoc.become(loc_x);
-    this.ran_$.syncRanvalFocus_$();
-    return this;
+  setStop(loc_x: Loc, tok_x?: T): this {
+    this.sntStopLoc.become(loc_x);
+    if (tok_x) this.value = tok_x;
+    return this.syncRanvalFocus();
   }
   /** @implement */
   get sntLastLine() {
@@ -113,6 +130,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   get sntStopLoff(): loff_t {
     return this.ran_$.stopLoff;
   }
+  /* 2 ~ */
 
   get empty(): boolean {
     return this.ran_$.collapsed;
@@ -278,8 +296,8 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     strtLoc_x?: Loc,
     stopLoc_x?: Loc,
   ): this {
-    if (strtLoc_x) this.setStrtLoc(strtLoc_x);
-    if (stopLoc_x) this.setStopLoc(stopLoc_x);
+    if (strtLoc_x) this.setStrt(strtLoc_x);
+    if (stopLoc_x) this.setStop(stopLoc_x);
     this.value = value_x;
     if (this.isErr) this.clrErr();
     /* `markPazRegion_$()` needs `stnod_$` of Token in dirty region. */

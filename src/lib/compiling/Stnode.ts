@@ -680,9 +680,13 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** @final */
+  //jjjj TOCLEANUP
+  // /** @final */
+  // get _info(): string {
+  //   return `${this.constructor.name}(${this.depth_2})`;
+  // }
   get _info(): string {
-    return `${this.constructor.name}(${this.depth_2})`;
+    return `${this.constructor.name},${this.depth_2}`;
   }
   //jjjj TOCLEANUP
   // /** @final */
@@ -694,14 +698,14 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   /** @final */
   override get _oldInfo(): string {
     return this.frstToken === this.lastToken
-      ? `${this._info}[ ${this.frstToken._oldInfo} ]`
-      : `${this._info}[ ${this.frstToken._oldInfo}, ${this.lastToken._oldInfo} ]`;
+      ? `${this._info} [ ${this.frstToken._oldInfo} ]`
+      : `${this._info} [ ${this.frstToken._oldInfo}, ${this.lastToken._oldInfo} ]`;
   }
   /** @final */
   get _newInfo(): string {
     return this.frstToken === this.lastToken
-      ? `${this._info}[ ${this.frstToken} ]`
-      : `${this._info}[ ${this.frstToken}, ${this.lastToken} ]`;
+      ? `${this._info} [ ${this.frstToken} ]`
+      : `${this._info} [ ${this.frstToken}, ${this.lastToken} ]`;
   }
 
   _repr(): unknown {

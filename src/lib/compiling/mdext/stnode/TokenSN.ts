@@ -26,6 +26,8 @@ export abstract class TokenSN extends Inline {
   constructor(tk_x: MdextTk) {
     super();
     this.tk$ = tk_x;
+
+    this.ensureBdry();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

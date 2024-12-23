@@ -12,7 +12,7 @@ import { SortedIdo } from "../util/SortedArray.ts";
 import { assert, out, traceOut } from "../util/trace.ts";
 import type { Tok } from "./alias.ts";
 import { BaseTok } from "./BaseTok.ts";
-import { LocCompared } from "./Loc.ts";
+import { type Loc, LocCompared } from "./Loc.ts";
 import type { Stnode } from "./Stnode.ts";
 import type { TokBufr } from "./TokBufr.ts";
 import { Token } from "./Token.ts";
@@ -439,7 +439,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
           if (tk_.sntFrstLine === strtLn_src) {
             tk_.sntStrtLoc.line_$ = strtLn_tgt;
           }
-          tk_.ran_$.syncRanval_$(); // Recalc the new one
+          tk_.syncRanval(); // Recalc the new one
 
           if (tk_ === strtLn_src.frstTokenBy(this)) {
             strtLn_src.delFrstTokenBy_$(this);
@@ -467,7 +467,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
           if (tk_.sntLastLine === stopLn_src) {
             tk_.sntStopLoc.set(stopLn_tgt, tk_.sntStopLoff + this.#dtLoff);
           }
-          tk_.ran_$.syncRanval_$(); // Recalc the new one
+          tk_.syncRanval(); // Recalc the new one
 
           if (
             tk_ === stopLn_src.frstTokenBy(this) && strtLn_tgt !== stopLn_tgt
@@ -570,7 +570,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
       if (!this.hasErr) this.strtLexTk$ = tk_;
       if (tk_ === this.stopLexTk$) break;
 
-      tk_.ran_$.syncRanval_$(); //!
+      tk_.syncRanval(); //!
       this.#scandTk_a.push(tk_);
       this.lsTk$ = tk_;
     } while (--valve);
@@ -619,21 +619,27 @@ export abstract class Lexr<T extends Tok = BaseTok> {
       retTk_x = new Token(this, new TokRan(this.curLoc$.dup()));
     } else if (retTk_x instanceof Token) {
       retTk_x //jjjj TOCLEANUP.reset()
-        .setStrtLoc(this.curLoc$);
+        .setStrt(this.curLoc$);
     }
     return this.scan_impl$(retTk_x);
   }
 
-  /**
-   * `curLoc$` must be at the end of the scaned `tok_x` (excluded)
-   * @final
-   * @const @param tok_x
-   * @out @param out_x
-   */
-  protected setTok$(tok_x: T, out_x: Token<T>): void {
-    out_x.value = tok_x;
-    out_x.setStopLoc(this.curLoc$);
-  }
+  //jjjj TOCLEANUP
+  // /**
+  //  * `curLoc$` must be at the end of the scaned `tok_x` (excluded)
+  //  * @final
+  //  * @const @param tok_x
+  //  * @out @param out_x
+  //  * @const @param stopLoc_x
+  //  */
+  // protected setTok$(
+  //   tok_x: T,
+  //   out_x: Token<T>,
+  //   stopLoc_x: Loc = this.curLoc$,
+  // ): void {
+  //   out_x.value = tok_x;
+  //   out_x.setStop(stopLoc_x);
+  // }
 
   /**
    * Scan one token ab to stopLexTk$ (excluded)\
@@ -680,15 +686,15 @@ export abstract class Lexr<T extends Tok = BaseTok> {
       tk_0 = this.strtLexTk_0$;
       tk_1 = tk_a[0];
       if (this.canConcat$(tk_0, tk_1)) { // 1894
-        tk_0.setStopLoc(tk_1.sntStopLoc);
+        tk_0.setStop(tk_1.sntStopLoc);
         tk_0.linkNext(tk_1.nextToken_$!, this.stopLexTk$);
         tk_a.splice(0, 1);
       }
       tk_0 = tk_a.at(-1);
       tk_1 = this.stopLexTk$;
       if (tk_0 && this.canConcat$(tk_0, tk_1)) { // 1895
-        tk_1.setStrtLoc(tk_0.sntStrtLoc);
-        tk_1.linkPrev(tk_0.prevToken_$!, this.strtLexTk_0$);
+        tk_1.setStrt(tk_0.sntStrtLoc)
+          .linkPrev(tk_0.prevToken_$!, this.strtLexTk_0$);
         tk_a.pop();
       }
     }
@@ -696,8 +702,8 @@ export abstract class Lexr<T extends Tok = BaseTok> {
       tk_0 = this.strtLexTk_0$;
       tk_1 = this.stopLexTk$;
       if (this.canConcat$(tk_0, this.stopLexTk$)) {
-        tk_1.setStrtLoc(tk_0.sntStrtLoc);
-        tk_1.linkPrev(tk_0.prevToken_$!);
+        tk_1.setStrt(tk_0.sntStrtLoc)
+          .linkPrev(tk_0.prevToken_$!);
         this.strtLexTk_0$ = tk_1; //!
       }
     }
@@ -709,17 +715,21 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     const VALVE = 1_000;
     let valve = VALVE;
     while (tk_ && tk_ !== lastTk && --valve) {
-      tk_.ran_$.syncRanval_$(); //!
+      tk_.syncRanval(); //!
       this.#scandTk_a.push(tk_);
       tk_ = tk_.nextToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
   }
   #scanBypassTk(tk_x: Token<T>): void {
-    tk_x.ran_$.syncRanval_$(); //!
+    tk_x.syncRanval(); //!
     this.#scandTk_a.push(tk_x);
   }
   /**
+   * Only chain the first token of `snt_a_x` with `lsTk$`, and put all tokens of
+   * `snt_a_x` into `#scandTk_a`.\
+   * ! Tokens in `snt_a_x` SHOULD already be well chained.
+   *
    * ! Do not modify `curLoc$`
    * @final
    * @headconst @param snt_a_x

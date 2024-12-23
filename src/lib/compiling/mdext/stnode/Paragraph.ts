@@ -41,16 +41,18 @@ export class Paragraph extends InlineBlock {
   }
 
   override readonly acceptsLines = true;
-  override appendLine(_x: MdextTk): void {
-    this.snt_a_$.push(_x);
+  override appendLine(_x: (MdextTk | Inline)[]): void {
+    this.snt_a_$.push(..._x);
 
     this.invalidateBdry();
   }
+  //llll review
   appendLines(_x: MdextTk[]): void {
     for (const tk of _x) this.snt_a_$.push(tk);
 
     this.invalidateBdry();
   }
+  //llll review
   prependLine(_x: MdextTk): void {
     this.snt_a_$.unshift(_x);
 
@@ -78,36 +80,32 @@ export class Paragraph extends InlineBlock {
   }
 
   /**
-   * @headconst @param tk_x
+   * @headconst @param snt_a_x
    */
-  constructor(tk_x: MdextTk | MdextTk[]) {
+  constructor(snt_a_x: (MdextTk | Inline)[]) {
     super();
-    if (Array.isArray(tk_x)) {
-      for (const tk of tk_x) this.snt_a_$.push(tk);
-    } else {
-      this.snt_a_$.push(tk_x);
-    }
+    this.snt_a_$.push(...snt_a_x);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   protected override closeBlock_impl$(): void {
     /*#static*/ if (INOUT) {
-      for (const tk of this.snt_a_$) {
-        assert(tk instanceof MdextTk && isLFOr0(tk.sntStopLoc.ucod));
-        /* `tk.value` can be other than `chunk`, in which case, `this` is
-        reused. */
+      let ln_, prevSnt: MdextTk | Inline | undefined;
+      for (const snt of this.snt_a_$) {
+        if (snt.sntFrstLine !== ln_ && prevSnt) {
+          assert(isLFOr0(prevSnt.sntStopLoc.ucod));
+        }
+        ln_ = snt.sntFrstLine;
+        prevSnt = snt;
       }
     }
-    /* Do not handle soft break here because line end may be in some multiline
-    "<code></code>". */
-
-    const lastTk = this.snt_a_$.at(-1)!;
-    const lastLn = lastTk.sntLastLine;
+    const lastSnt = this.snt_a_$.at(-1)!;
+    const lastLn = lastSnt.sntLastLine;
     const i_ = lastNonblankIn(lastLn);
     /*#static*/ if (INOUT) {
-      assert(lastTk.sntStrtLoff <= i_ && i_ < lastLn.uchrLen);
+      assert(lastSnt.sntStrtLoff <= i_ && i_ < lastLn.uchrLen);
     }
-    lastTk.sntStopLoc.loff = 1 + i_;
+    lastSnt.sntStopLoc.loff = 1 + i_;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -122,28 +120,6 @@ export class Paragraph extends InlineBlock {
     assert(valve, `Loop ${VALVE}±1 times`);
     return this;
   }
-
-  //jjjj TOCLEANUP
-  // protected override inline_impl$(lexr_x: MdextLexr): void {
-  //   let iloc = this.iloc;
-
-  //   const snt_a = this.snt_a_$;
-  //   let i_ = 0;
-  //   const iI = snt_a.length;
-  //   for (; i_ < iI; ++i_) if (!(snt_a[i_] instanceof Linkdef)) break;
-  //   if (i_ === iI) return;
-
-  //   /*#static*/ if (INOUT) {
-  //     assert(snt_a[i_] instanceof MdextTk);
-  //   }
-  //   iloc.reset_O(snt_a[i_] as MdextTk);
-
-  //   const VALVE = 1_000;
-  //   let valve = VALVE;
-  //   while (lexr_x.lexInline_$(iloc) && --valve) {}
-  //   assert(valve, `Loop ${VALVE}±1 times`);
-  //   lexr_x.lexEmphasis_$(iloc);
-  // }
 
   //jjjj TOCLEANUP
   // /**

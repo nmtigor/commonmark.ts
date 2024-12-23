@@ -5,13 +5,12 @@
 
 import type { lnum_t, uint } from "@fe-lib/alias.ts";
 import type { Loc } from "../../Loc.ts";
-import type { MdextLexr } from "../MdextLexr.ts";
-import { Block } from "./Block.ts";
-import type { MdextTk } from "../../Token.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { SortedStnod_id } from "../../Stnode.ts";
+import type { MdextTk } from "../../Token.ts";
+import type { MdextLexr } from "../MdextLexr.ts";
+import { Block } from "./Block.ts";
 import type { Inline } from "./Inline.ts";
-import { fail } from "@fe-lib/util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class CtnrBlock extends Block {
@@ -148,19 +147,21 @@ export abstract class CtnrBlock extends Block {
   override gathrUnrelSnt(
     drtStrtLoc_x: Loc,
     drtStopLoc_x: Loc,
-    unrelSn_sa_x: SortedStnod_id,
     unrelSnt_sa_x: SortedSnt_id,
-  ): void {
+    unrelSn_sa_x: SortedStnod_id,
+  ): uint {
+    let ret = 0;
     for (const c of this.children) {
       if (!unrelSn_sa_x.includes(c)) {
-        c.gathrUnrelSnt(
+        ret += c.gathrUnrelSnt(
           drtStrtLoc_x,
           drtStopLoc_x,
-          unrelSn_sa_x,
           unrelSnt_sa_x,
+          unrelSn_sa_x,
         );
       }
     }
+    return ret;
   }
 
   override reuseLine(lidx_x: lnum_t, snt_a_x: (MdextTk | Inline)[]) {

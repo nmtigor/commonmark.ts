@@ -29,7 +29,7 @@ export abstract class Block extends MdextSN {
   }
 
   readonly acceptsLines: boolean = false;
-  appendLine(_x: MdextTk): void {
+  appendLine(_x: (MdextTk | Inline)[]): void {
     fail("Disabled");
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -53,6 +53,8 @@ export abstract class Block extends MdextSN {
   get complete() {
     return this.#complete;
   }
+  /** "iS" */
+  #_inlineSkipd = false;
 
   /**
    * For compiling only
@@ -66,6 +68,7 @@ export abstract class Block extends MdextSN {
   reuse(): this {
     this.#open = true;
     this.#complete = false;
+    this.#_inlineSkipd = false;
     this.invalidateBdry();
     return this;
   }
@@ -121,7 +124,10 @@ export abstract class Block extends MdextSN {
    * @headconst @param lexr_x
    */
   inline(lexr_x: MdextLexr): void {
-    if (this.#complete) return;
+    if (this.#complete) {
+      this.#_inlineSkipd = true;
+      return;
+    }
 
     this.inline_impl$(lexr_x);
     this.ensureBdry();
@@ -141,5 +147,10 @@ export abstract class Block extends MdextSN {
    * @out @param _snt_a_x
    */
   reuseLine(_lidx_x: lnum_t, _snt_a_x: (MdextTk | Inline)[]): void {}
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  override get _info(): string {
+    return `${super._info}${this.#_inlineSkipd ? ",iS" : ""}`;
+  }
 }
 /*80--------------------------------------------------------------------------*/
