@@ -564,7 +564,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
       }
       /* Could set `lsTk$` to `undefined` in `scan_impl$()` to prevent
       `.lineNext()` here. */
-      this.lsTk$?.linkNext(tk_, this.stopLexTk$);
+      this.lsTk$?.linkNext(tk_);
 
       if (tk_.isErr) this.#errTk_sa.add(tk_);
       if (!this.hasErr) this.strtLexTk$ = tk_;
@@ -686,15 +686,15 @@ export abstract class Lexr<T extends Tok = BaseTok> {
       tk_0 = this.strtLexTk_0$;
       tk_1 = tk_a[0];
       if (this.canConcat$(tk_0, tk_1)) { // 1894
-        tk_0.setStop(tk_1.sntStopLoc);
-        tk_0.linkNext(tk_1.nextToken_$!, this.stopLexTk$);
+        tk_0.setStop(tk_1.sntStopLoc)
+          .linkNext(tk_1.nextToken_$!);
         tk_a.splice(0, 1);
       }
       tk_0 = tk_a.at(-1);
       tk_1 = this.stopLexTk$;
       if (tk_0 && this.canConcat$(tk_0, tk_1)) { // 1895
         tk_1.setStrt(tk_0.sntStrtLoc)
-          .linkPrev(tk_0.prevToken_$!, this.strtLexTk_0$);
+          .linkPrev(tk_0.prevToken_$!);
         tk_a.pop();
       }
     }

@@ -3,8 +3,8 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { LOG_cssc } from "../alias.ts";
-import { _TRACE, DEV, g_vco, global, INOUT, RESIZ } from "../global.ts";
+import { g_getRootVCo, LOG_cssc } from "../alias.ts";
+import { _TRACE, DEV, global, INOUT, RESIZ } from "../global.ts";
 import { Moo } from "./Moo.ts";
 import type { id_t, SetLayoutP, unum } from "./alias.ts";
 import {
@@ -24,9 +24,7 @@ import { div, MouseButton } from "./dom.ts";
 import { assert, bind, fail, traceOut } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
-/**
- * Scroll container
- */
+/** Scroll container */
 export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   static #ID = 0 as id_t;
   override readonly id = ++Scronr.#ID as id_t;
@@ -113,9 +111,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     return this.#scrollHigt;
   }
 
-  /**
-   * @headconst @param coo_x
-   */
+  /** @headconst @param coo_x */
   constructor(coo_x: C) {
     super(coo_x, div());
 
@@ -201,9 +197,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     }[this.writingMode])();
   }
 
-  /**
-   * @param bstrt_x block-start change
-   */
+  /** @param bstrt_x block-start change */
   scrollScrolrBy(bstrt_x: number) {
     /* final switch */ ({
       [WritingMode.htb]: () => {
@@ -222,9 +216,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     this.#scrolr.el.scrollBy(scrollO);
   }
 
-  /**
-   * @param bstrt_x block-start value
-   */
+  /** @param bstrt_x block-start value */
   scrollScrolrTo(bstrt_x: number) {
     /* final switch */ ({
       [WritingMode.htb]: () => {
@@ -243,9 +235,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     this.#scrolr.el.scrollTo(scrollO);
   }
 
-  /**
-   * @param bstrt_x block-start value
-   */
+  /** @param bstrt_x block-start value */
   scrollSlidrTo(bstrt_x: unum) {
     this.#scrodB.scrodicatr.el.style.insetBlockStart =
       this.#scrobarB.slidr.el.style.insetBlockStart =
@@ -308,9 +298,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     this.refresh();
   }
 
-  /**
-   * `in( this.#scrolrInited )`
-   */
+  /** `in( this.#scrolrInited )` */
   @bind
   // @traceOut(_TRACE)
   private _onScroll_scrolr() {
@@ -332,9 +320,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     );
   }
 
-  /**
-   * `in( this.#scrolrInited )`
-   */
+  /** `in( this.#scrolrInited )` */
   @bind
   // @traceOut(_TRACE)
   private _onWheel(evt_x: WheelEvent) {
@@ -350,9 +336,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 }
 /*64----------------------------------------------------------*/
 
-/**
- * Scrolller, the `HTMLVuu` being scrolled
- */
+/** Scrolller, the `HTMLVuu` being scrolled */
 export abstract class Scrolr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   readonly host;
 
@@ -360,9 +344,7 @@ export abstract class Scrolr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     return BufrDir.ltr;
   }
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scronr<C>) {
     super(host_x.coo, div());
     this.host = host_x;
@@ -375,9 +357,7 @@ export abstract class Scrolr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 }
 /*64----------------------------------------------------------*/
 
-/**
- * Scroll rod
- */
+/** Scroll rod */
 abstract class Scrod_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   static readonly thick = 2;
 
@@ -398,9 +378,7 @@ abstract class Scrod_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 
   abstract readonly scrodicatr: Scrodicatr_<C>;
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scronr<C>) {
     super(host_x.coo, div());
     this.host = host_x;
@@ -423,9 +401,7 @@ class ScrodB_<C extends Coo> extends Scrod_<C> {
   /** @implement */
   readonly scrodicatr;
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scronr<C>) {
     super(host_x);
 
@@ -449,9 +425,7 @@ class ScrodI_<C extends Coo> extends Scrod_<C> {
   /** @implement */
   readonly scrodicatr;
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scronr<C>) {
     super(host_x);
 
@@ -468,13 +442,9 @@ class ScrodI_<C extends Coo> extends Scrod_<C> {
 }
 /*49-------------------------------------------*/
 
-/**
- * Scroll indicator
- */
+/** Scroll indicator */
 abstract class Scrodicatr_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scrod_<C>) {
     super(host_x.coo, div());
 
@@ -569,9 +539,7 @@ abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   /** `Moo` of `Slidr_` block-start or inline-start */
   readonly slidrBStrt_mo = new Moo({ val: 0 as unum });
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scronr<C>) {
     super(host_x.coo, div());
     this.host = host_x;
@@ -616,9 +584,7 @@ class ScrobarB_<C extends Coo> extends Scrobar_<C> {
   /** @implement */
   readonly slidr;
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scronr<C>) {
     super(host_x);
 
@@ -654,9 +620,7 @@ class ScrobarI_<C extends Coo> extends Scrobar_<C> {
   /** @implement */
   readonly slidr;
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scronr<C>) {
     super(host_x);
 
@@ -689,9 +653,7 @@ abstract class Slidr_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     return this.host$.host;
   }
 
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: Scrobar_<C>) {
     super(host_x.coo, div());
     this.host$ = host_x;
@@ -724,8 +686,8 @@ abstract class Slidr_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
       this.#clientY = evt_x.clientY;
 
       clearTimeout(this.host$.hide_to);
-      g_vco().on("pointermove", this.#onPointerMove);
-      g_vco().on("pointerup", this.#onPointerUp);
+      g_getRootVCo()?.on("pointermove", this.#onPointerMove);
+      g_getRootVCo()?.on("pointerup", this.#onPointerUp);
       if (global.can_hover) {
         this.host$.off("pointerenter", this.host$.onPointerEnter);
         this.host$.off("pointerleave", this.host$.onPointerLeave);
@@ -745,8 +707,8 @@ abstract class Slidr_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   #onPointerUp = (evt_x: PointerEvent) => {
     evt_x.stopPropagation();
 
-    g_vco().off("pointermove", this.#onPointerMove);
-    g_vco().off("pointerup", this.#onPointerUp);
+    g_getRootVCo()?.off("pointermove", this.#onPointerMove);
+    g_getRootVCo()?.off("pointerup", this.#onPointerUp);
     if (global.can_hover) {
       this.host$.on("pointerenter", this.host$.onPointerEnter);
       this.host$.on("pointerleave", this.host$.onPointerLeave);
@@ -759,9 +721,7 @@ abstract class Slidr_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
  * @final
  */
 class SlidrB_<C extends Coo> extends Slidr_<C> {
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: ScrobarB_<C>) {
     super(host_x);
 
@@ -820,9 +780,7 @@ class SlidrB_<C extends Coo> extends Slidr_<C> {
  * @final
  */
 class SlidrI_<C extends Coo> extends Slidr_<C> {
-  /**
-   * @headconst @param host_x
-   */
+  /** @headconst @param host_x */
   constructor(host_x: ScrobarI_<C>) {
     super(host_x);
 

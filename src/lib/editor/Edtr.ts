@@ -53,17 +53,13 @@ import {
 
 declare global {
   interface Node {
-    /**
-     * Usage: @see {@linkcode anchrRecOf_$()}
-     */
+    /** Usage: @see {@linkcode anchrRecOf_$()} */
     [$rec_utx_a]: DOMRect[];
     "cy.rec_utx_a": DOMRect[];
   }
 
   interface DOMRect {
-    /**
-     * Usage: @see {@linkcode anchrRecOf_$()}
-     */
+    /** Usage: @see {@linkcode anchrRecOf_$()} */
     [$uts]: ts_t;
   }
 
@@ -663,9 +659,7 @@ export abstract class EdtrScrolr<
     }
   }
 
-  /**
-   * `in( this.bufr$.newRan && this.bufr$.oldRan )`
-   */
+  /** `in( this.bufr$.newRan && this.bufr$.oldRan )` */
   protected abstract replace_impl$(): void;
   /**
    * `in( this.bufr$.newRan && this.bufr$.oldRan )`
@@ -1101,9 +1095,7 @@ export abstract class EdtrScrolr<
     }
   }
 
-  /**
-   * Set by other data rather than `eran`.
-   */
+  /** Set by other data rather than `eran`. */
   protected setSel$(): boolean {
     this.sel$ = window.getSelection();
     if (!this.sel$) return false;
@@ -1178,9 +1170,7 @@ export abstract class EdtrScrolr<
       ? ret[st_x]
       : undefined;
   }
-  /**
-   * @const @param f_x
-   */
+  /** @const @param f_x */
   protected onKeydown_impl_f$(f_x: string): void {
     const mc_ = this.proactiveCaret;
     /** EdtrFuncRet */
@@ -1484,9 +1474,7 @@ export abstract class EdtrScrolr<
     //   caret_el.offsetTop,
     //   caret_el.clientHeight );
   }
-  /**
-   * `in( this.#composingRepl )`
-   */
+  /** `in( this.#composingRepl )` */
   @bind
   @traceOut(_TRACE && EDITOR)
   private _onCompositionUpdate(evt_x: CompositionEvent) {
@@ -1504,9 +1492,7 @@ export abstract class EdtrScrolr<
     // console.log( this.#imevu.height_save );
     // console.log( this.#imevu.el.clientHeight );
   }
-  /**
-   * `in( this.#composingRepl )`
-   */
+  /** `in( this.#composingRepl )` */
   @bind
   @traceOut(_TRACE && EDITOR)
   private _onCompositionEnd(evt_x: CompositionEvent) {
@@ -1545,9 +1531,7 @@ export abstract class EdtrScrolr<
 
   // kCtrlEnter$( mc_x: Caret ) { return EdtrFuncRet.nope; }
   // kShiftEnter$( mc_x: Caret ) { return EdtrFuncRet.nope; }
-  /**
-   * `in( mc_x.eran && mc_x.active && mc_x.st === CaretState.blinking )`
-   */
+  /** `in( mc_x.eran && mc_x.active && mc_x.st === CaretState.blinking )` */
   protected carriageReturn$() {
     this.insertUChr$("\n");
   }

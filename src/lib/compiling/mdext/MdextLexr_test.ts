@@ -329,7 +329,7 @@ describe("Compiling Paragraph", () => {
     ]);
     assertEquals(lexr._abadnSnt_2_sa._repr(), []);
 
-    repl(rv(2, 0), "4");
+    repl(rv(2, 0), "4"); // 3144
     /*
     p
     ⏎
@@ -3279,18 +3279,15 @@ describe("Compiling Linkdef", () => {
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
     assertEquals(
       pazr._root?._toHTML(lexr),
-      /* deno-fmt-ignore */ [
-        '<p><a href="/uri(xyz)">foo</a> <a href="abc">bar</a></p>',
-      ].join("\n"),
+      '<p><a href="/uri(xyz)">foo</a> <a href="abc">bar</a></p>',
     );
     assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
     assertEquals(lexr._relexd, false);
-    assertEquals(pazr.unrelSn_sa_$._repr(), [
-      "Link,2 [ bracket_open[2-6,2-7), bracket_cloz[2-10,2-11) ]",
-    ]);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
     assertEquals(pazr.takldSn_sa_$._repr(), [
       "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
       "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+      "Link,2 [ bracket_open[2-6,2-7), bracket_cloz[2-10,2-11) ]",
     ]);
     assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
     assertStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(0)?._c(2));
@@ -3391,6 +3388,517 @@ describe("Compiling Linkdef", () => {
       "chunk[1-4,1-8)",
       "text[1-9,1-14)",
       "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+  });
+
+  it("edits at boundaries of one Linkdef", () => {
+    init(["[bar]:abc", "[foo]: /uri (xyz)", "[foo]"]);
+
+    repl(ran(1)._rv, " ");
+    /*
+    [bar]:abc
+    [foo]: /uri (xyz)·
+    [foo]
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "bracket_colon[0-4,0-6)", "chunk[0-6,0-9)",
+        "bracket_open[1-0,1-1)", "text[1-1,1-4)", "bracket_colon[1-4,1-6)", "chunk[1-7,1-11)", "text[1-12,1-17)", "text[1-17,1-18)",
+        "bracket_open[2-0,2-1)", "text[2-1,2-4)", "bracket_cloz[2-4,2-5)",
+      ],
+      "stopBdry[2-5)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p><a href="/uri" title="xyz">foo</a></p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
+      "Linkdef,2 [ bracket_open[1-0,1-1), text[1-12,1-17) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(0)?._c(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
+      "Linkdef,2 [ bracket_open[1-0,1-1), text[1-12,1-17) ]",
+      "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    repl(rv(1, 0), " ");
+    /*
+    [bar]:abc
+    ·[foo]: /uri (xyz)·
+    [foo]
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "bracket_colon[0-4,0-6)", "chunk[0-6,0-9)",
+        "bracket_open[1-1,1-2)", "text[1-2,1-5)", "bracket_colon[1-5,1-7)", "chunk[1-8,1-12)", "text[1-13,1-18)", "text[1-18,1-19)",
+        "bracket_open[2-0,2-1)", "text[2-1,2-4)", "bracket_cloz[2-4,2-5)",
+      ],
+      "stopBdry[2-5)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p><a href="/uri" title="xyz">foo</a></p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
+      "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+      "SoftBr,2 [ text[1-17,1-18) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(0)?._c(3));
+    assertStrictEquals(pazr.takldSn_sa_$.at(2), pazr._root?._c(0)?._c(2));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
+      "Linkdef,2 [ bracket_open[1-0,1-1), text[1-12,1-17) ]",
+      "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+      "SoftBr,2 [ text[1-17,1-18) ]",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    repl(rv(1, 6), " ");
+    /*
+    [bar]:abc
+    ·[foo] : /uri (xyz)·
+    [foo]
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "bracket_colon[0-4,0-6)", "chunk[0-6,0-9)",
+        "bracket_open[1-1,1-2)", "text[1-2,1-5)", "bracket_cloz[1-5,1-6)", "text[1-6,1-19)", "text[1-19,1-20)",
+        "bracket_open[2-0,2-1)", "text[2-1,2-4)", "bracket_cloz[2-4,2-5)",
+      ],
+      "stopBdry[2-5)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>[foo] : /uri (xyz)", '<a href="">foo</a></p>'].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
+      "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+      "SoftBr,2 [ text[1-18,1-19) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(0)?._c(2));
+    assertStrictEquals(pazr.takldSn_sa_$.at(2), pazr._root?._c(0)?._c(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), [
+      "text[1-2,1-5)",
+      "chunk[1-8,1-12)",
+      "text[1-13,1-18)",
+    ]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
+      "bracket_open[1-1,1-2)",
+      "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+      "SoftBr,2 [ text[1-18,1-19) ]",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    undo();
+    /*
+    [bar]:abc
+    ·[foo]: /uri (xyz)·
+    [foo]
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "bracket_colon[0-4,0-6)", "chunk[0-6,0-9)",
+        "bracket_open[1-1,1-2)", "text[1-2,1-5)", "bracket_colon[1-5,1-7)", "chunk[1-8,1-12)", "text[1-13,1-18)", "text[1-18,1-19)",
+        "bracket_open[2-0,2-1)", "text[2-1,2-4)", "bracket_cloz[2-4,2-5)",
+      ],
+      "stopBdry[2-5)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p><a href="/uri" title="xyz">foo</a></p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
+      "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertStrictEquals(pazr.takldSn_sa_$.at(1), pazr._root?._c(0)?._c(3));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), ["bracket_cloz[1-5,1-6)"]);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), chunk[0-6,0-9) ]",
+      "bracket_open[1-1,1-2)",
+      "Link,2 [ bracket_open[2-0,2-1), bracket_cloz[2-4,2-5) ]",
+      "SoftBr,2 [ text[1-19,1-20) ]",
+      "text[1-2,1-5)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+  });
+});
+
+describe("Compiling Link", () => {
+  it("edits destination, title in one Link", () => {
+    init(["abc[foo](/uri (xyz))"]);
+
+    repl(rv(0, 13, 0, 14), "");
+    /*
+    abc[foo](/uri(xyz))
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-3)", "bracket_open[0-3,0-4)", "text[0-4,0-7)", "bracket_paren[0-7,0-9)", "chunk[0-9,0-18)", "paren_cloz[0-18,0-19)",
+      ],
+      "stopBdry[0-19)",
+      [],
+    ]);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>abc<a href="/uri(xyz)">foo</a></p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), [
+      "chunk[0-9,0-13)",
+      "text[0-14,0-19)",
+    ]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "paren_cloz[0-19,0-20)",
+      "text[0-0,0-3)",
+      "bracket_open[0-3,0-4)",
+      "text[0-4,0-7)",
+      "bracket_paren[0-7,0-9)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    undo();
+    /*
+    abc[foo](/uri (xyz))
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-3)", "bracket_open[0-3,0-4)", "text[0-4,0-7)", "bracket_paren[0-7,0-9)", "chunk[0-9,0-13)", "text[0-14,0-19)", "paren_cloz[0-19,0-20)",
+      ],
+      "stopBdry[0-20)",
+      [],
+    ]);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>abc<a href="/uri" title="xyz">foo</a></p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "paren_cloz[0-18,0-19)",
+      "text[0-0,0-3)",
+      "bracket_open[0-3,0-4)",
+      "text[0-4,0-7)",
+      "bracket_paren[0-7,0-9)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+  });
+
+  it("edits label in one Link", () => {
+    init(["[foo]: /uri (xyz)", "abc[foo][foo]"]);
+
+    repl(rv(1, 9), " ");
+    /*
+    [foo]: /uri (xyz)
+    abc[foo][ foo]
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "bracket_colon[0-4,0-6)", "chunk[0-7,0-11)", "text[0-12,0-17)",
+        "text[1-0,1-3)", "bracket_open[1-3,1-4)", "text[1-4,1-7)", "bracket_cloz[1-7,1-8)", "bracket_open[1-8,1-9)", "text[1-9,1-13)", "bracket_cloz[1-13,1-14)",
+      ],
+      "stopBdry[1-14)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>abc<a href="/uri" title="xyz">foo</a></p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), text[0-12,0-17) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), ["text[1-9,1-12)"]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "bracket_cloz[1-12,1-13)",
+      "Linkdef,2 [ bracket_open[0-0,0-1), text[0-12,0-17) ]",
+      "text[1-0,1-3)",
+      "bracket_open[1-3,1-4)",
+      "text[1-4,1-7)",
+      "bracket_cloz[1-7,1-8)",
+      "bracket_open[1-8,1-9)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    repl(rv(1, 12), " ");
+    /*
+    [foo]: /uri (xyz)
+    abc[foo][ fo o]
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "bracket_colon[0-4,0-6)", "chunk[0-7,0-11)", "text[0-12,0-17)",
+        "text[1-0,1-3)", "bracket_open[1-3,1-4)", "text[1-4,1-7)", "bracket_cloz[1-7,1-8)", "bracket_open[1-8,1-9)", "text[1-9,1-14)", "bracket_cloz[1-14,1-15)",
+      ],
+      "stopBdry[1-15)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      "<p>abc[foo][ fo o]</p>",
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), text[0-12,0-17) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "bracket_cloz[1-13,1-14)",
+      "Linkdef,2 [ bracket_open[0-0,0-1), text[0-12,0-17) ]",
+      "text[1-0,1-3)",
+      "bracket_open[1-3,1-4)",
+      "text[1-4,1-7)",
+      "bracket_cloz[1-7,1-8)",
+      "bracket_open[1-8,1-9)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    repl(rv(1, 9, 1, 14), "");
+    /*
+    [foo]: /uri (xyz)
+    abc[foo][]
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "bracket_colon[0-4,0-6)", "chunk[0-7,0-11)", "text[0-12,0-17)",
+        "text[1-0,1-3)", "bracket_open[1-3,1-4)", "text[1-4,1-7)", "bracket_cloz[1-7,1-8)", "bracket_open[1-8,1-9)", "bracket_cloz[1-9,1-10)",
+      ],
+      "stopBdry[1-10)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>abc<a href="/uri" title="xyz">foo</a></p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Linkdef,2 [ bracket_open[0-0,0-1), text[0-12,0-17) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "bracket_cloz[1-14,1-15)",
+      "Linkdef,2 [ bracket_open[0-0,0-1), text[0-12,0-17) ]",
+      "text[1-0,1-3)",
+      "bracket_open[1-3,1-4)",
+      "text[1-4,1-7)",
+      "bracket_cloz[1-7,1-8)",
+      "bracket_open[1-8,1-9)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+  });
+
+  it("edits at boundaries of one Link", () => {
+    init(["abc[foo](/uri (xyz))", "123"]);
+
+    repl(ran(0)._rv, " ");
+    /*
+    abc[foo](/uri (xyz))·
+    123
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-3)", "bracket_open[0-3,0-4)", "text[0-4,0-7)", "bracket_paren[0-7,0-9)", "chunk[0-9,0-13)", "text[0-14,0-19)", "paren_cloz[0-19,0-20)", "text[0-20,0-21)",
+        "text[1-0,1-3)",
+      ],
+      "stopBdry[1-3)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ['<p>abc<a href="/uri" title="xyz">foo</a>', "123</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Link,2 [ bracket_open[0-3,0-4), paren_cloz[0-19,0-20) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "text[1-0,1-3)",
+      "text[0-0,0-3)",
+      "Link,2 [ bracket_open[0-3,0-4), paren_cloz[0-19,0-20) ]",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    repl(rv(0, 3), " ");
+    /*
+    abc [foo](/uri (xyz))·
+    123
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-4)", "bracket_open[0-4,0-5)", "text[0-5,0-8)", "bracket_paren[0-8,0-10)", "chunk[0-10,0-14)", "text[0-15,0-20)", "paren_cloz[0-20,0-21)", "text[0-21,0-22)",
+        "text[1-0,1-3)",
+      ],
+      "stopBdry[1-3)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ['<p>abc <a href="/uri" title="xyz">foo</a>', "123</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), ["SoftBr,2 [ text[0-20,0-21) ]"]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "text[1-0,1-3)",
+      "Link,2 [ bracket_open[0-3,0-4), paren_cloz[0-19,0-20) ]",
+      "SoftBr,2 [ text[0-20,0-21) ]",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    repl(rv(0, 9), " ");
+    /*
+    abc [foo] (/uri (xyz))·
+    123
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-4)", "bracket_open[0-4,0-5)", "text[0-5,0-8)", "bracket_cloz[0-8,0-9)", "text[0-9,0-21)", "paren_cloz[0-21,0-22)", "text[0-22,0-23)",
+        "text[1-0,1-3)",
+      ],
+      "stopBdry[1-3)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ["<p>abc [foo] (/uri (xyz))", "123</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), ["SoftBr,2 [ text[0-21,0-22) ]"]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), [
+      "text[0-5,0-8)",
+      "chunk[0-10,0-14)",
+      "text[0-15,0-20)",
+    ]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "paren_cloz[0-20,0-21)",
+      "text[1-0,1-3)",
+      "bracket_open[0-4,0-5)",
+      "SoftBr,2 [ text[0-21,0-22) ]",
+      "text[0-0,0-4)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    undo();
+    /*
+    abc [foo](/uri (xyz))·
+    123
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "text[0-0,0-4)", "bracket_open[0-4,0-5)", "text[0-5,0-8)", "bracket_paren[0-8,0-10)", "chunk[0-10,0-14)", "text[0-15,0-20)", "paren_cloz[0-20,0-21)", "text[0-21,0-22)",
+        "text[1-0,1-3)",
+      ],
+      "stopBdry[1-3)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      ['<p>abc <a href="/uri" title="xyz">foo</a>', "123</p>"].join("\n"),
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), ["SoftBr,2 [ text[0-22,0-23) ]"]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(1));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), ["bracket_cloz[0-8,0-9)"]);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), []);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "paren_cloz[0-21,0-22)",
+      "text[1-0,1-3)",
+      "bracket_open[0-4,0-5)",
+      "SoftBr,2 [ text[0-22,0-23) ]",
+      "text[0-0,0-4)",
+      "text[0-5,0-8)",
     ]);
     assertEquals(lexr._abadnSnt_2_sa._repr(), []);
   });

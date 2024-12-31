@@ -76,7 +76,7 @@ export class MdextPazr extends Pazr<MdextTok> {
     for (let i = this.unrelSn_sa_$.length; i--;) {
       if (drtStopLoc.posE(this.unrelSn_sa_$[i].sntStrtLoc)) {
         /* Reusability of Stnode is checked by `sntStrtLoc`. In case of this
-        branch, current Stnode can not be reused. Deleting it from
+        branch, current Stnode can not be reused (see 3144). Deleting it from
         `unrelSn_sa_$` makes its Token be able to be gathered by
         `#gathrUnrelSntIn()`. */
         this.unrelSn_sa_$.deleteByIndex(i);

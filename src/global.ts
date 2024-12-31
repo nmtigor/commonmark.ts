@@ -3,10 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { space } from "./lib/util/global.ts";
-import { Hover, Pointer } from "./lib/alias.ts";
-import type { HTMLVCo } from "./lib/cv.ts";
-import { assert } from "./lib/util/trace.ts";
+import { Hover, Pointer, type uint } from "./lib/alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 // deno-fmt-ignore
@@ -28,12 +25,12 @@ export const
   , PDFTS = true
     , PDFTS_v = true // verbose
       , PDFTS_vv = false // very verbose
-, /** @deprecated */APP = false // release build
+, /** @deprecated */APP = false // release build 
 , PRF = true
 
 , DENO = true
 , TESTING = true
-, CYPRESS = false
+, CYPRESS = false 
 
 , _COLR = DEV && COLR
 , _INFO = DEV && INFO
@@ -53,6 +50,15 @@ export const
 ;
 /*80-------------------------------------------------------------------------*/
 
+const space_a_: (string | undefined)[] = [];
+export const space = (n_: uint) => {
+  if (space_a_[n_] === undefined) {
+    space_a_[n_] = new Array(n_).fill(" ").join("");
+  }
+  return space_a_[n_]!;
+};
+/*80-------------------------------------------------------------------------*/
+
 export const global = new class {
   /** @deprecated Use preprocessor */
   testing = false;
@@ -61,7 +67,8 @@ export const global = new class {
   readonly LASTUPDATE_DATNI = "2020-07-24 01:59:51 +0200";
   readonly LASTUPDATE_DEV = "2021-05-22 05:04:21 +0200";
 
-  vco?: HTMLVCo;
+  /** HTMLVCo */
+  vco?: unknown;
   // holdindicatr?: [HoldIndicatr, HoldIndicatr, HoldIndicatr];
 
   /** @deprecated */
@@ -124,7 +131,7 @@ export const global = new class {
   }
   get outdent() {
     this.#dent -= this.#tabsize;
-    assert(this.#dent >= 0);
+    console.assert(this.#dent >= 0, "There are more outdent than indent!");
     return this.#dent;
   }
   // inlog( s_x:string, c_x?:string )
@@ -140,44 +147,6 @@ export const global = new class {
   //   else console.log( `%c${this.dent}${s_x}`, `color:${c_x}` );
   // }
 }();
-
-export const g_vco = () => global.vco!;
-/*80--------------------------------------------------------------------------*/
-
-export const g_onresize = () => {
-  /*#static*/ if (_TRACE && RESIZ) {
-    console.log(
-      `%c${global.indent}>>>>>>> window.on("resize") >>>>>>>`,
-      "color:#ffcd4a",
-    );
-  }
-  /*#static*/ if (_TRACE && RESIZ) {
-    console.log(
-      `${global.dent}w:${document.documentElement.clientWidth}, h:${document.documentElement.clientHeight}`,
-    );
-    global.outdent;
-  }
-};
-
-export const g_onerror = (evt_x: ErrorEvent) => {
-  if (global.vco) {
-    global.vco.el.style.backgroundColor = "#61bed4";
-  }
-
-  /*#static*/ if (!TESTING) {
-    global.vco?.ci.reportError?.(evt_x.error);
-  }
-};
-
-export const g_onunhandledrejection = (evt_x: PromiseRejectionEvent) => {
-  if (global.vco) {
-    global.vco.el.style.backgroundColor = "#b6d361";
-  }
-
-  /*#static*/ if (!TESTING) {
-    global.vco?.ci.reportError?.(evt_x.reason);
-  }
-};
 /*80--------------------------------------------------------------------------*/
 
 /*

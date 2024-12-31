@@ -3,9 +3,9 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "@fe-src/global.ts";
 import type { uint } from "@fe-lib/alias.ts";
 import { assert, fail } from "@fe-lib/util/trace.ts";
+import { INOUT } from "@fe-src/global.ts";
 import type { Loc } from "../../Loc.ts";
 import { SortedSnt_id } from "../../Snt.ts";
 import { MdextTk } from "../../Token.ts";
@@ -37,13 +37,11 @@ export class Link extends Inline {
   #mode;
   #normdLabel;
 
-  #frstTk;
-  get isImg() {
-    return (this.#frstTk.lexdInfo as BrktOpen_LI).is_image;
-  }
-  #textSnt_a;
+  /** `[...]` or `[...](` */
+  #textPart;
   #lastTk;
 
+  #lablTk_a;
   #destTk_a;
   #titlTk_a;
 
@@ -51,40 +49,44 @@ export class Link extends Inline {
     if (this.children$) return this.children$ as Inline[];
 
     const ret: Inline[] = [];
-    for (const snt of this.#textSnt_a) {
+    for (const snt of this.#textPart) {
       if (snt instanceof Inline) ret.push(snt);
     }
     return this.children$ = ret;
   }
 
   override get frstToken() {
-    return this.frstToken$ ??= this.#frstTk;
+    return this.frstToken$ ??= this.#textPart[0] as MdextTk;
   }
   override get lastToken() {
     return this.lastToken$ ??= this.#lastTk;
   }
 
+  get isImg() {
+    return (this.frstToken.lexdInfo as BrktOpen_LI).is_image;
+  }
+
   /**
    * @const @param mode_x
    * @const @param normdLabel_x
-   * @headconst @param frstTk_x
-   * @headconst @param textSnt_a_x
+   * @headconst @param textPart_x include brackets, i.e., `[...]` or `[...](`
    * @headconst @param lastTk_x
+   * @headconst @param lablTk_a_x
    * @headconst @param destTk_a_x
    * @headconst @param titlTk_a_x
    */
   constructor(
     mode_x: LinkMode,
     normdLabel_x: string | undefined,
-    frstTk_x: MdextTk,
-    textSnt_a_x: (MdextTk | Inline)[],
+    textPart_x: (MdextTk | Inline)[],
     lastTk_x: MdextTk,
+    lablTk_a_x?: MdextTk[],
     destTk_a_x?: MdextTk[],
     titlTk_a_x?: MdextTk[],
   ) {
     /*#static*/ if (INOUT) {
       if (mode_x === LinkMode.inline) {
-        assert(!normdLabel_x && destTk_a_x);
+        assert(!normdLabel_x && !lablTk_a_x && destTk_a_x);
       } else {
         assert(normdLabel_x && !destTk_a_x && !titlTk_a_x);
       }
@@ -92,9 +94,9 @@ export class Link extends Inline {
     super();
     this.#mode = mode_x;
     this.#normdLabel = normdLabel_x;
-    this.#frstTk = frstTk_x;
-    this.#textSnt_a = textSnt_a_x;
+    this.#textPart = textPart_x;
     this.#lastTk = lastTk_x;
+    this.#lablTk_a = lablTk_a_x;
     this.#destTk_a = destTk_a_x;
     this.#titlTk_a = titlTk_a_x;
 
@@ -119,14 +121,19 @@ export class Link extends Inline {
       }
     }
 
-    for (let i = this.#textSnt_a.length; i--;) {
-      const snt = this.#textSnt_a[i];
+    if (this.#lablTk_a?.length) {
+      for (let i = this.#lablTk_a.length; i--;) {
+        const tk_ = this.#lablTk_a[i];
+        if (tk_.touch(loc_x)) return tk_;
+      }
+    }
+
+    for (let i = this.#textPart.length; i--;) {
+      const snt = this.#textPart[i];
       if (snt.touch(loc_x)) {
         return snt instanceof Inline ? snt.tokenAt(loc_x) : snt;
       }
     }
-
-    if (this.frstToken.touch(loc_x)) return this.frstToken;
 
     return /*#static*/ INOUT ? fail("Should not run here!") : this.frstToken;
   }
@@ -140,14 +147,7 @@ export class Link extends Inline {
     let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     if (ret) return ret;
 
-    ret += gathrUnrelTk(
-      this.#frstTk,
-      drtStrtLoc_x,
-      drtStopLoc_x,
-      unrelSnt_sa_x,
-    );
-
-    for (const snt of this.#textSnt_a) {
+    for (const snt of this.#textPart) {
       if (snt instanceof MdextTk) {
         ret += gathrUnrelTk(snt, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
       } else {
@@ -155,19 +155,28 @@ export class Link extends Inline {
       }
     }
 
-    ret += gathrUnrelTk(
-      this.#lastTk,
-      drtStrtLoc_x,
-      drtStopLoc_x,
-      unrelSnt_sa_x,
-    );
+    if (this.#lastTk !== this.#textPart.at(-1)) {
+      ret += gathrUnrelTk(
+        this.#lastTk,
+        drtStrtLoc_x,
+        drtStopLoc_x,
+        unrelSnt_sa_x,
+      );
+    }
+
+    if (this.#lablTk_a) {
+      for (const tk of this.#lablTk_a) {
+        if (tk !== this.#lastTk) {
+          ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+        }
+      }
+    }
 
     if (this.#destTk_a) {
       for (const tk of this.#destTk_a) {
         ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
       }
     }
-
     if (this.#titlTk_a) {
       for (const tk of this.#titlTk_a) {
         ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
@@ -179,7 +188,8 @@ export class Link extends Inline {
 
   override _toHTML(lexr_x: MdextLexr): string {
     const isImg = this.isImg;
-    if (!lexr_x._enableTags) return _toHTML(lexr_x, this.#textSnt_a);
+    const textSnt_a = this.#textPart.slice(1, -1);
+    if (!lexr_x._enableTags) return _toHTML(lexr_x, textSnt_a);
 
     const attrs: [k: string, v: string][] = [];
     const linkdef = this.#mode === LinkMode.inline
@@ -214,7 +224,7 @@ export class Link extends Inline {
 
     if (isImg) {
       lexr_x._enableTags = false;
-      attrs.push(["alt", _toHTML(lexr_x, this.#textSnt_a)]);
+      attrs.push(["alt", _toHTML(lexr_x, textSnt_a)]);
       lexr_x._enableTags = true;
     }
 
@@ -231,7 +241,7 @@ export class Link extends Inline {
 
     return isImg
       ? _tag("img", attrs, true)
-      : `${_tag("a", attrs)}${_toHTML(lexr_x, this.#textSnt_a)}</a>`;
+      : `${_tag("a", attrs)}${_toHTML(lexr_x, textSnt_a)}</a>`;
   }
 }
 /*80--------------------------------------------------------------------------*/

@@ -16,7 +16,7 @@ import {
 import { assert, fail, out } from "../../util/trace.ts";
 import { LexdInfo, Lexr } from "../Lexr.ts";
 import type { Line } from "../Line.ts";
-import { type Loc, LocCompared } from "../Loc.ts";
+import { type Loc } from "../Loc.ts";
 import { TokRan } from "../TokRan.ts";
 import { MdextTk, Token } from "../Token.ts";
 import type { MdextBufr } from "./MdextBufr.ts";
@@ -53,7 +53,6 @@ import {
   lastNonhashIn,
   SortedMdextSnt_id,
 } from "./util.ts";
-import { LOG_cssc } from "@fe-src/alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 const enum Ctx_ {
@@ -432,6 +431,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     const loc = this.curLoc$;
     const ln_ = loc.line_$;
     for (const snt of this.unrelSnt_sa_$) {
+      let got = false;
       if (
         loc.posSE(snt.sntStrtLoc) &&
         snt.sntFrstLine === ln_ && snt.sntStopLoff <= stop_x
@@ -440,10 +440,21 @@ export class MdextLexr extends Lexr<MdextTok> {
         for (; i_--;) {
           if (snt_a[i_].sntStopLoc.posSE(snt.sntStrtLoc)) {
             snt_a.splice(i_ + 1, 0, snt as MdextTk | Inline);
+            got = true;
             break;
           }
         }
-        if (i_ < 0) snt_a.unshift(snt as MdextTk | Inline);
+        if (i_ < 0) {
+          snt_a.unshift(snt as MdextTk | Inline);
+          got = true;
+        }
+      }
+      if (got && snt instanceof Inline) {
+        /* It's sure that Inline will be reused. */
+        if (this.#pazr.unrelSn_sa_$.delete(snt) >= 0) {
+          this.#pazr.takldSn_sa_$.add(snt);
+        }
+        snt.ensureAllBdry(); //!
       }
     }
     const iI = snt_a.length;
@@ -549,26 +560,50 @@ export class MdextLexr extends Lexr<MdextTok> {
     if (snt_a_0) {
       this.lsTk$ = this.scanBypassSnt$(...snt_a_0);
       if (snt_a_1) {
-        const tk_ = new Token(this, new TokRan(loc.dup()), MdextTok.chunk)
-          .setStrt(this.lsTk$.sntStopLoc)
-          .setStop(snt_a_1[0].sntStrtLoc);
-        this.lsTk$ = this.scanBypassSnt$(tk_);
+        let tk_;
+        if (this.lsTk$.sntStopLoff < snt_a_1[0].sntStrtLoff) {
+          tk_ = new Token(this, new TokRan(loc.dup()), MdextTok.chunk)
+            .setStrt(this.lsTk$.sntStopLoc)
+            .setStop(snt_a_1[0].sntStrtLoc);
+          this.lsTk$ = this.scanBypassSnt$(tk_);
+        }
         this._outTk = this.scanBypassSnt$(...snt_a_1);
-        return [...snt_a_0, tk_, ...snt_a_1];
+        return [...snt_a_0, ...tk_ ? [tk_] : [], ...snt_a_1];
       } else {
         this._outTk_1
           .setStrt(this.lsTk$.sntStopLoc, MdextTok.chunk)
           .setStop(loc);
+        /*#static*/ if (INOUT) {
+          assert(!this._outTk!.empty);
+        }
         return [...snt_a_0, this._outTk!];
       }
     } else {
       const tk_ = new Token(this, new TokRan(loc.dup()), MdextTok.chunk)
         .setStrt(poc)
         .setStop(snt_a_1![0].sntStrtLoc);
+      /*#static*/ if (INOUT) {
+        assert(!tk_.empty);
+      }
       this.lsTk$ = this.scanBypassSnt$(tk_);
       this._outTk = this.scanBypassSnt$(...snt_a_1!);
       return [tk_, ...snt_a_1!];
     }
+
+    //jjjj TOCLEANUP
+    // /**
+    //  * Call it AFTER `scanBypassSnt$()` because `linkNext()` in which will erase
+    //  * `stnod_$`.
+    //  * @headconst @param snt_a_y
+    //  */
+    // function ensureAllBdryOfInline(
+    //   snt_a_y: (MdextTk | Inline)[],
+    // ): (MdextTk | Inline)[] {
+    //   for (const snt of snt_a_y) {
+    //     if (snt instanceof Inline) snt.ensureAllBdry();
+    //   }
+    //   return snt_a_y;
+    // }
   }
 
   /**
@@ -2970,7 +3005,7 @@ export class MdextLexr extends Lexr<MdextTok> {
 
     /* If we got here, `opener` is a potential opener */
     let linkMode: LinkMode, normdLabel: string | undefined;
-    let textClozTk, lastTk, destTk_a, titlTk_a;
+    let textClozTk, lastTk, lablTk_a, destTk_a, titlTk_a;
     const is_image = opener.is_image;
 
     /* Check to see if we have a link/image */
@@ -3034,13 +3069,14 @@ export class MdextLexr extends Lexr<MdextTok> {
       if (loc_fb.peek_ucod(1) === /* "[" */ 0x5B) {
         /* "]" and "[" must not have been seperated yet. */
         textClozTk = iloc_x.setCurTk(this, 1, MdextTok.bracket_cloz);
-        const lablTk_a = [
+        lablTk_a = [
           iloc_x.setCurTk(this, 1, MdextTok.bracket_open),
         ];
         if (loc_fb.peek_ucod(2) === /* "]" */ 0x5D) {
           /* [...][] */
           linkMode = LinkMode.ref_collapsed;
           lastTk = iloc_x.setCurTk(this, 1, MdextTok.bracket_cloz);
+          lablTk_a = undefined;
           label = openerLabel(textClozTk);
         } else if (this._lexLinkLabel(iloc_x, lablTk_a)) {
           /* [...][...] */
@@ -3053,6 +3089,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           linkMode = LinkMode.ref_shortcut;
           lastTk = iloc_x.toTk("strt", textClozTk)
             .setCurTk(this, 1, MdextTok.bracket_cloz);
+          lablTk_a = undefined;
           textClozTk.value = MdextTok.bracket_open;
           textClozTk = lastTk;
           label = openerLabel(textClozTk);
@@ -3102,6 +3139,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       opener.host,
       textClozTk!,
       lastTk!,
+      lablTk_a,
       destTk_a,
       titlTk_a,
     );

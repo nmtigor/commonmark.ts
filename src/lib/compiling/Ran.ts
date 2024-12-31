@@ -3,17 +3,15 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { type Less, SortedArray } from "../util/SortedArray.ts";
-import { DEV, INOUT, PRF } from "../../global.ts";
+import { LOG_cssc } from "../../alias.ts";
+import { INOUT, PRF, space } from "../../global.ts";
 import type { id_t, lnum_t, loff_t, uint } from "../alias.ts";
-import { space } from "../util/global.ts";
+import { Factory } from "../util/Factory.ts";
 import { assert, out } from "../util/trace.ts";
 import type { Bufr } from "./Bufr.ts";
 import type { Line } from "./Line.ts";
 import { Loc } from "./Loc.ts";
 import { Ranval } from "./Ranval.ts";
-import { Factory } from "../util/Factory.ts";
-import { LOG_cssc } from "../../alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**

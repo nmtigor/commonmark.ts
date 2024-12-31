@@ -561,56 +561,53 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return retLn;
   }
 
-  /**
-   * @headconst @param stndKept_tk_x
-   * @return unlinked `Token<T>`
-   */
-  #unlinkPrev(stndKept_tk_x?: Token<T>) {
+  /** @return unlinked `Token<T>` */
+  #unlinkPrev() {
     const retTk = this.prevToken_$;
     if (retTk) {
       retTk.nextToken_$ = this.prevToken_$ = undefined;
       // retTk.notAsLinebdry_();
       // retTk.linked_ = false;
-      if (retTk !== stndKept_tk_x) retTk.stnod_$ = undefined;
+      //jjjj TOCLEANUP
+      // if (retTk !== stndKept_tk_x) retTk.stnod_$ = undefined;
     }
     return retTk;
   }
-  /**
-   * @headconst @param stndKept_tk_x
-   * @return unlinked `Token<T>`
-   */
-  #unlinkNext(stndKept_tk_x?: Token<T>) {
+  /** @return unlinked `Token<T>` */
+  #unlinkNext() {
     const retTk = this.nextToken_$;
     if (retTk) {
       retTk.prevToken_$ = this.nextToken_$ = undefined;
       // retTk.notAsLinebdry_();
       // retTk.linked_ = false;
-      if (retTk !== stndKept_tk_x) retTk.stnod_$ = undefined;
+      //jjjj TOCLEANUP
+      // if (retTk !== stndKept_tk_x) retTk.stnod_$ = undefined;
     }
     return retTk;
   }
 
   /**
-   * !`retTk_x.prevToken_$` will be untouched. (cf. {@linkcode insertPrev()})
+   * !`retTk_x.prevToken_$` will be untouched. (cf. {@linkcode insertPrev()})\
+   * `stnod_$`s do not change.
    * @headconst @param retTk_x
-   * @headconst @param stndKept_tk_x kkkk check uses, then better remove this
    */
-  // @out((_,self:any)=>{}) //! Cause "segmentation fault"
-  linkPrev(retTk_x: Token<T>, stndKept_tk_x?: Token<T>): Token<T> {
+  // @out((_,self:any)=>{}) //jjjj Cause "segmentation fault"
+  linkPrev(retTk_x: Token<T>): Token<T> {
     /*#static*/ if (INOUT) {
       assert(retTk_x !== this);
       assert(retTk_x.posS(this));
     }
     if (this.prevToken_$ !== retTk_x) {
-      retTk_x.#unlinkNext(stndKept_tk_x);
+      retTk_x.#unlinkNext();
       retTk_x.nextToken_$ = this;
-      this.#unlinkPrev(stndKept_tk_x);
+      this.#unlinkPrev();
       this.prevToken_$ = retTk_x;
       // this.linked_ = true;
       // retTk_x.linked_ = true;
     }
 
-    if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
+    //jjjj TOCLEANUP
+    // if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
 
     const frstLn = retTk_x.#correct_line_frstToken();
     const lastLn = retTk_x.#correct_line_lastToken();
@@ -626,25 +623,26 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   }
   /**
    * ! `retTk_x.nextToken_$` will be untouched. (cf. {@linkcode insertNext()})
+   * `stnod_$`s do not change.
    * @headconst @param retTk_x
-   * @headconst @param stndKept_tk_x
    */
-  // @out((_,self:any)=>{}) //! Cause "segmentation fault"
-  linkNext(retTk_x: Token<T>, stndKept_tk_x?: Token<T>): Token<T> {
+  // @out((_,self:any)=>{}) //jjjj Cause "segmentation fault"
+  linkNext(retTk_x: Token<T>): Token<T> {
     /*#static*/ if (INOUT) {
       assert(retTk_x !== this);
       assert(this.posS(retTk_x));
     }
     if (this.nextToken_$ !== retTk_x) {
-      retTk_x.#unlinkPrev(stndKept_tk_x);
+      retTk_x.#unlinkPrev();
       retTk_x.prevToken_$ = this;
-      this.#unlinkNext(stndKept_tk_x);
+      this.#unlinkNext();
       this.nextToken_$ = retTk_x;
       // this.linked_ = true;
       // retTk_x.linked_ = true;
     }
 
-    if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
+    //jjjj TOCLEANUP
+    // if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
 
     const frstLn = retTk_x.#correct_line_frstToken();
     const lastLn = retTk_x.#correct_line_lastToken();
@@ -685,10 +683,10 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   }
 
   /**
+   * `stnod_$`s do not change.
    * @headconst @param retTk_x
-   * @headconst @param stndKept_tk_x
    */
-  insertPrev(retTk_x: Token<T>, stndKept_tk_x?: Token<T>) {
+  insertPrev(retTk_x: Token<T>) {
     /*#static*/ if (INOUT) {
       assert(retTk_x !== this);
       assert(retTk_x.posS(this));
@@ -703,7 +701,8 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     retTk_x.nextToken_$ = this;
     this.prevToken_$ = retTk_x;
 
-    if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
+    //jjjj TOCLEANUP
+    // if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
 
     const frstLn = retTk_x.#correct_line_frstToken();
     const lastLn = retTk_x.#correct_line_lastToken();
@@ -717,7 +716,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return retTk_x;
   }
   /** @see {@linkcode insertPrev()} */
-  insertNext(retTk_x: Token<T>, stndKept_tk_x?: Token<T>) {
+  insertNext(retTk_x: Token<T>) {
     /*#static*/ if (INOUT) {
       assert(retTk_x !== this);
       assert(this.posS(retTk_x));
@@ -732,7 +731,8 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     retTk_x.prevToken_$ = this;
     this.nextToken_$ = retTk_x;
 
-    if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
+    //jjjj TOCLEANUP
+    // if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
 
     const frstLn = retTk_x.#correct_line_frstToken();
     const lastLn = retTk_x.#correct_line_lastToken();

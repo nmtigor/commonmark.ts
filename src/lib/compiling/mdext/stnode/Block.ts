@@ -130,7 +130,11 @@ export abstract class Block extends MdextSN {
     }
 
     this.inline_impl$(lexr_x);
-    this.ensureBdry();
+    /* `invalidateBdry()` is because, after `reference()`, `frstToken$` could
+    have been set (e.g. in `ILoc.constructor()`), and could have been changed
+    to an incorrect value in `inline_impl$`. */
+    this.invalidateBdry()
+      .ensureBdry();
     this.#complete = true;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/

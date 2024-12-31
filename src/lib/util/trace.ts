@@ -3,6 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import { g_getRootVCo } from "@fe-src/alias.ts";
 import { global, INOUT, TESTING } from "../../global.ts";
 import type { ts_t } from "../alias.ts";
 /*80--------------------------------------------------------------------------*/
@@ -94,7 +95,7 @@ export const reportError = async <E extends Error>(err_x: E) => {
 
   const err_j = err_x?.toJ(); //! `err_x` seems still  could be `null` at runtime
   // console.log(err_j);
-  global.vco?.showReportedError?.({
+  g_getRootVCo()?.showReportedError?.({
     err_j,
     ts: Date.now() as ts_t,
   });
@@ -120,7 +121,7 @@ export const reportError = async <E extends Error>(err_x: E) => {
 
   // if( res.ok )
   // {
-  //   global.vco?.showReportedError?.( data_be.data_fe );
+  //   g_getRootVCo()?.showReportedError?.( data_be.data_fe );
 
   //   count_reported_++;
   //   if( count_reported_ > MAX_reported_ )

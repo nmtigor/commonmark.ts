@@ -264,31 +264,19 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
     tk_.stnod_$ ??= this; // First setting wins.
     return tk_;
   }
-  /**
-   * @final
-   * @implement
-   */
+  /** @final @implement */
   get sntFrstLine() {
     return this.frstToken.sntFrstLine;
   }
-  /**
-   * @final
-   * @implement
-   */
+  /** @final @implement */
   get sntFrstLidx_1() {
     return this.sntFrstLine.lidx_1;
   }
-  /**
-   * @final
-   * @implement
-   */
+  /** @final @implement */
   get sntStrtLoc() {
     return this.frstToken.sntStrtLoc;
   }
-  /**
-   * @final
-   * @implement
-   */
+  /** @final @implement */
   get sntStrtLoff(): loff_t {
     return this.frstToken.sntStrtLoff;
   }
@@ -309,31 +297,19 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
     tk_.stnod_$ ??= this; // First setting wins.
     return tk_;
   }
-  /**
-   * @final
-   * @implement
-   */
+  /** @final @implement */
   get sntLastLine() {
     return this.lastToken.sntLastLine;
   }
-  /**
-   * @final
-   * @implement
-   */
+  /** @final @implement */
   get sntLastLidx_1() {
     return this.sntLastLine.lidx_1;
   }
-  /**
-   * @final
-   * @implement
-   */
+  /** @final @implement */
   get sntStopLoc() {
     return this.lastToken.sntStopLoc;
   }
-  /**
-   * @final
-   * @implement
-   */
+  /** @final @implement */
   get sntStopLoff(): loff_t {
     return this.lastToken.sntStopLoff;
   }

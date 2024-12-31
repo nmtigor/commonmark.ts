@@ -1,6 +1,8 @@
 /** 80**************************************************************************
  * @module lib/alias
  * @license BSD-3-Clause
+ *
+ * ! This module is loaded BEFORE "global.ts". DO NOT use preprocessor names here!
  ******************************************************************************/
 
 import { z } from "@zod";

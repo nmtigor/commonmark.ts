@@ -12,6 +12,7 @@
 
     "strict": true,
     "exactOptionalPropertyTypes": true,
+    "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noImplicitOverride": true
   },
@@ -37,7 +38,7 @@
     "@std/path": "jsr:@std/path@^1.0.6",
     "@std/testing": "jsr:@std/testing@^1.0.3",
     "@wretch": "./src/3rd/wretch-2.9.0/dist/index.js",
-    "@xstate": "npm:xstate@^5.17.1",
+    "@xstate": "npm:xstate@^5.19.1",
     "@yaml": "npm:yaml@^2.5.1",
     "@zod": "./src/3rd/zod-3.23.8/lib/index.mjs"
   },

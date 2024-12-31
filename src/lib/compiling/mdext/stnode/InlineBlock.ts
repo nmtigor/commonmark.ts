@@ -413,10 +413,20 @@ export class ILoc extends TokLoc<MdextTok> {
     using tkStrtLoc = (strtLoc_x ?? this).using();
     using tkStopLoc = this.using();
     tkStopLoc.loff = tkStrtLoc.loff_$ + size_t;
+    let curTk = this.curTk_$;
+    let nextTk = curTk.nextToken_$;
+    if (nextTk?.sntStrtLoc.posS(tkStopLoc)) {
+      nextTk = curTk.removeSelf("next")!;
+      nextTk.sntStrtLoc.become(curTk.sntStrtLoc);
+      if (curTk === this.curSnt_$) {
+        this.host$.snt_a_$.splice(this.iCurSnt_$, 1);
+      }
+      curTk = nextTk;
+    }
+
     /** @primaryconst */
     const stopLoc = stopLoc_x ?? tkStopLoc;
     let ret;
-    const curTk = this.curTk_$;
     if (curTk.sntStrtLoc.posE(tkStrtLoc) && curTk.sntStopLoc.posE(stopLoc)) {
       let reusd = false;
       if (lexr_x.reusdSnt_sa_$.includes(curTk)) {
@@ -514,6 +524,7 @@ export abstract class InlineBlock extends Block {
 
   override reset(): this {
     super.reset();
+    this.children$ = undefined; //!
     this.snt_a_$.length = 0;
     return this;
   }
@@ -667,6 +678,7 @@ export abstract class InlineBlock extends Block {
    * @headconst @param frstTk_x
    * @headconst @param textClozTk_x
    * @headconst @param lastTk_x
+   * @headconst @param lablTk_a_x
    * @headconst @param destTk_a_x
    * @headconst @param titlTk_a_x
    */
@@ -676,6 +688,7 @@ export abstract class InlineBlock extends Block {
     frstTk_x: MdextTk,
     textClozTk_x: MdextTk,
     lastTk_x: MdextTk,
+    lablTk_a_x?: MdextTk[],
     destTk_a_x?: MdextTk[],
     titlTk_a_x?: MdextTk[],
   ): void {
@@ -694,12 +707,22 @@ export abstract class InlineBlock extends Block {
     }
     if (iFrstTk === 0 || iLastTk === snt_a.length - 1) this.invalidateBdry();
 
+    for (let i = iFrstTk; i <= iLastTk; ++i) {
+      const snt_i = snt_a[i];
+      if (
+        snt_i instanceof MdextTk &&
+        snt_i.value === MdextTok.chunk && !snt_i.lexdInfo
+      ) {
+        snt_i.removeSelf();
+      }
+    }
+
     const sn_ = new Link(
       linkMode_x,
       normdLabel_x,
-      frstTk_x,
-      snt_a.slice(iFrstTk + 1, iTextCloz),
+      snt_a.slice(iFrstTk, iTextCloz + 1),
       lastTk_x,
+      lablTk_a_x,
       destTk_a_x,
       titlTk_a_x,
     );
@@ -876,7 +899,10 @@ export abstract class InlineBlock extends Block {
     for (const snt of this.snt_a_$) {
       const lidx = snt.sntFrstLidx_1;
       if (lidx > lidx_x) break;
-      if (lidx === lidx_x) snt_a_x.push(snt);
+      if (lidx === lidx_x) {
+        snt_a_x.push(snt);
+        if (snt instanceof Inline) snt.ensureAllBdry(); //!
+      }
     }
   }
 

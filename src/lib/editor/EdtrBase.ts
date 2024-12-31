@@ -147,9 +147,7 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /**
-   * Used before `#inited`
-   */
+  /** Used before `#inited` */
   #writingMode = WritingMode.htb;
   /**
    * Init setting. Normally called within constructors. So no callbacks will be
@@ -186,9 +184,7 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
 
 /** @final */
 export class EdtrScronr<CI extends EdtrBaseCI> extends Scronr<EdtrBase<CI>> {
-  /**
-   * @headconst @param coo_x
-   */
+  /** @headconst @param coo_x */
   constructor(coo_x: EdtrBase<CI>) {
     super(coo_x);
 
@@ -598,9 +594,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  /**
-   * @headconst @param rvm_x
-   */
+  /** @headconst @param rvm_x */
   #setShadowCaret(rvm_x: CaretRvM) {
     /*#static*/ if (INOUT) {
       assert(this !== rvm_x[0].edtr);
@@ -694,13 +688,9 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
     return ret_x;
   }
 
-  /**
-   * @headconst @param rv_x will be corrected
-   */
+  /** @headconst @param rv_x will be corrected */
   abstract getEFocusBy_$(rv_x: Ranval, ret_x?: ERan): ERan;
-  /**
-   * @headconst @param rv_x will be corrected
-   */
+  /** @headconst @param rv_x will be corrected */
   abstract getEAnchrBy_$(rv_x: Ranval, out_x: ERan): void;
   /**
    * @final
