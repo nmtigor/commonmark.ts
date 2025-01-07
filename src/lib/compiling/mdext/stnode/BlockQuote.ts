@@ -5,7 +5,7 @@
 
 import type { uint } from "@fe-lib/alias.ts";
 import { isSpaceOrTab } from "@fe-lib/util/general.ts";
-import type { lnum_t } from "../../../alias.ts";
+import type { lnum_t } from "@fe-lib/alias.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { SortedStnod_id } from "../../Stnode.ts";

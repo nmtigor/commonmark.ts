@@ -2139,10 +2139,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     let curStopLoc = iloc_x.curStopLoc;
     L_0: for (let i = 0; i < 1000; ++i) {
       let ucod = loc.ucod;
-      if (
-        loc.posS(curStopLoc) ||
-        /* In case compiling ... */ ucod === /* "]" */ 0x5D
-      ) {
+      if (loc.posS(curStopLoc)) {
         switch (ucod) {
           case /* "\\" */ 0x5C:
             ++loc.loff;
@@ -2211,11 +2208,10 @@ export class MdextLexr extends Lexr<MdextTok> {
           );
         }
         iloc_x.forw();
-        const loc_1 = iloc_x.curStopLoc;
         /*#static*/ if (INOUT) {
-          assert(curStopLoc !== loc_1);
+          assert(iloc_x.curStopLoc.posG(curStopLoc));
         }
-        curStopLoc = loc_1;
+        curStopLoc = iloc_x.curStopLoc;
         loc.become(iloc_x);
       } else if (ucod === 0) {
         if (loc.loff_$ - iloc_x.loff_$ > 0) {
@@ -2223,9 +2219,24 @@ export class MdextLexr extends Lexr<MdextTok> {
         }
         break;
       } else {
+        /* In link label, for reused token, do not change `value`,  */
+        let tv_ = iloc_x.posE(iloc_x.curStrtLoc)
+          ? iloc_x.curTk_$.value
+          : MdextTok.text;
+        /* ..., unless it's a `chunk`, because `chunk` token will be removed
+        in `addLinkdef()`, `addLink()`. */
+        if (tv_ === MdextTok.chunk) tv_ = MdextTok.text;
+        outTk_a_x.push(
+          iloc_x.setCurTk(this, loc.loff_$ - iloc_x.loff_$, tv_),
+        );
+        /* Link label does not contain Inline.*/
+        if (iloc_x.curSnt_$ instanceof Inline) break;
+
         /*#static*/ if (INOUT) {
-          fail("Should not run here!");
+          assert(iloc_x.posE(loc));
+          assert(iloc_x.curStopLoc.posG(curStopLoc));
         }
+        curStopLoc = iloc_x.curStopLoc;
       }
     }
     return seen && count > 0;
@@ -2560,11 +2571,11 @@ export class MdextLexr extends Lexr<MdextTok> {
     );
 
     this.#lexSpnl(iloc_x);
-    const destTk_a: MdextTk[] = [];
-    const destSize = this._lexLinkDest(iloc_x, destTk_a);
+    const destPart: MdextTk[] = [];
+    const destSize = this._lexLinkDest(iloc_x, destPart);
     if (
       destSize < 0 ||
-      destSize === 0 && destTk_a.at(0)?.value !== MdextTok.link_dest_head
+      destSize === 0 && destPart.at(0)?.value !== MdextTok.link_dest_head
     ) return false;
 
     loc_fb.become(iloc_x);
@@ -2602,7 +2613,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     /*#static*/ if (INOUT) {
       assert(normdLabel);
     }
-    const linkdef = iloc_x.host.addLinkdef(lablTk_a, destTk_a, titlTk_a);
+    const linkdef = iloc_x.host.addLinkdef(lablTk_a, destPart, titlTk_a);
     if (!this.linkdef_m_$.has(normdLabel)) {
       this.linkdef_m_$.set(normdLabel, linkdef);
     }
@@ -2796,11 +2807,12 @@ export class MdextLexr extends Lexr<MdextTok> {
         if (!linkhead_(loc.ucod)) break;
 
         let s_ = iloc_x.getText();
-        let found, isEmail: boolean;
-        if (found = EmailAutolink_re_.exec(s_)) {
-          isEmail = true;
-        } else if (found = URLAutolink_re_.exec(s_)) {
-          isEmail = false;
+        let found = EmailAutolink_re_.exec(s_);
+        let isEmail: boolean;
+        if (found) isEmail = true;
+        else {
+          found = URLAutolink_re_.exec(s_);
+          if (found) isEmail = false;
         }
         const forwSetTks_inline = (size_y: loff_t): MdextTk[] => {
           loc.become(iloc_x);
@@ -2817,7 +2829,8 @@ export class MdextLexr extends Lexr<MdextTok> {
           handled = true;
         } else {
           s_ = `${s_}\n${iloc_x.forwTextBelow()}`;
-          if (found = HTMLInline.HTMLTag_re.exec(s_)) {
+          found = HTMLInline.HTMLTag_re.exec(s_);
+          if (found) {
             const frstTk = iloc_x.setCurTk(this, 1, MdextTok.link_dest_head);
             const chunkTk_a: MdextTk[] = [];
             for (const pln of found[0].slice(1, -1).split("\n")) {
@@ -2859,6 +2872,12 @@ export class MdextLexr extends Lexr<MdextTok> {
           iloc_x.toNextTk("strt");
           reusd = true;
         }
+      } else if (this._reusdSnt_2_sa.includes(curSnt)) {
+        /*#static*/ if (INOUT) {
+          assert(curSnt instanceof MdextTk);
+        }
+        iloc_x.toNextTk("strt");
+        reusd = true;
       }
       if (!reusd) {
         const ln_ = iloc_x.line_$;
@@ -3005,7 +3024,7 @@ export class MdextLexr extends Lexr<MdextTok> {
 
     /* If we got here, `opener` is a potential opener */
     let linkMode: LinkMode, normdLabel: string | undefined;
-    let textClozTk, lastTk, lablTk_a, destTk_a, titlTk_a;
+    let textClozTk, lastTk, lablTk_a, destPart, titlTk_a;
     const is_image = opener.is_image;
 
     /* Check to see if we have a link/image */
@@ -3019,8 +3038,8 @@ export class MdextLexr extends Lexr<MdextTok> {
       /* "]" and "(" must not have been seperated yet. */
       textClozTk = iloc_x.setCurTk(this, 2, MdextTok.bracket_paren);
       this.#lexSpnl(iloc_x);
-      destTk_a = [] as MdextTk[];
-      if (this._lexLinkDest(iloc_x, destTk_a) >= 0) {
+      destPart = [] as MdextTk[];
+      if (this._lexLinkDest(iloc_x, destPart) >= 0) {
         if (this.#lexSpnl(iloc_x)) {
           titlTk_a = [] as MdextTk[];
           this._lexTitle(iloc_x, titlTk_a);
@@ -3037,7 +3056,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
 
     if (!matched) {
-      destTk_a = titlTk_a = undefined; //!
+      destPart = titlTk_a = undefined; //!
 
       /* Next, see if there's a link label */
       iloc_x.toLoc(loc_fb);
@@ -3106,7 +3125,7 @@ export class MdextLexr extends Lexr<MdextTok> {
           .replace(LLabelNormr_re_, " ")
           .toLowerCase()
           .toUpperCase();
-        /* For reference link, get LAZILY `destTk_a`, `titlTk_a` from
+        /* For reference link, get LAZILY `destPart`, `titlTk_a` from
         `linkdef_m_$`. */
         if (this.linkdef_m_$.has(normdLabel)) matched = true;
       }
@@ -3140,7 +3159,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       textClozTk!,
       lastTk!,
       lablTk_a,
-      destTk_a,
+      destPart,
       titlTk_a,
     );
 

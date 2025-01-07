@@ -3903,4 +3903,205 @@ describe("Compiling Link", () => {
     assertEquals(lexr._abadnSnt_2_sa._repr(), []);
   });
 });
+
+describe("Compiling Autolink", () => {
+  it("edits in one Autolink", () => {
+    init("[abc<http://uri>xyz");
+
+    repl(rv(0, 15), "]");
+    /*
+    [abc<http://uri]>xyz
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "link_dest_head[0-4,0-5)", "chunk[0-5,0-15)", "chunk[0-15,0-16)", "link_dest_tail[0-16,0-17)", "text[0-17,0-20)",
+      ],
+      "stopBdry[0-20)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>[abc<a href="http://uri%5D">http://uri]</a>xyz</p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), ["chunk[0-5,0-15)"]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "text[0-16,0-19)",
+      "bracket_open[0-0,0-1)",
+      "text[0-1,0-4)",
+      "link_dest_head[0-4,0-5)",
+      "link_dest_tail[0-15,0-16)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    undo();
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "link_dest_head[0-4,0-5)", "chunk[0-5,0-15)", "link_dest_tail[0-15,0-16)", "text[0-16,0-19)",
+      ],
+      "stopBdry[0-19)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    /*
+    [abc<http://uri>xyz
+     */
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>[abc<a href="http://uri">http://uri</a>xyz</p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), ["chunk[0-5,0-15)"]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "text[0-17,0-20)",
+      "bracket_open[0-0,0-1)",
+      "text[0-1,0-4)",
+      "link_dest_head[0-4,0-5)",
+      "link_dest_tail[0-16,0-17)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+  });
+
+  it("edits at boundaries of one Autolink", () => {
+    init("[abc<http://uri]>xyz");
+
+    repl(rv(0, 17), " ");
+    /*
+    [abc<http://uri> xyz
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-4)", "link_dest_head[0-4,0-5)", "chunk[0-5,0-15)", "chunk[0-15,0-16)", "link_dest_tail[0-16,0-17)", "text[0-17,0-21)",
+      ],
+      "stopBdry[0-21)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>[abc<a href="http://uri%5D">http://uri]</a> xyz</p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), [
+      "Autolink,2 [ link_dest_head[0-4,0-5), link_dest_tail[0-16,0-17) ]",
+    ]);
+    assertStrictEquals(pazr.takldSn_sa_$.at(0), pazr._root?._c(0)?._c(0));
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), ["text[0-17,0-20)"]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "bracket_open[0-0,0-1)",
+      "text[0-1,0-4)",
+      "Autolink,2 [ link_dest_head[0-4,0-5), link_dest_tail[0-16,0-17) ]",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    repl(rv(0, 4), " ");
+    /*
+    [abc <http://uri]> xyz
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-5)", "link_dest_head[0-5,0-6)", "chunk[0-6,0-16)", "chunk[0-16,0-17)", "link_dest_tail[0-17,0-18)", "text[0-18,0-22)",
+      ],
+      "stopBdry[0-22)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>[abc <a href="http://uri%5D">http://uri]</a> xyz</p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), ["text[0-1,0-4)"]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "bracket_open[0-0,0-1)",
+      "Autolink,2 [ link_dest_head[0-4,0-5), link_dest_tail[0-16,0-17) ]",
+      "text[0-17,0-21)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    repl(rv(0, 17, 0, 18), ":");
+    /*
+    [abc <http://uri]: xyz
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-5)", "link_dest_head[0-5,0-6)", "text[0-6,0-16)", "bracket_colon[0-16,0-18)", "chunk[0-19,0-22)",
+      ],
+      "stopBdry[0-22)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(pazr._root?._toHTML(lexr), "");
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), [
+      "chunk[0-6,0-16)",
+      "chunk[0-16,0-17)",
+      "text[0-18,0-22)",
+    ]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "bracket_open[0-0,0-1)",
+      "link_dest_head[0-5,0-6)",
+      "text[0-1,0-5)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+
+    undo();
+    /*
+    [abc <http://uri]> xyz
+     */
+    assertEquals(lexr.strtLexTk_$._Repr(), [
+      /* deno-fmt-ignore */ [
+        "strtBdry[0-0)", "bracket_open[0-0,0-1)", "text[0-1,0-5)", "link_dest_head[0-5,0-6)", "chunk[0-6,0-16)", "chunk[0-16,0-17)", "link_dest_tail[0-17,0-18)", "text[0-18,0-22)",
+      ],
+      "stopBdry[0-22)",
+      [],
+    ]);
+    assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
+    assertEquals(
+      pazr._root?._toHTML(lexr),
+      '<p>[abc <a href="http://uri%5D">http://uri]</a> xyz</p>',
+    );
+    assertStrictEquals(pazr.drtSn_$, pazr._root?._c(0));
+    assertEquals(lexr._relexd, false);
+    assertEquals(pazr.unrelSn_sa_$._repr(), []);
+    assertEquals(pazr.takldSn_sa_$._repr(), []);
+    assertEquals(lexr.unrelSnt_sa_$._repr(), []);
+    assertEquals(lexr.reusdSnt_sa_$._repr(), []);
+    assertEquals(lexr.abadnSnt_sa_$._repr(), [
+      "text[0-6,0-16)",
+      "chunk[0-19,0-22)",
+    ]);
+    assertEquals(lexr._reusdSnt_2_sa._repr(), [
+      "bracket_open[0-0,0-1)",
+      "link_dest_head[0-5,0-6)",
+      "text[0-1,0-5)",
+    ]);
+    assertEquals(lexr._abadnSnt_2_sa._repr(), []);
+  });
+});
 /*80--------------------------------------------------------------------------*/

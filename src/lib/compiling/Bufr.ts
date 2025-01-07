@@ -94,7 +94,7 @@ export class Bufr {
   set modified(modified_x: boolean) {
     this.modified_mo.val = modified_x;
     if (modified_x) {
-      this.lastView_ts = Date.now() as ts_t;
+      this.updateLastViewTs();
     } else {
       this.#repl_saved = this.#lastRepl;
     }
@@ -162,7 +162,15 @@ export class Bufr {
   readonly repl_actr = new ReplActr(this);
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  lastView_ts = Date.now() as ts_t;
+  #lastView_ts = Date.now() as ts_t;
+  get lastView_ts() {
+    return this.#lastView_ts;
+  }
+  updateLastViewTs(): ts_t {
+    let ts_ = Date.now();
+    if (ts_ === this.#lastView_ts) ts_ += 1;
+    return this.#lastView_ts = ts_ as ts_t;
+  }
 
   /* #sigPool */
   #sigPool: sig_t = 0xffff_ffff;
@@ -255,7 +263,7 @@ export class Bufr {
 
     this.repl_actr.fina();
 
-    this.lastView_ts = Date.now() as ts_t;
+    this.updateLastViewTs();
 
     /*#static*/ if (DEV) {
       assert(this.#sigPool === 0xffff_ffff); //kkkk

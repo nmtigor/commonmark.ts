@@ -16,6 +16,13 @@
     "noImplicitReturns": true,
     "noImplicitOverride": true
   },
+  "lint": {
+    "rules": {
+      "exclude": [
+        "adjacent-overload-signatures"
+      ]
+    }
+  },
   "imports": {
     "@b-fuze/deno-dom": "jsr:@b-fuze/deno-dom@^0.1.48",
     "@denosaurs/argontwo": "jsr:@denosaurs/argontwo@^0.2.0",

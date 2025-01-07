@@ -3,10 +3,9 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { count } from "../util/performance.ts";
 import { LOG_cssc } from "../../alias.ts";
 import { _TRACE, CYPRESS, DEV, global, INOUT, RESIZ } from "../../global.ts";
-import type { id_t, loff_t } from "../alias.ts";
+import type { id_t, loff_t, ts_t } from "../alias.ts";
 import { WritingMode } from "../alias.ts";
 import { Bidi } from "../Bidi.ts";
 import type { Bidir } from "../compiling/alias.ts";
@@ -16,6 +15,7 @@ import { HTMLVuu, Vuu } from "../cv.ts";
 import { div, textnode } from "../dom.ts";
 import "../jslang.ts";
 import { $tail_ignored, $vuu } from "../symbols.ts";
+import { count } from "../util/performance.ts";
 import { assert } from "../util/trace.ts";
 import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
 import { g_eran_fac } from "./ERan.ts";
@@ -53,9 +53,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   /** To be consistent with `StnodeV.eline_$` */
   eline_$ = this;
 
-  /**
-   * `bidi$.valid` if there is wrapping. Otherwise, use `bline_$.bidi`.
-   */
+  /** `bidi$.valid` if there is wrapping. Otherwise, use `bline_$.bidi`. */
   protected readonly bidi$ = new Bidi();
   /** @final @implement */
   get bidi(): Bidi {
@@ -139,6 +137,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
    * `in( this.el$.isConnected )`
    * @final
    */
+  // @traceOut(_TRACE)
   protected setBidi$(): void {
     // /*#static*/ if (_TRACE) {
     //   console.log(
@@ -187,8 +186,6 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
       bln.bidi.embedLevels,
     );
     if (this.#wrap_a.length > 1) this.bidi$.validate();
-    // /*#static*/ if (_TRACE) global.outdent;
-    return;
   }
 
   #onResiz = () => {
@@ -201,6 +198,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
       );
     }
     this.setBidi$();
+    this.bline_$.bufr?.updateLastViewTs(); //!
     /*#static*/ if (_TRACE && RESIZ) global.outdent;
     return;
   };
@@ -210,7 +208,10 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     return !this.el$.parentNode;
   }
 
-  /** @final */
+  /**
+   * @final
+   * @const @param loff_x
+   */
   caretNodeAt(loff_x: loff_t): HTMLElement | Text {
     let ret;
     // loff_x = Math.clamp(0, loff_x, this.bline_$.uchrLen - 1);
@@ -272,9 +273,23 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   /**
    * @final
    * @headconst @param node_x
-   * @out @param ozrInfo_x
    */
-  static getBLine(node_x: Node, ozrInfo_x?: OzrInfo): Line {
+  static getELine(node_x: Node): ELineBase {
+    const v_ = Vuu.of(node_x) as StnodeV | ELineBase;
+    return v_.eline_$;
+  }
+
+  /**
+   * @final
+   * @headconst @param node_x
+  //jjjj TOCLEANUP
+  //  * @out @param ozrInfo_x
+   */
+  static getBLine(
+    node_x: Node,
+    //jjjj TOCLEANUP
+    // ozrInfo_x?: BLineInfo,
+  ): Line {
     // /*#static*/ if (INOUT) {
     //   assert(node_x.parentNode);
     // }
@@ -282,8 +297,8 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
 
     // let np = NodeInELine.unknown;
     // const pa_el = node_x.parentNode as Element;
-    let v_ = Vuu.of(node_x) as StnodeV | ELineBase;
-    const ret = v_.bline_$;
+    const v_ = Vuu.of(node_x) as StnodeV | ELineBase;
+    return v_.bline_$;
 
     // if( node_x.isText )
     // {
@@ -306,13 +321,14 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     // }
 
     // let eline;
-    if (ozrInfo_x) {
-      // ozrInfo_x.pa_el = pa_el;
-      ozrInfo_x.eline = v_.eline_$;
+    //jjjj TOCLEANUP
+    // if (ozrInfo_x) {
+    //   // ozrInfo_x.pa_el = pa_el;
+    //   ozrInfo_x.eline = v_.eline_$;
 
-      // eline = v_;
-      // ozrInfo_x.eline = <PlainELine>eline;
-    }
+    //   // eline = v_;
+    //   // ozrInfo_x.eline = <PlainELine>eline;
+    // }
 
     // const out = ( np_y:NodeInELine, vuu_y:any, eline_y:any ) =>
     // {
@@ -332,17 +348,19 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     //   if( ozrInfo_x ) assert( eline_y instanceof PlainELine );
     // }
     // out(np,v_,eline);
-    return ret;
+    //jjjj TOCLEANUP
+    // return ret;
   }
 }
 
-export class OzrInfo {
-  // nodeInELine: NodeInELine = NodeInELine.unknown;
-  // pa_el?: Element;
-  // pa_el:Node | null = null;
-  eline!: ELineBase;
-  // eline?:PlainELine;
-}
+//jjjj TOCLEANUP
+// export type BLineInfo = {
+//   // nodeInELine: NodeInELine = NodeInELine.unknown;
+//   // pa_el?: Element;
+//   // pa_el:Node | null = null;
+//   eline: ELineBase;
+//   // eline?:PlainELine;
+// };
 
 export const enum NodeInELine {
   unknown = 1,

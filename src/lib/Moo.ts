@@ -46,9 +46,7 @@ class MooHandlerDB<T extends {} | null, D = any> {
     return this.#nforce > 0;
   }
 
-  /**
-   * @headconst @param eq_x
-   */
+  /** @headconst @param eq_x */
   constructor(eq_x: MooEq<T>) {
     this.#eq = eq_x;
   }
@@ -122,10 +120,8 @@ class MooHandlerDB<T extends {} | null, D = any> {
   #oldval: T | undefined;
   #gforce: boolean | undefined;
   #got: MooHandler<T, D>[] = [];
-  /**
-   * Get a sub-array of `#_a`
-   */
-  get(n_x: T, o_x: T, gforce_x: boolean) {
+  /** Get a sub-array of `#_a` */
+  get(n_x: T, o_x: T, gforce_x: boolean): MooHandler<T, D>[] {
     if (
       this.#got.length &&
       this.#newval !== undefined && this.#eq(this.#newval, n_x) &&
@@ -270,9 +266,7 @@ export class Moo<T extends {} | null, D = any> {
     this.reset();
   }
 
-  /**
-   * Not invoking any callbacks
-   */
+  /** Not invoking any callbacks */
   set(val: T): this {
     this.#val = this.#newval = val;
     return this;
@@ -346,6 +340,7 @@ export class Moo<T extends {} | null, D = any> {
   }
 
   static _count = 0;
+  /** @primaryconst @param n_x only potentially changed by  `#eq` */
   set val(n_x: T) {
     if (
       this.#eq(n_x, this.#val) &&

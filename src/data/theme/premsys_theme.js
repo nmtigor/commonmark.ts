@@ -1,5 +1,8 @@
 export default [
-  ["Primary", { "coors": [{ "qm_a": [[null, "#53606c"]] }], "cidx": 0 }],
+  ["Primary", {
+    "coors": [{ "qm_a": [[null, "rgb(5,102,97,1)"]] }],
+    "cidx": 0,
+  }],
   ["On Primary", {
     "coors": [{
       "axes": ["Primary"],
@@ -556,7 +559,7 @@ export default [
   }],
   ["lib.editor.Caret.passiveBg", {
     "coors": [{
-      "axes": ["Neutral"],
+      "axes": ["On Surface Variant"],
       "qm_a": [[[["rgb", [[0, 255], [0, 255], [0, 255]]]], []]],
     }],
     "cidx": 0,

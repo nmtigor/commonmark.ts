@@ -73,9 +73,7 @@ class Selec extends HTMLVuu<EdtrBase, HTMLSpanElement> {
   }
   /* ~ */
 
-  /**
-   * @headconst @param coo_x
-   */
+  /** @headconst @param coo_x */
   private constructor(coo_x: EdtrBase) {
     super(coo_x, span());
 
@@ -149,9 +147,7 @@ export class SelecFac extends Factory<Selec> {
     this.#proactive = _x;
   }
 
-  /**
-   * @headconst @param edtr_x
-   */
+  /** @headconst @param edtr_x */
   constructor(edtr_x: EdtrBase) {
     super();
     this.#edtr = edtr_x;

@@ -17,7 +17,7 @@ import { Inline } from "./Inline.ts";
 /** @final */
 export class Autolink extends Inline {
   #frstTk;
-  #destTk_a;
+  readonly #destTk_a;
   #lastTk;
 
   #isEmail;
@@ -35,19 +35,19 @@ export class Autolink extends Inline {
 
   /**
    * @headconst @param frstTk_x
-   * @headconst @param destTk_x_a
+   * @headconst @param destTk_a_x
    * @headconst @param lastTk_x
    * @const @param isEmail_x
    */
   constructor(
     frstTk_x: MdextTk,
-    destTk_x_a: MdextTk[],
+    destTk_a_x: MdextTk[],
     lastTk_x: MdextTk,
     isEmail_x: boolean,
   ) {
     super();
     this.#frstTk = frstTk_x;
-    this.#destTk_a = destTk_x_a;
+    this.#destTk_a = destTk_a_x;
     this.#lastTk = lastTk_x;
     this.#isEmail = isEmail_x;
 

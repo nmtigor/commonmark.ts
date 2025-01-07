@@ -32,10 +32,9 @@ import {
   $uts,
 } from "../symbols.ts";
 import { noContextMenu } from "../util/general.ts";
-import { assert, bind, fail, traceOut } from "../util/trace.ts";
+import { assert, bind, fail, out, traceOut } from "../util/trace.ts";
 import { Caret, CaretState } from "./Caret.ts";
 import { ELine } from "./ELine.ts";
-import { OzrInfo } from "./ELineBase.ts";
 import { ELoc } from "./ELoc.ts";
 import { ERan, g_eran_fac } from "./ERan.ts";
 import type { EdtrBaseCI, EdtrScronr } from "./EdtrBase.ts";
@@ -81,7 +80,7 @@ rulidx = document[$cssstylesheet].insertRule(
   rulidx,
 );
 
-document.on("selectionchange", (evt_x: Event) => {
+document.on("selectionchange", (_evt_x: Event) => {
   /*#static*/ if (_TRACE && EDITOR) {
     console.log(
       `%c${global.indent}>>>>>>> document.on("selectionchange") >>>>>>>`,
@@ -208,8 +207,8 @@ export abstract class EdtrScrolr<
     // });
 
     this.#dragingM_mo.registHandler((n_y) => {
-      if (n_y) this.#strtDragM();
-      else this.#stopDragM();
+      if (n_y) this._strtDragM();
+      else this._stopDragM();
     });
     this.#draggedM_mo.registHandler((n_y) => {
       if (n_y) {
@@ -224,7 +223,7 @@ export abstract class EdtrScrolr<
     this.on("focus", this._onFocus);
     this.on("blur", this._onBlur);
     this.on("pointerdown", this._onPointerDown);
-    this.on("pointerup", this.#onPointerUp);
+    this.on("pointerup", this._onPointerUp);
     // this.on( "touchstart", this.#onTouchStart );
     this.on("touchend", this.#onTouchEnd);
     if (global.can_hover) {
@@ -233,6 +232,7 @@ export abstract class EdtrScrolr<
     }
     this.on("keydown", this._onKeyDown);
     this.on("keyup", this.#onKeyUp);
+
     this.on("contextmenu", noContextMenu);
     // this.on( "selectstart", ( evt:Event ) => {
     //   // #if _TRACE
@@ -291,6 +291,15 @@ export abstract class EdtrScrolr<
    * @headconst @param pazr_x
    * @headconst @param tfmr_x
    */
+  @out((_, self: EdtrScrolr) => {
+    assert(self.bufr$);
+    assert(self.#sig);
+    assert(self.lexr$.bufr === self.bufr$);
+    assert(self.pazr$.bufr === self.bufr$ && self.pazr$.lexr === self.lexr$);
+    assert(
+      self.tfmr$.bufr === self.bufr$ && self.tfmr$.tbufr.bufr === self.bufr$,
+    );
+  })
   protected attachBufr_impl$(
     bufr_x: TokBufr<T>,
     lexr_x: Lexr<T>,
@@ -351,15 +360,6 @@ export abstract class EdtrScrolr<
       this.resetCarets$(this.bufr$.edtr_sa);
     }
 
-    /*#static*/ if (INOUT) {
-      assert(this.bufr$);
-      assert(this.#sig);
-      assert(this.lexr$.bufr === this.bufr$);
-      assert(this.pazr$.bufr === this.bufr$ && this.pazr$.lexr === this.lexr$);
-      assert(
-        this.tfmr$.bufr === this.bufr$ && this.tfmr$.tbufr.bufr === this.bufr$,
-      );
-    }
     return this;
   }
 
@@ -752,7 +752,7 @@ export abstract class EdtrScrolr<
 
   @bind
   @traceOut(_TRACE && EDITOR)
-  private _onFocus(evt_x: FocusEvent) {
+  private _onFocus(_evt_x: FocusEvent) {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
         `${global.indent}>>>>>>> ${this._type_id}._onFocus() >>>>>>>`,
@@ -803,7 +803,7 @@ export abstract class EdtrScrolr<
   }
   @bind
   @traceOut(_TRACE && EDITOR)
-  private _onBlur(evt_x: FocusEvent) {
+  private _onBlur(_evt_x: FocusEvent) {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(`${global.indent}>>>>>>> ${this._type_id}._onBlur() >>>>>>>`);
     }
@@ -826,30 +826,28 @@ export abstract class EdtrScrolr<
     // // this.st_ = EdtrScrolr.ST.unfocus;
   }
 
-  #strtDragM() {
+  @traceOut(_TRACE && EDITOR)
+  private _strtDragM() {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id}.#strtDragM() >>>>>>>`,
+        `${global.indent}>>>>>>> ${this._type_id}._strtDragM() >>>>>>>`,
       );
     }
     this.on("pointermove", this.#onDragM);
 
     // document[ $selection_vu ] = this;
-    /*#static*/ if (_TRACE && EDITOR) global.outdent;
-    return;
   }
-  #stopDragM() {
+  @traceOut(_TRACE && EDITOR)
+  private _stopDragM() {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id}.#stopDragM() >>>>>>>`,
+        `${global.indent}>>>>>>> ${this._type_id}._stopDragM() >>>>>>>`,
       );
     }
     this.off("pointermove", this.#onDragM);
 
-    // Otherwise, selected texts could get dragged by mouse.
+    /* Otherwise, selected texts could get dragged by mouse. */
     this.proactiveCaret.el.focus();
-    /*#static*/ if (_TRACE && EDITOR) global.outdent;
-    return;
   }
 
   #onDragM = () => {
@@ -890,21 +888,22 @@ export abstract class EdtrScrolr<
       evt_x.preventDefault();
     }
   }
-  #onPointerUp = (evt_x: PointerEvent) => {
+  @bind
+  @traceOut(_TRACE && EDITOR)
+  private _onPointerUp(_evt_x: PointerEvent) {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id}.#onPointerUp() >>>>>>>`,
+        `${global.indent}>>>>>>> ${this._type_id}._onPointerUp() >>>>>>>`,
       );
     }
+    //jjjj TOCLEANUP
     // if( this.#dragingM_mo.val )
     // {
     //   this.proactiveCaret.el.focus();
     // }
 
     this.#dragingM_mo.val = false;
-    /*#static*/ if (_TRACE && EDITOR) global.outdent;
-    return;
-  };
+  }
 
   // #onTouchStart = ( evt_x:TouchEvent ) =>
   // {
@@ -920,12 +919,13 @@ export abstract class EdtrScrolr<
    * "pointerup" doesn't seem to be triggered after "touchmove".
    * "touchend" will be trggered anyway after "touchmove".
    */
-  #onTouchEnd = (evt: TouchEvent) => {
+  #onTouchEnd = (_evt_x: TouchEvent) => {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
         `${global.indent}>>>>>>> ${this._type_id}.#onTouchEnd() >>>>>>>`,
       );
     }
+    //jjjj TOCLEANUP
     // if( this.#dragingM_mo.val )
     // {
     //   this.proactiveCaret.el.focus();
@@ -975,7 +975,7 @@ export abstract class EdtrScrolr<
     /*#static*/ if (INOUT) {
       assert(mc_.st === CaretState.blinking);
     }
-    const sel = this.sel$ = window.getSelection()!;
+    const sel = this.sel$ = getSelection()!;
     const eran = mc_.eran!;
     /*#static*/ if (INOUT) {
       assert(sel && eran);
@@ -996,21 +996,26 @@ export abstract class EdtrScrolr<
   }
 
   /**
-   * When moving main caret, handle main caret.
+   * This is the handler of `document.on("selectionchange")`. It's invoked when
+   * moving the main caret. It handles main caret.\
+   * For each EdtrScrolr instance, this is invoked once. To invoke again,
+   * reassign `document[$selection_vu]` to the instance.
    * @final
-   * @headconst @param rv_x [COPIED] because it will be kept through
-   *    `proactiveCaret.keepRanval_$()`
+  //jjjj TOCLEANUP
+  //  * @headconst @param rv_x [COPIED] because it will be kept through
+  //  *    `proactiveCaret.keepRanval_$()`
    */
   @traceOut(_TRACE && EDITOR)
-  onSelectionchange(rv_x?: Ranval) {
+  onSelectionchange(
+    //jjjj TOCLEANUP
+    // rv_x?: Ranval,
+  ) {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
         [
           "%c",
           global.indent,
-          ">>>>>>> ",
-          `${this._type_id}.onSelectionchange(${rv_x ?? ""})`,
-          " >>>>>>>",
+          `>>>>>>> ${this._type_id}.onSelectionchange() >>>>>>>`,
         ].join(""),
         `color:${LOG_cssc.selectionchange_1}`,
       );
@@ -1028,19 +1033,21 @@ export abstract class EdtrScrolr<
     }
 
     const mc_ = this.proactiveCaret;
-    if (rv_x) mc_.keepRanval_$(rv_x); //!
+    //jjjj TOCLEANUP
+    // if (rv_x) mc_.keepRanval_$(rv_x); //!
+    let rv_: Ranval;
     if (mc_.st === CaretState.staring) {
-      rv_x ??= this.getRanvalBy$(mc_.eran!);
-      mc_.setByRanval(rv_x, true);
+      rv_ = this.getRanvalBy$(mc_.eran!);
+      mc_.setByRanval(rv_, true);
 
       // mc_.blink();
     } else if (this.setSel$()) {
       // if( this.sel$?.[$sync_eran] )
       mc_.setERanBySel_$(this.sel$!);
 
-      rv_x ??= this.getRanvalBy$(mc_.eran!);
-      mc_.setByRanval(rv_x, mc_.st !== CaretState.blinking);
-      // mc_.setByRanval( rv_x, true );
+      rv_ = this.getRanvalBy$(mc_.eran!);
+      mc_.setByRanval(rv_, mc_.st !== CaretState.blinking);
+      // mc_.setByRanval( rv_, true );
 
       // if( !mc_.caretrvm ) mc_.createCaretRvM_$( this.bufr$ );
       // const ranval = this.getRanvalBy$( eran );
@@ -1077,17 +1084,16 @@ export abstract class EdtrScrolr<
   /** Helper */
   protected offs$!: number;
   /**
-   * `out( this.ctnr$ !== undefined )`\
-   * `out( this.offs$ !== undefined )`
    * @headconst @param ctnr_x
    * @const @param offs_x
    */
+  @out((_, self: EdtrScrolr) => {
+    assert(self.ctnr$ !== undefined && self.offs$ !== undefined);
+  })
   protected correctSel$(ctnr_x: Node | null, offs_x: number) {
     // console.log("🚀 ", ctnr_x);
     if (ctnr_x?.isText) {
-      const ozrInfo = new OzrInfo();
-      ELine.getBLine(ctnr_x, ozrInfo);
-      this.offs$ = ozrInfo.eline.empty ? 0 : offs_x;
+      this.offs$ = ELine.getELine(ctnr_x).empty ? 0 : offs_x;
       this.ctnr$ = ctnr_x;
     } else {
       this.ctnr$ = this.frstELine$!.frstCaretNode;
@@ -1097,7 +1103,7 @@ export abstract class EdtrScrolr<
 
   /** Set by other data rather than `eran`. */
   protected setSel$(): boolean {
-    this.sel$ = window.getSelection();
+    this.sel$ = getSelection();
     if (!this.sel$) return false;
 
     // this.sel$[ $sync_eran ] = false; //!
@@ -1133,7 +1139,7 @@ export abstract class EdtrScrolr<
   /**
    * @const @param forceOnce_x E.g., through `deleteUChr$()`, `ranval_$` will
    *    not change `caretrvm![1].val`, so must `forceOnce_x` to update
-   *    `eran.focusCtnr`, etc in `Caret.#onRanvalChange()`.
+   *    `eran.focusCtnr`, etc in `Caret._onRanvalChange()`.
    */
   #syncAllCaret(forceOnce_x?: boolean) {
     // if (!this.proactiveCaret.caretrvm) {
@@ -1719,11 +1725,15 @@ export abstract class EdtrScrolr<
         ctnr[$rec_utx_a][offs] =
           eran_x!.syncRange_$().getBoundingClientRect();
       ret[$uts] = Date.now() as ts_t;
-      // console.log( ">>>>>>>>>>>" );
-      // console.log( `x=${ret.x}, l=${ret.left}, y=${ret.y}, t=${ret.top}, r=${ret.right}, b=${ret.bottom}` );
+      // console.log(`>>>>>>>>>>> ${rv_x}`);
+      // console.log(
+      //   `x=${ret.x}, l=${ret.left}, y=${ret.y}, t=${ret.top}, r=${ret.right}, b=${ret.bottom}`,
+      // );
       ret.x -= this.vpLeft; //! record relative value
       ret.y -= this.vpTop;
-      // console.log( `x=${ret.x}, l=${ret.left}, y=${ret.y}, t=${ret.top}, r=${ret.right}, b=${ret.bottom}` );
+      // console.log(
+      //   `x=${ret.x}, l=${ret.left}, y=${ret.y}, t=${ret.top}, r=${ret.right}, b=${ret.bottom}`,
+      // );
     }
     /*#static*/ if (CYPRESS) {
       ctnr["cy.rec_utx_a"] = ctnr[$rec_utx_a];

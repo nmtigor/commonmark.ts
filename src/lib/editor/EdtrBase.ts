@@ -253,7 +253,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
     if (!this.#bcr) {
       this.#bcr = this.el$.getBoundingClientRect();
 
-      this.bufr$.lastView_ts = Date.now() as ts_t; //!
+      this.bufr$.updateLastViewTs(); //!
     }
     return this.#bcr;
   }
@@ -319,6 +319,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
       }
     }
   }
+
   readonly active_mo = new Moo({ val: false });
   get active() {
     return this.active_mo.val;
@@ -343,9 +344,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
     this.type = type_x;
     this.caret_a$ = [Caret.create(host_x.coo)];
 
-    /*#static*/ if (DEV) {
-      this.el$.id = this._type_id;
-    }
+    this.el$.id = this._type_id;
     // this.el$.id = "editor-selection";
     this.assignAttro({
       contenteditable: "true",
@@ -359,7 +358,6 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
       position: "relative",
       // zIndex: 0,
       isolation: "isolate", //!
-      overflow: "scroll",
       // writingMode: "vertical-rl",
 
       // border: "2px solid",
@@ -669,13 +667,13 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
 
   /**
    * @headconst @param eran_x
+  //jjjj TOCLEANUP
   //  * @out @param outF_o
   //  * @out @param outA_o
   //  * @return fill and return caret.ranval_$
    */
   protected getRanvalBy$(eran_x: ERan, ret_x?: Ranval): Ranval {
     ret_x ??= new Ranval(0 as lnum_t, 0);
-
     ret_x.focusLidx = ELine.getBLine(eran_x.focusCtnr).lidx_1;
     ret_x.focusLoff = eran_x.focusLoff;
     if (eran_x.collapsed) {
@@ -684,7 +682,6 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
       ret_x.anchrLidx = ELine.getBLine(eran_x.anchrCtnr).lidx_1;
       ret_x.anchrLoff = eran_x.anchrLoff;
     }
-
     return ret_x;
   }
 

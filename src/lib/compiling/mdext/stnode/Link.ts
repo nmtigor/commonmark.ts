@@ -41,9 +41,10 @@ export class Link extends Inline {
   #textPart;
   #lastTk;
 
-  #lablTk_a;
-  #destTk_a;
-  #titlTk_a;
+  readonly #lablTk_a;
+  /** `...` or `<...>` */
+  readonly #destPart;
+  readonly #titlTk_a;
 
   override get children(): Inline[] {
     if (this.children$) return this.children$ as Inline[];
@@ -72,7 +73,7 @@ export class Link extends Inline {
    * @headconst @param textPart_x include brackets, i.e., `[...]` or `[...](`
    * @headconst @param lastTk_x
    * @headconst @param lablTk_a_x
-   * @headconst @param destTk_a_x
+   * @headconst @param destPart_x  `...` or `<...>`
    * @headconst @param titlTk_a_x
    */
   constructor(
@@ -81,14 +82,14 @@ export class Link extends Inline {
     textPart_x: (MdextTk | Inline)[],
     lastTk_x: MdextTk,
     lablTk_a_x?: MdextTk[],
-    destTk_a_x?: MdextTk[],
+    destPart_x?: MdextTk[],
     titlTk_a_x?: MdextTk[],
   ) {
     /*#static*/ if (INOUT) {
       if (mode_x === LinkMode.inline) {
-        assert(!normdLabel_x && !lablTk_a_x && destTk_a_x);
+        assert(!normdLabel_x && !lablTk_a_x && destPart_x);
       } else {
-        assert(normdLabel_x && !destTk_a_x && !titlTk_a_x);
+        assert(normdLabel_x && !destPart_x && !titlTk_a_x);
       }
     }
     super();
@@ -97,7 +98,7 @@ export class Link extends Inline {
     this.#textPart = textPart_x;
     this.#lastTk = lastTk_x;
     this.#lablTk_a = lablTk_a_x;
-    this.#destTk_a = destTk_a_x;
+    this.#destPart = destPart_x;
     this.#titlTk_a = titlTk_a_x;
 
     this.ensureBdry();
@@ -114,9 +115,9 @@ export class Link extends Inline {
         if (tk_.touch(loc_x)) return tk_;
       }
     }
-    if (this.#destTk_a?.length) {
-      for (let i = this.#destTk_a.length; i--;) {
-        const tk_ = this.#destTk_a[i];
+    if (this.#destPart?.length) {
+      for (let i = this.#destPart.length; i--;) {
+        const tk_ = this.#destPart[i];
         if (tk_.touch(loc_x)) return tk_;
       }
     }
@@ -172,8 +173,8 @@ export class Link extends Inline {
       }
     }
 
-    if (this.#destTk_a) {
-      for (const tk of this.#destTk_a) {
+    if (this.#destPart) {
+      for (const tk of this.#destPart) {
         ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
       }
     }
@@ -197,9 +198,9 @@ export class Link extends Inline {
       : lexr_x.linkdef_m_$.get(this.#normdLabel!);
 
     let dest_s;
-    const destTk_a = this.#destTk_a ?? linkdef?.destTk_a;
-    if (destTk_a?.length === 1 || destTk_a?.length === 3) {
-      dest_s = (destTk_a.length === 3 ? destTk_a[1] : destTk_a[0]).getText();
+    const destPart = this.#destPart ?? linkdef?.destPart;
+    if (destPart?.length === 1 || destPart?.length === 3) {
+      dest_s = (destPart.length === 3 ? destPart[1] : destPart[0]).getText();
       dest_s = _unescapeString(dest_s);
       // console.log("🚀 ~ Link ~ override_toHTML ~ dest_s:", dest_s)
       dest_s = encodeURI(decodeURI(dest_s));

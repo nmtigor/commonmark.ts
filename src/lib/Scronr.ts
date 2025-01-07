@@ -152,7 +152,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
    * @final
    * @headconst @param scrolr_x
    */
-  initScrolr(scrolr_x: Scrolr<C>) {
+  initScrolr(scrolr_x: Scrolr<C>): void {
     /*#static*/ if (INOUT) {
       assert(!this.#scrolrInited);
     }

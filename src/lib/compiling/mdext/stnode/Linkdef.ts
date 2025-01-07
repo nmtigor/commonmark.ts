@@ -16,7 +16,7 @@ import { Inline } from "./Inline.ts";
 /** @final */
 export class Linkdef extends Inline {
   readonly lablTk_a;
-  readonly destTk_a;
+  readonly destPart;
   readonly titlTk_a;
 
   override get children() {
@@ -28,17 +28,17 @@ export class Linkdef extends Inline {
   }
   override get lastToken() {
     return this.lastToken$ ??= this.titlTk_a?.at(-1) ??
-      this.destTk_a.at(-1)!;
+      this.destPart.at(-1)!;
   }
 
   constructor(
     lablTk_a_x: MdextTk[],
-    destTk_a_x: MdextTk[],
+    destPart_x: MdextTk[],
     titlTk_a_x: MdextTk[] | undefined,
   ) {
     super();
     this.lablTk_a = lablTk_a_x;
-    this.destTk_a = destTk_a_x;
+    this.destPart = destPart_x;
     this.titlTk_a = titlTk_a_x;
 
     this.ensureBdry();
@@ -49,8 +49,8 @@ export class Linkdef extends Inline {
     // for (const tk of tk_a_x) {
     //   if (tk_a === this.lablTk_a) {
     //     tk_a.push(tk);
-    //     if (tk.value === lastTok) tk_a = this.destTk_a;
-    //   } else if (tk_a === this.destTk_a) {
+    //     if (tk.value === lastTok) tk_a = this.destPart;
+    //   } else if (tk_a === this.destPart) {
     //     if (tk.value === MdextTok.link_dest_head) {
     //       lastTok = MdextTok.link_dest_tail;
     //     }
@@ -72,13 +72,13 @@ export class Linkdef extends Inline {
     //       this.lablTk_a[0].value === MdextTok.bracket_open &&
     //       this.lablTk_a.at(-1)!.value === MdextTok.bracket_colon,
     //   );
-    //   if (this.destTk_a.length === 3) {
+    //   if (this.destPart.length === 3) {
     //     assert(
-    //       this.destTk_a[0].value === MdextTok.link_dest_head &&
-    //         this.destTk_a.at(-1)!.value === MdextTok.link_dest_tail,
+    //       this.destPart[0].value === MdextTok.link_dest_head &&
+    //         this.destPart.at(-1)!.value === MdextTok.link_dest_tail,
     //     );
     //   } else {
-    //     assert(this.destTk_a.length === 1);
+    //     assert(this.destPart.length === 1);
     //   }
     //   if (this.titlTk_a) {
     //     assert(this.titlTk_a.length);
@@ -102,8 +102,8 @@ export class Linkdef extends Inline {
         if (tk_.touch(loc_x)) return tk_;
       }
     }
-    for (let i = this.destTk_a.length; i--;) {
-      const tk_ = this.destTk_a[i];
+    for (let i = this.destPart.length; i--;) {
+      const tk_ = this.destPart[i];
       if (tk_.touch(loc_x)) return tk_;
     }
     for (let i = this.lablTk_a.length; i--;) {
@@ -127,7 +127,7 @@ export class Linkdef extends Inline {
       ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
 
-    for (const tk of this.destTk_a) {
+    for (const tk of this.destPart) {
       ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
 

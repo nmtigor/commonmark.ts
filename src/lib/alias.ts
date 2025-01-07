@@ -117,17 +117,14 @@ export type dot2d_t = [x: number, y: number];
 export type dim2d_t = [widt: number, high: number];
 export type rect_t = TupleOf<number, 4>;
 
-export type IntegerArray =
-  | Int8Array
+export type IntArray = Int8Array | Int16Array | Int32Array;
+export type UintArray =
   | Uint8Array
   | Uint8ClampedArray
-  | Int16Array
   | Uint16Array
-  | Int32Array
   | Uint32Array;
-export type FloatArray =
-  | Float32Array
-  | Float64Array;
+export type IntegerArray = IntArray | UintArray;
+export type FloatArray = Float32Array | Float64Array;
 export type TypedArray = IntegerArray | FloatArray;
 /*80--------------------------------------------------------------------------*/
 
