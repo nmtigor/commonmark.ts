@@ -56,9 +56,7 @@ export class Unre<T extends {} | null> {
     };
   }
 
-  /**
-   * @const @param len_x
-   */
+  /** @const @param len_x */
   constructor(len_x: uint) {
     /*#static*/ if (INOUT) {
       assert(1 <= len_x);
@@ -67,7 +65,7 @@ export class Unre<T extends {} | null> {
     this.ary$ = new Array<T>(this.#Len);
   }
 
-  reset() {
+  resetUnre() {
     this.i$ = this.i_1$ = this.i_0$;
     this.lastUR$ = LastUR.bakw;
   }
@@ -93,6 +91,7 @@ export class Unre<T extends {} | null> {
     ret.lastUR$ = this.lastUR$;
     return ret;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @const */
   #loopPlusOne(j_x: uint): uint {

@@ -51,8 +51,8 @@ export class BlockQuote extends CtnrBlock {
     this.#mrkrTk_a = [mrkrTk_x];
   }
 
-  override reset(): this {
-    super.reset();
+  override resetBlock(): this {
+    super.resetBlock();
     this.#mrkrTk_a.length = 0;
     return this;
   }
@@ -97,7 +97,7 @@ export class BlockQuote extends CtnrBlock {
     const ln_ = loc_x.line_$;
     for (const tk of this.#mrkrTk_a) {
       if (tk.sntFrstLine === ln_) {
-        loc_x.become(tk.sntStopLoc);
+        loc_x.becomeLoc(tk.sntStopLoc);
         /* optional following space */
         if (isSpaceOrTab(loc_x.ucod)) loc_x.forwnCol(1);
         ret = tk;

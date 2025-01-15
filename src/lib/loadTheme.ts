@@ -585,7 +585,7 @@ export async function loadTheme() {
         z.tuple([zPaleName, zPaleRaw]).parse(raw);
         document[$theme].raw_o[raw[0]] = raw[1];
         document[$theme].ord_a.push(raw[0]);
-      } catch (_) {}
+      } catch (_) { /* no-ops */ }
     }
   } catch (err) {
     console.error(err);

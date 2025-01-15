@@ -72,8 +72,8 @@ export abstract class ListItem extends CtnrBlock {
     this.#mrkrTk = mrkrTk_x;
   }
 
-  override reset(): this {
-    super.reset();
+  override resetBlock(): this {
+    super.resetBlock();
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -109,7 +109,7 @@ export abstract class ListItem extends CtnrBlock {
   lcolCntStrt(loc_x: Loc): MdextTk | null | undefined {
     let ret: MdextTk | null | undefined;
     if (this.#mrkrTk.sntFrstLine === loc_x.line_$) {
-      loc_x.become(this.#mrkrTk.sntStrtLoc)
+      loc_x.becomeLoc(this.#mrkrTk.sntStrtLoc)
         .forwnCol((this.#mrkrTk.lexdInfo as ListMrkr_LI).padding);
       ret = this.#mrkrTk;
     } else if (

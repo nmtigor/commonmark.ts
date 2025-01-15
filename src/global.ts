@@ -78,7 +78,8 @@ export const global = new class {
   pointer = Pointer.none;
   anyPointer = Pointer.none;
   get can_touch() {
-    return this.anyPointer === Pointer.coarse;
+    return (this.anyPointer === Pointer.coarse || "ontouchstart" in window) &&
+      navigator.maxTouchPoints > 0;
   }
   hover = Hover.none;
   anyHover = Hover.none;

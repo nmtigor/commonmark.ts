@@ -88,14 +88,14 @@ class Selec extends HTMLVuu<EdtrBase, HTMLSpanElement> {
     });
   }
   static create(coo_x: EdtrBase) {
-    return new Selec(coo_x).reuse();
+    return new Selec(coo_x).reuseSelec();
   }
 
-  reuse(): this {
+  reuseSelec(): this {
     /*#static*/ if (DEV) this.observeTheme();
     return this;
   }
-  reset(): this {
+  resetSelec(): this {
     /*#static*/ if (DEV) this.unobserveTheme();
     return this;
   }
@@ -173,10 +173,10 @@ export class SelecFac extends Factory<Selec> {
   }
 
   protected override resetVal$(i_x: uint) {
-    return this.get(i_x).reset().hide_$();
+    return this.get(i_x).resetSelec().hide_$();
   }
   protected override reuseVal$(i_x: uint) {
-    const ret = this.get(i_x).reuse();
+    const ret = this.get(i_x).reuseSelec();
     ret.proactive_$ = this.#proactive;
     return ret;
   }

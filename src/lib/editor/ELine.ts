@@ -24,7 +24,10 @@ import { ELineBase } from "./ELineBase.ts";
  */
 export abstract class ELine<T extends Tok = BaseTok, CI extends EdtrCI = EdtrCI>
   extends ELineBase<CI> {
-  // override bline_$!: TokLine<T>;
+  //jjjj TOCLEANUP
+  // override get bline_$(): TokLine<T> {
+  //   return super.bline_$ as TokLine<T>;
+  // }
   declare bline_$: TokLine<T>;
 
   // /**

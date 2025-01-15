@@ -49,7 +49,7 @@ declare global {
      * `MouseButton.Main` requires bubble up to top in general to `off()` some
      * global event listeners. (see uses of `g_vco.off()`)
      */
-    isDrag?: boolean;
+    isDragd?: boolean;
   }
 
   interface WheelEvent {

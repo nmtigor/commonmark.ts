@@ -6,7 +6,7 @@
 import { INOUT, TESTING } from "../../global.ts";
 import type { id_t, lnum_t, loff_t, uint16 } from "../alias.ts";
 import { BufrDir, llen_MAX, MAX_lnum } from "../alias.ts";
-import { Bidi } from "../Bidi.ts";
+import { Bidi, type Bidir } from "../Bidi.ts";
 import { assert, out } from "../util/trace.ts";
 import type { Tok } from "./alias.ts";
 import type { Bufr } from "./Bufr.ts";
@@ -21,7 +21,7 @@ import type { TSeg } from "./TSeg.ts";
  *
  * primaryconst: const exclude `lidx$`
  */
-export class Line {
+export class Line implements Bidir {
   static #ID = 0 as id_t;
   readonly id = ++Line.#ID as id_t;
   /** @final */
@@ -69,7 +69,10 @@ export class Line {
   }
 
   readonly bidi = new Bidi();
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  //jjjj TOCLEANUP
+  // eline: ELineBase | undefined;
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
    * ! `lidx$` must be nondecreasing, however valid or not
@@ -86,11 +89,8 @@ export class Line {
       assert(!this.removed);
       assert(this.linked$ !== linked_x);
     }
-    if (this.linked$) {
-      this.bufr$!.lineN_$--;
-    } else {
-      this.bufr$!.lineN_$++;
-    }
+    if (this.linked$) this.bufr$!.lineN_$--;
+    else this.bufr$!.lineN_$++;
     this.linked$ = linked_x;
   }
 
@@ -102,7 +102,7 @@ export class Line {
   get nextLine() {
     return this.nextLine$;
   }
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /* #frstToken_m */
   /**
@@ -110,15 +110,11 @@ export class Line {
    * is not.
    */
   #frstToken_m = new Map<Lexr<any>, Token<any>>();
-  /**
-   * `out( ret; !ret || ret.frstLine === this )`
-   */
+  /** `out( ret; !ret || ret.frstLine === this )` */
   frstTokenBy<T extends Tok>(lexr_x: Lexr<T>): Token<T> | undefined {
     return this.#frstToken_m.get(lexr_x);
   }
-  /**
-   * `out( ret; !ret || ret.lastLine === this )`
-   */
+  /** `out( ret; !ret || ret.lastLine === this )` */
   strtTokenBy<T extends Tok>(lexr_x: Lexr<T>): Token<T> | undefined {
     let ret: Token<T> | undefined;
     let tk_ = this.frstTokenBy(lexr_x);
@@ -150,15 +146,11 @@ export class Line {
    * is not.
    */
   #lastToken_m = new Map<Lexr<any>, Token<any>>();
-  /**
-   * `out( ret; !ret || ret.lastLine === this )`
-   */
+  /** `out( ret; !ret || ret.lastLine === this )` */
   lastTokenBy<T extends Tok>(lexr_x: Lexr<T>): Token<T> | undefined {
     return this.#lastToken_m.get(lexr_x);
   }
-  /**
-   * `out( ret; !ret || ret.frstLine === this )`
-   */
+  /** `out( ret; !ret || ret.frstLine === this )` */
   stopTokenBy<T extends Tok>(lexr_x: Lexr<T>): Token<T> | undefined {
     let ret: Token<T> | undefined;
     let tk_ = this.lastTokenBy(lexr_x);
@@ -183,7 +175,7 @@ export class Line {
   }
   // hasStop_$( lexr_x:Lexr ) { return this.#lastToken_m.has(lexr_x); }
   /* ~ */
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /* #strtTSeg_m */
   #strtTSeg_m = new Map<Tfmr, TSeg>();
@@ -237,9 +229,7 @@ export class Line {
     this.#stopTSeg_m.clear();
   }
 
-  /**
-   * @headconst @param tseg_x
-   */
+  /** @headconst @param tseg_x */
   hasTSeg(tseg_x: TSeg) {
     const tfmr = tseg_x.tfmr_$;
     const strtTSeg = this.strtTSeg_$(tfmr);
@@ -272,15 +262,13 @@ export class Line {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /**
-   * @const @param text_x
-   */
+  /** @const @param text_x */
   @out((_, self: Line) => {
     assert(self.text$.length < llen_MAX);
   })
   resetText_$(text_x?: string): this {
     this.text$ = text_x ?? "";
-    this.bidi.reset(this.text$, this.dir);
+    this.bidi.resetBidi(this.text$, this.dir);
     /*#static*/ if (!TESTING) {
       this.bidi.validate();
     }
@@ -336,8 +324,8 @@ export class Line {
 
   /**
    * `in( !this.removed )`
-   * @primaryconst
    * @final
+   * @primaryconst
    */
   invalLidx$() {
     /*#static*/ if (INOUT) {
@@ -376,8 +364,8 @@ export class Line {
   }
 
   /**
-   * @primaryconst
    * @final
+   * @primaryconst
    */
   get lidx_1(): lnum_t {
     /*#static*/ if (INOUT) {
@@ -470,9 +458,7 @@ export class Line {
     );
   }
 
-  /**
-   * @const @param ret_ln_x
-   */
+  /** @const @param ret_ln_x */
   @out((ret: any, self: Line) => {
     assert(ret.linked$);
     assert(ret === self.prevLine$);
@@ -504,9 +490,7 @@ export class Line {
     ret_ln_x.#inval_lidx_selfup();
     return ret_ln_x;
   }
-  /**
-   * @const @param ret_ln_x
-   */
+  /** @const @param ret_ln_x */
   @out((ret: any, self: Line) => {
     assert(ret.linked$);
     assert(ret === self.nextLine$);
@@ -621,7 +605,7 @@ export class Line {
   // }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  get _info(): string {
+  get _info_(): string {
     return `${this._type_id}, ${this.bufr$?._type_id ?? "-"}, ` +
       `prev: ${this.prevLine$?._type_id ?? "-"}, ` +
       `next: ${this.nextLine$?._type_id ?? "-"}`;

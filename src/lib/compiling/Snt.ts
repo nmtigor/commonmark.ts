@@ -10,9 +10,9 @@ import type { Loc } from "./Loc.ts";
 /*80--------------------------------------------------------------------------*/
 
 export class SortedSnt_id extends SortedIdo<Snt> {
-  _repr(): string[] {
+  _repr_(): string[] {
     const ret: string[] = [];
-    for (const v of this) ret.push(v._oldInfo);
+    for (const v of this) ret.push(v._oldInfo_);
     return ret;
   }
 }
@@ -43,7 +43,7 @@ export abstract class Snt {
     return this._type_id;
   }
 
-  get _oldInfo(): string {
+  get _oldInfo_(): string {
     return "";
   }
 }

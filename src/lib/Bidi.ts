@@ -10,11 +10,11 @@
  * @license MIT
  ******************************************************************************/
 
-import { INOUT } from "../global.ts";
+import { _TRACE, global, INOUT } from "../global.ts";
 import type { Chr, id_t, loff_t, uint, uint8 } from "./alias.ts";
 import { BufrDir, ChrTyp } from "./alias.ts";
 import { canonicalOf, chrTypOf, closingOf, openingOf } from "./loadBidi.ts";
-import { assert } from "./util/trace.ts";
+import { assert, traceOut } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
 const ISOLATE_INIT = ChrTyp.LRI | ChrTyp.RLI | ChrTyp.FSI;
@@ -983,9 +983,7 @@ export class Bidi {
     return this.#rowN ??= this.#wrap_a.length;
   }
 
-  /**
-   * [ 0, #wrap_a.length )
-   */
+  /** [ 0, #wrap_a.length ) */
   #lastRow: uint | -1 = -1;
   // get _lastRow() {
   //   return this.#lastRow;
@@ -1013,9 +1011,7 @@ export class Bidi {
     return this.#lastRow = ret!;
   }
 
-  /**
-   * `in( 0 <= row_x && row_x < this.rowN)`
-   */
+  /** `in( 0 <= row_x && row_x < this.rowN)` */
   #rowStrtOf(row_x: uint): loff_t {
     return row_x === 0 ? 0 : this.#wrap_a[row_x - 1];
   }
@@ -1023,22 +1019,24 @@ export class Bidi {
 
   /* #embedLevels */
   #embedLevels: GetEmbeddingLevelsR_ | undefined;
+  /**
+   * shared between `Line.bidi` and `ELineBase.bidi$`
+   * (@see {@linkcode ELineBase.setBidi$()})
+   */
   get embedLevels() {
     return this.#embedLevels ??= getEmbeddingLevels(this.#text, this.#dir);
   }
 
-  /**
-   * `in( this.#embedLevels )`
-   */
+  /** `in( this.#embedLevels )` */
   #lrOf(l_x: loff_t): ChrTyp.R | ChrTyp.L {
     return (this.#embedLevels!.levels[l_x] & 1) ? ChrTyp.R : ChrTyp.L;
   }
   get _lr_a() {
     if (!this.#embedLevels) this.validate();
 
-    const ret = new Array<ChrTyp.R | ChrTyp.L>(this.#text.length);
+    const ret = new Array<string>(this.#text.length);
     for (let i = this.#text.length; i--;) {
-      ret[i] = this.#lrOf(i);
+      ret[i] = ChrTyp[this.#lrOf(i)];
     }
     return ret;
   }
@@ -1158,7 +1156,7 @@ export class Bidi {
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  reset(
+  resetBidi(
     text_x: string,
     dir_x: BufrDir,
     wrap_a_x = [text_x.length],
@@ -1176,17 +1174,13 @@ export class Bidi {
     return this;
   }
 
-  /**
-   * Assign `#embedLevels`, `#logal_a`, `#visul_a`
-   */
+  /** Assign `#embedLevels`, `#logal_a`, `#visul_a` */
+  @traceOut(_TRACE)
   validate(): this {
-    // /*#static*/ if (_TRACE) {
-    //   console.log(`${global.indent}>>>>>>> Bidi.validate() >>>>>>>`);
-    // }
-    if (this.valid) {
-      // /*#static*/ if (_TRACE) global.outdent;
-      return this;
+    /*#static*/ if (_TRACE) {
+      console.log(`${global.indent}>>>>>>> Bidi.validate() >>>>>>>`);
     }
+    if (this.valid) return this;
 
     const LEN = this.#wrap_a.at(-1)!;
     /*#static*/ if (INOUT) {
@@ -1214,17 +1208,16 @@ export class Bidi {
         i_ = iI;
       }
     }
-    // /*#static*/ if (_TRACE) {
-    //   console.log(`${global.dent}`, [...this.#text]);
-    //   // console.log(`${global.dent}[${this.#wrap_a}]`);
-    //   // console.log(
-    //   //   `${global.dent}#embedLevels.levels = [${this.#embedLevels.levels}]`,
-    //   // );
-    //   // console.log(`${global.dent}[${this._lr_a}]`);
-    //   // console.log(`${global.dent}#visul_a = [${this.#visul_a}]`);
-    //   // console.log(`${global.dent}#logal_a = [${this.#logal_a}]`);
-    //   global.outdent;
-    // }
+    /*#static*/ if (_TRACE) {
+      console.log(`${global.dent}`, [...this.#text]);
+      console.log(`${global.dent}[${this.#wrap_a}]`);
+      console.log(
+        `${global.dent}#embedLevels.levels = [${this.#embedLevels.levels}]`,
+      );
+      console.log(`${global.dent}[${this._lr_a}]`);
+      console.log(`${global.dent}#visul_a = [${this.#visul_a}]`);
+      console.log(`${global.dent}#logal_a = [${this.#logal_a}]`);
+    }
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -1337,4 +1330,9 @@ export class Bidi {
     return true;
   }
 }
+/*80--------------------------------------------------------------------------*/
+
+export type Bidir = {
+  readonly bidi: Bidi;
+};
 /*80--------------------------------------------------------------------------*/

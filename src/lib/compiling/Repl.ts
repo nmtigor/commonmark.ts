@@ -55,8 +55,19 @@ export class Repl {
     return this.#text_a!;
   }
 
-  readonly replText_a2: string[][] | undefined;
-  readonly replText_a: string[] | undefined;
+  readonly #replText_a2: string[][] | undefined;
+  get _replText_a2_(): string[][] {
+    return this.#replText_a2!;
+  }
+  readonly #replText_a: string[] | undefined;
+  get _replText_a_(): string[] {
+    return this.#replText_a!;
+  }
+
+  /** for composition */
+  #replText_a2_0: string[][] | undefined;
+  /** for composition */
+  #replText_a_0: string[] | undefined;
 
   /** Helper */
   readonly #tmpRan;
@@ -84,7 +95,7 @@ export class Repl {
         ? text_x as string[]
         : linesOf(text_x);
       this.#ranval_rev = new Ranval(0 as lnum_t, 0);
-      this.replText_a = [];
+      this.#replText_a = [];
     } else {
       this.aoa = true;
       this.#ranval_a = rv_x;
@@ -95,9 +106,9 @@ export class Repl {
         { length: rv_x.length },
         () => new Ranval(0 as lnum_t, 0),
       );
-      this.replText_a2 = Array.from({ length: rv_x.length }, () => []);
+      this.#replText_a2 = Array.from({ length: rv_x.length }, () => []);
     }
-    using rv_ = g_ranval_fac.oneMore().reset(0 as lnum_t, 0);
+    using rv_ = g_ranval_fac.oneMore().setRanval(0 as lnum_t, 0);
     this.#tmpRan = Ran.create(this.#bufr, rv_);
   }
 
@@ -174,7 +185,7 @@ export class Repl {
       // lnSrc_1.prevLine.append_$( txtSrc_1.slice(loffSrc_1) );
       // lnSrc_1.removeSelf_$();
       lnSrc_1.splice_$(0, loffSrc_1, lnSrc_1.prevLine!.text);
-      outRan_x.stopLoc.set(lnSrc_1, lnSrc_1.prevLine!.uchrLen);
+      outRan_x.stopLoc.setLoc(lnSrc_1, lnSrc_1.prevLine!.uchrLen);
       if (lnSrc_1.prevLine === lnSrc_0) lnSrc_0 = lnSrc_1; //!
       lnSrc_1.prevLine!.removeSelf_$();
     } else if (lnSrc === lnSrc_1) {
@@ -190,7 +201,7 @@ export class Repl {
         lnSrc_1.splice_$(loffSrc_0, loffSrc_1, inTxt_a_x[0]);
 
         // lnSrc_0 = lnSrc_1;
-        outRan_x.stopLoc.set(lnSrc_1, loffSrc_0 + inTxt_a_x[0].length);
+        outRan_x.stopLoc.setLoc(lnSrc_1, loffSrc_0 + inTxt_a_x[0].length);
       } else {
         if (i_ < tgtN - 1) {
           const bufr = this.#bufr;
@@ -214,23 +225,21 @@ export class Repl {
         }
         lnSrc_1.splice_$(0, loffSrc_1, inTxt_a_x[i_]);
 
-        outRan_x.stopLoc.set(lnSrc_1, inTxt_a_x[i_].length);
+        outRan_x.stopLoc.setLoc(lnSrc_1, inTxt_a_x[i_].length);
       }
     } else {
       /*#static*/ if (INOUT) {
         fail("Should not run here!");
       }
     }
-    outRan_x.strtLoc.set(lnSrc_0, loffSrc_0);
+    outRan_x.strtLoc.setLoc(lnSrc_0, loffSrc_0);
 
     /*#static*/ if (INOUT) {
       assert(lnSrc_1 === outRan_x.lastLine);
     }
   }
 
-  /**
-   * @const @param inRv_x
-   */
+  /** @const @param inRv_x */
   #pre(inRv_x: Ranval | Ranval[]): Ran[] {
     // console.log(`inRv_x = ${inRv_x.toString()}`);
     // console.log(inTxt_a_x);
@@ -339,7 +348,7 @@ export class Repl {
    * @out @param outRv_x range of inTxt_a_x
    * @out @param outTxt_a_x texts of inRv_x
    */
-  _test(
+  _test_(
     inRv_x: Ranval | Ranval[],
     inTxt_a_x: string[] | string[][],
     outRv_x: Ranval | Ranval[],
@@ -383,8 +392,8 @@ export class Repl {
 
   #replFRan = false;
   /**
-   * If `aoa`, assign `#ranval_rev_a`, `replText_a2`,
-   * else, assign `#ranval_rev`, `replText_a`.
+   * If `aoa`, assign `#ranval_rev_a`, `#replText_a2`,
+   * else, assign `#ranval_rev`, `#replText_a`.
    *
    * A `Repl` is a step stored in `Bufr.#doq`, and `replFRun()` is called with
    * one `#text_a`.\
@@ -415,7 +424,7 @@ export class Repl {
           ? txt_x as string[]
           : linesOf(txt_x);
         // this.#ranval = this.#ranval_rev.dup(); //!
-        // replText_a_save = [...this.replText_a]; //!
+        // replText_a_save = [...this.#replText_a]; //!
       }
     }
 
@@ -424,14 +433,14 @@ export class Repl {
         this.#ranval_a!,
         this.#text_a2!,
         this.#ranval_rev_a!,
-        this.replText_a2!,
+        this.#replText_a2!,
       );
     } else {
       this._impl(
         this.#ranval!,
         this.#text_a!,
         this.#ranval_rev!,
-        this.replText_a!,
+        this.#replText_a!,
       );
     }
 
@@ -439,34 +448,36 @@ export class Repl {
       this.#replFRan = true;
     } else {
       if (this.aoa) {
+        this.#replText_a2_0 ??= this.#replText_a2!.slice();
+
         for (let i = this.#ranval_rev_a!.length; i--;) {
           this.#ranval_a![i].become(this.#ranval_rev_a![i]);
         }
       } else {
+        this.#replText_a_0 ??= this.#replText_a!.slice();
+
         this.#ranval!.become(this.#ranval_rev!);
       }
       /* ..., then could continue to `this.replFRun(txt_x)` */
 
-      // this.replText_a = replText_a_save!; // For keeping `replBRun()` correct
-      // console.log(this.replText_a);
+      // this.#replText_a = replText_a_save!; // For keeping `replBRun()` correct
+      // console.log(this.#replText_a);
     }
   }
 
-  /**
-   * Assign `#ranval`, `#text_a`.
-   */
+  /** Assign `#ranval`, `#text_a` */
   replBRun() {
     if (this.aoa) {
       this._impl(
         this.#ranval_rev_a!,
-        this.replText_a2!,
+        this.#replText_a2_0 ?? this.#replText_a2!,
         this.#ranval_a!,
         this.#text_a2!,
       );
     } else {
       this._impl(
         this.#ranval_rev!,
-        this.replText_a!,
+        this.#replText_a_0 ?? this.#replText_a!,
         this.#ranval!,
         this.#text_a!,
       );

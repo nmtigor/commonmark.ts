@@ -138,10 +138,10 @@ export const reportError = async <E extends Error>(err_x: E) => {
 
 /**
  * Ref. https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/#decorators
- * @headconst @param tgt_x
+ * @headconst @param _tgt_x
  * @headconst @param ctx_x
  */
-export const bind = (tgt_x: unknown, ctx_x: ClassMethodDecoratorContext) => {
+export const bind = (_tgt_x: unknown, ctx_x: ClassMethodDecoratorContext) => {
   const methodName = ctx_x.name;
   assert(
     !ctx_x.private,
@@ -159,7 +159,6 @@ export const bind = (tgt_x: unknown, ctx_x: ClassMethodDecoratorContext) => {
 export const traceOut = (_x: boolean) => {
   return <This, Args extends any[], Return>(
     tgt_x: (this: This, ...args: Args) => Return,
-    ctx_x: ClassMethodDecoratorContext,
   ) => {
     return _x
       ? function (this: This, ...args: Args): Return {
@@ -174,10 +173,7 @@ export const traceOut = (_x: boolean) => {
 export const out = <Return, This, Args extends any[]>(
   _x: (ret_y: Return, self_y: This, args_y: Args) => void,
 ) => {
-  return (
-    tgt_x: (this: This, ...args: Args) => Return,
-    ctx_x: ClassMethodDecoratorContext,
-  ) => {
+  return (tgt_x: (this: This, ...args: Args) => Return) => {
     return /*#static*/ INOUT
       ? function (this: This, ...args: Args): Return {
         const ret = tgt_x.call(this, ...args);

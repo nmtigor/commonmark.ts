@@ -117,7 +117,7 @@ export class Colr {
   protected get mo$() {
     return this.#mo ??= new Moo({
       val: this,
-      _name: `Colr_${this.id}.#mo`,
+      _name_: `Colr_${this.id}.#mo`,
     });
   }
 
@@ -311,7 +311,7 @@ export class Colr {
   }
   setByCsscMo(cssc_x: Cssc): this {
     this.setByCssc(cssc_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
 
@@ -339,7 +339,7 @@ export class Colr {
   }
   setByColrMo(colr_x: Colr): this {
     this.setByColr(colr_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
 
@@ -593,7 +593,7 @@ export class Colr {
   }
   setRedMo(val_x: red_t): this {
     this.setRed(val_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
   SetRed(val_x: red_t): Colr {
@@ -617,7 +617,7 @@ export class Colr {
   }
   setGreenMo(val_x: red_t): this {
     this.setGreen(val_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
   SetGreen(val_x: red_t): Colr {
@@ -641,7 +641,7 @@ export class Colr {
   }
   setBlueMo(val_x: red_t): this {
     this.setBlue(val_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
   SetBlue(val_x: red_t): Colr {
@@ -668,7 +668,7 @@ export class Colr {
   }
   setHueMo(val_x: hue_t): this {
     this.setHue(val_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
   SetHue(val_x: hue_t): Colr {
@@ -691,7 +691,7 @@ export class Colr {
   }
   setChromaMo(val_x: chroma_t): this {
     this.setChroma(val_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
   SetChroma(val_x: chroma_t): Colr {
@@ -715,7 +715,7 @@ export class Colr {
   }
   setToneMo(val_x: tone_t): this {
     this.setTone(val_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
   SetTone(val_x: tone_t): Colr {
@@ -739,7 +739,7 @@ export class Colr {
   }
   setHCTMo(h_x: hue_t, c_x: chroma_t, t_x: tone_t): this {
     this.setHCT(h_x, c_x, t_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
   SetHCT(h_x: hue_t, c_x: chroma_t, t_x: tone_t): Colr {
@@ -803,7 +803,7 @@ export class Colr {
   }
   setAlphaMo(val_x: alpha_t): this {
     this.setAlpha(val_x);
-    this.#mo?.refresh();
+    this.#mo?.refreshMoo();
     return this;
   }
   SetAlpha(val_x: alpha_t): Colr {
@@ -937,14 +937,14 @@ export class Colr {
   removeHandler(handler_x: MooHandler<Colr>) {
     this.mo$.removeHandler(handler_x);
   }
-  refresh() {
-    this.#mo?.refresh();
+  refreshColr() {
+    this.#mo?.refreshMoo();
   }
 } // class Colr
 
-export function isColr(obj: Object) {
-  return obj.constructor === Colr;
-}
+// export function isColr(obj: Object) {
+//   return obj.constructor === Colr;
+// }
 
 // /**
 //  * (L1 + 0.05) / (L2 + 0.05)

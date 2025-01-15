@@ -3,12 +3,13 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../global.ts";
+import { global, INOUT } from "../global.ts";
 import type {
   AbstractConstructor,
   Constructor,
   FloatArray,
   IntegerArray,
+  ts_t,
   uint,
   uint8,
 } from "./alias.ts";
@@ -486,6 +487,9 @@ declare global {
       month?: number,
       date?: number,
     ): number;
+
+    _lastNow: ts_t;
+    now_1(): ts_t;
   }
 }
 
@@ -605,6 +609,16 @@ Date.setFullYear = (refdate, year, month, date) => {
     return Date.date.setFullYear(year);
   }
 };
+
+Date.now_1 = () => {
+  let ts_ = Date.now();
+  if (ts_ <= Date._lastNow) ts_ += .01;
+  // console.log(
+  //   `%c${global.dent}>>>>>>>>>>>>> Date.now_1(): ${ts_}`,
+  //   "color:red",
+  // );
+  return Date._lastNow = ts_ as ts_t;
+};
 /*80--------------------------------------------------------------------------*/
 
 declare global {
@@ -670,7 +684,7 @@ ReadableStream.prototype[Symbol.asyncIterator] ??= async function* <R = any>(
  * ! Should always companion with an interface declaration
  *
  * @param mixins_x
- *  Laat element has the highest precedence, and so on.
+ *  Last element has the highest precedence, and so on.
  */
 export function mix<C extends Constructor | AbstractConstructor>(
   Base_x: C,

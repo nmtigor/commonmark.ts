@@ -74,7 +74,7 @@ export class PaleCoor extends Moo<PaleCoor> {
 
   readonly modified_mo = new Moo({
     val: false,
-    _name: `PaleCoor_${this.id}.modified_mo`,
+    _name_: `PaleCoor_${this.id}.modified_mo`,
   });
   // /** For `qm_a` and `Cssc | ColrFn` part. Not for `ColranQ` part. */
   // #modified = false;
@@ -141,11 +141,11 @@ export class PaleCoor extends Moo<PaleCoor> {
       }
     }
 
-    this.sample().update().set(this);
+    this.sample().update().setMoo(this);
   }
 
   #upR = () => {
-    this.update().refresh();
+    this.update().refreshMoo();
   };
 
   #onQModified = (_x: boolean) => {
@@ -428,7 +428,7 @@ export class PaleCoor extends Moo<PaleCoor> {
   /*49-----------------------------------------*/
 
   toJSON(): PaleCoorRaw {
-    this.modified_mo.set(false); //!
+    this.modified_mo.setMoo(false); //!
     return {
       axes: this.axes.length ? this.axes : undefined,
       qm_a: this.qm_sa as any,

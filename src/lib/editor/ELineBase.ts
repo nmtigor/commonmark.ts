@@ -5,10 +5,9 @@
 
 import { LOG_cssc } from "../../alias.ts";
 import { _TRACE, CYPRESS, DEV, global, INOUT, RESIZ } from "../../global.ts";
-import type { id_t, loff_t, ts_t } from "../alias.ts";
+import type { id_t, loff_t } from "../alias.ts";
 import { WritingMode } from "../alias.ts";
-import { Bidi } from "../Bidi.ts";
-import type { Bidir } from "../compiling/alias.ts";
+import { Bidi, type Bidir } from "../Bidi.ts";
 import type { Line } from "../compiling/Line.ts";
 import { g_ranval_fac } from "../compiling/Ranval.ts";
 import { HTMLVuu, Vuu } from "../cv.ts";
@@ -16,7 +15,7 @@ import { div, textnode } from "../dom.ts";
 import "../jslang.ts";
 import { $tail_ignored, $vuu } from "../symbols.ts";
 import { count } from "../util/performance.ts";
-import { assert } from "../util/trace.ts";
+import { assert, traceOut } from "../util/trace.ts";
 import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
 import { g_eran_fac } from "./ERan.ts";
 import { StnodeV } from "./StnodeV.ts";
@@ -49,7 +48,16 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   static #ID = 0 as id_t;
   override readonly id = ++ELineBase.#ID as id_t;
 
-  bline_$: Line;
+  bline_$;
+  //jjjj TOCLEANUP
+  // get bline_$(): Line {
+  //   return this.#bline;
+  // }
+  // setBLine_$(_x: Line) {
+  //   this.bline_$ = _x;
+  //   _x.eline = this;
+  // }
+
   /** To be consistent with `StnodeV.eline_$` */
   eline_$ = this;
 
@@ -77,26 +85,27 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     /*#static*/ if (CYPRESS) {
       this.el$.cyName = this._type_id;
     }
-    this.assignStylo({});
+    // this.assignStylo({});
 
     new ResizeObserver(this.#onResiz).observe(this.el$);
   }
 
   /** @final */
-  protected reset$() {
+  protected resetELineBase$() {
     this.el$.removeAllChild();
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @final */
+  // @traceOut(_TRACE)
   refreshPlain(): this {
     // /*#static*/ if (_TRACE) {
     //   console.log(
     //     `${global.indent}>>>>>>> ${this._type_id}.refreshPlain() >>>>>>>`,
     //   );
     // }
-    this.reset$();
+    this.resetELineBase$();
 
     if (!this.empty) {
       this.el$.append(textnode(this.bline_$.text));
@@ -127,26 +136,25 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     // /*#static*/ if (INOUT) {
     //   assert(this.el$.childNodes.length === 2 && this.el$.firstChild!.isText);
     // }
-    // /*#static*/ if (_TRACE) global.outdent;
     return this;
   }
 
   /** Helper */
   #wrap_a: loff_t[] = [];
-  /**
-   * `in( this.el$.isConnected )`
-   * @final
-   */
-  // @traceOut(_TRACE)
+  /** @final */
+  @traceOut(_TRACE)
   protected setBidi$(): void {
-    // /*#static*/ if (_TRACE) {
-    //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id}.setBidi$() >>>>>>>`,
-    //   );
-    // }
+    /*#static*/ if (_TRACE) {
+      console.log(
+        `${global.indent}>>>>>>> ${this._type_id}.setBidi$() >>>>>>>`,
+      );
+    }
+    /*#static*/ if (INOUT) {
+      assert(this.el$.isConnected);
+    }
     const edtr = this.coo;
     const bln = this.bline_$;
-    using rv_ = g_ranval_fac.oneMore().reset(bln.lidx_1, 0);
+    using rv_ = g_ranval_fac.oneMore().setRanval(bln.lidx_1, 0);
     using eran = g_eran_fac.oneMore();
     let rec = edtr._scrolr.anchrRecOf_$(rv_, eran);
     const LEN = bln.uchrLen;
@@ -179,11 +187,11 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     // console.log(this.#wrap_a);
     // console.log(_a_);
 
-    this.bidi$.reset(
+    this.bidi$.resetBidi(
       bln.text,
       edtr._scrolr.bufrDir,
       this.#wrap_a,
-      bln.bidi.embedLevels,
+      bln.bidi.embedLevels, //!
     );
     if (this.#wrap_a.length > 1) this.bidi$.validate();
   }
@@ -197,8 +205,8 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
         `color:${LOG_cssc.resiz}`,
       );
     }
+    this.coo$.updateLastViewTs(); //!
     this.setBidi$();
-    this.bline_$.bufr?.updateLastViewTs(); //!
     /*#static*/ if (_TRACE && RESIZ) global.outdent;
     return;
   };
@@ -265,6 +273,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   /**
    * According to `bline_$`, which is updated in `EdtrScrolr.resetELine_$()`\
    * `in( this.el$.isConnected )`
+   *
    * jjjj@return false if `newSn` is not used
    */
   abstract replace_$(...a_x: any[]): any;

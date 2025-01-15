@@ -53,10 +53,6 @@ export type Tok =
   | LaTeXTok
   | RMLTok
   | JSLangTok;
-
-export type Bidir = {
-  readonly bidi: Bidi;
-};
 /*80--------------------------------------------------------------------------*/
 
 export const enum Err {

@@ -14,20 +14,21 @@ import { Loc } from "./Loc.ts";
 import { Ranval } from "./Ranval.ts";
 /*80--------------------------------------------------------------------------*/
 
-/**
- * @see {@linkcode Ran.calcRanP()}
- */
+/** @see {@linkcode Ran.calcRanP()} */
 export const enum RanP {
-  unknown = 1,
+  unknown = 0b0_00_0001,
   /** ( ... ) */
-  inOldRan,
+  inOldRan = 0b0_00_0010,
   /** [ ... ] */
-  frstLineBefor,
+  frstLineBefor = 0b0_00_0100,
   /** [ ... */
-  lastLineAfter,
-  ranLinesBefor,
-  ranLinesAfter,
+  lastLineAfter = 0b0_00_1000,
+  ranLinesBefor = 0b0_01_0000,
+  ranLinesAfter = 0b0_10_0000,
 }
+//jjjj TOCLEANUP
+// export const RanP_unstable = RanP.inOldRan | RanP.lastLineAfter |
+//   RanP.ranLinesAfter;
 
 type RanPData_ =
   | [RanP.unknown, 0]
@@ -94,7 +95,7 @@ export class Ran {
    * @param loc_1_x [COPIED]
    */
   constructor(loc_x: Loc, loc_1_x?: Loc) {
-    this.set(loc_x, loc_1_x);
+    this.setRan(loc_x, loc_1_x);
   }
   /**
    * @headconst @param bufr_x
@@ -112,13 +113,13 @@ export class Ran {
     return new Ran(this.strtLoc.dup(), this.stopLoc.dup());
   }
 
-  reset(bufr_x?: Bufr): this {
+  resetRan(bufr_x?: Bufr): this {
     bufr_x ??= this.bufr;
     /*#static*/ if (INOUT) {
       assert(bufr_x);
     }
-    this.strtLoc$.set(bufr_x!.frstLine_$, 0);
-    this.stopLoc$.set(bufr_x!.frstLine_$, 0);
+    this.strtLoc$.setLoc(bufr_x!.frstLine_$, 0);
+    this.stopLoc$.setLoc(bufr_x!.frstLine_$, 0);
     return this;
   }
 
@@ -133,7 +134,7 @@ export class Ran {
         self.strtLoc$.posSE(self.stopLoc$),
     );
   })
-  set(loc_x: Loc, loc_1_x?: Loc): this {
+  setRan(loc_x: Loc, loc_1_x?: Loc): this {
     loc_1_x ??= loc_x.dup();
     if (loc_x.posSE(loc_1_x)) {
       this.strtLoc$ = loc_x;
@@ -152,7 +153,7 @@ export class Ran {
    * @const @param rv_x
    */
   setByRanval(bufr_x: Bufr, rv_x: Ranval): this {
-    return this.set(
+    return this.setRan(
       Loc.create(bufr_x, rv_x.anchrLidx, rv_x.anchrLoff),
       Loc.create(bufr_x, rv_x.focusLidx, rv_x.focusLoff),
     );
@@ -162,9 +163,9 @@ export class Ran {
    * @final
    * @const @param ran_x
    */
-  become(ran_x: Ran): this {
-    this.strtLoc$.become(ran_x.strtLoc$);
-    this.stopLoc$.become(ran_x.stopLoc$);
+  becomeRan(ran_x: Ran): this {
+    this.strtLoc$.becomeLoc(ran_x.strtLoc$);
+    this.stopLoc$.becomeLoc(ran_x.stopLoc$);
 
     // this.syncRanval_$();
 
@@ -181,7 +182,7 @@ export class Ran {
    * @const
    */
   using() {
-    return g_ran_fac.setBufr(this.bufr!).oneMore().become(this);
+    return g_ran_fac.setBufr(this.bufr!).oneMore().becomeRan(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -194,7 +195,7 @@ export class Ran {
    * Change `strtLoc$`, keep `stopLoc$`
    */
   collapse() {
-    this.strtLoc$.become(this.stopLoc$);
+    this.strtLoc$.becomeLoc(this.stopLoc$);
 
     // this.syncRanval_$();
 
@@ -329,9 +330,7 @@ export class Ran {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /**
-   * @out @param ret_x
-   */
+  /** @out @param ret_x */
   toRanval(ret_x?: Ranval): Ranval {
     ret_x = this.strtLoc$.toRanval(ret_x, 2);
     this.stopLoc$.toRanval(ret_x, 0);
@@ -379,7 +378,7 @@ class RanFac_ extends Factory<Ran> {
   }
 
   protected override reuseVal$(i_x: uint) {
-    return this.get(i_x).reset(this.#bufr);
+    return this.get(i_x).resetRan(this.#bufr);
   }
 }
 export const g_ran_fac = new RanFac_();

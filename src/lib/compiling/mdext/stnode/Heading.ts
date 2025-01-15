@@ -140,8 +140,8 @@ export class ATXHeading extends Heading {
     this.st = ATXHeadingSt.head;
   }
 
-  override reset(): this {
-    super.reset();
+  override resetBlock(): this {
+    super.resetBlock();
     this.#tailTk = undefined;
     return this;
   }

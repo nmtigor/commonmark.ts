@@ -37,8 +37,8 @@ export class MdextPazr extends Pazr<MdextTok> {
     super(bufr_x, Lexr_x);
   }
 
-  override reset(): this {
-    this.reset$(this.bufr$, this.lexr$);
+  override resetPazr(): this {
+    this.resetPazr$(this.bufr$, this.lexr$);
     this.root$ = undefined;
     return this;
   }

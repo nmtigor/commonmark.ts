@@ -87,7 +87,7 @@ export class Colran {
 
   readonly modified_mo = new Moo({
     val: false,
-    _name: `Colran_${this.id}.modified_mo`,
+    _name_: `Colran_${this.id}.modified_mo`,
   });
 
   /**
@@ -160,7 +160,7 @@ export class Colran {
     if (this.#correctRan(1)) {
       this.#setColr(1);
       this.colr_1.removeHandler(this.#onColr1);
-      this.colr_1.refresh();
+      this.colr_1.refreshColr();
       this.colr_1.registHandler(this.#onColr1);
     }
     /*#static*/ if (_TRACE && THEMESETTING) global.outdent;
@@ -177,7 +177,7 @@ export class Colran {
     if (this.#correctRan(0)) {
       this.#setColr(0);
       this.colr_0.removeHandler(this.#onColr0);
-      this.colr_0.refresh();
+      this.colr_0.refreshColr();
       this.colr_0.registHandler(this.#onColr0);
     }
     /*#static*/ if (_TRACE && THEMESETTING) global.outdent;
@@ -274,8 +274,8 @@ export class Colran {
     if (this.#typ.startsWith(typ_x)) return;
 
     this.#typ = `${typ_x}${this.#typ[3] ?? ""}` as ColranTyp;
-    if (src_x === 0) this.colr_0.refresh();
-    else this.colr_1.refresh();
+    if (src_x === 0) this.colr_0.refreshColr();
+    else this.colr_1.refreshColr();
     this.modified_mo.val = true;
   }
 
@@ -352,7 +352,7 @@ export class Colran {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   toJSON(): ColranRaw {
-    this.modified_mo.set(false); //!
+    this.modified_mo.setMoo(false); //!
     return ({
       rgb: [this.#typ, [this.#redran, this.#greenran, this.#blueran]],
       rgba: [this.#typ, [

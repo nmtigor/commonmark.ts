@@ -6,16 +6,12 @@
 import { LOG_cssc } from "../../alias.ts";
 import { INOUT, PRF } from "../../global.ts";
 import type { id_t, loff_t, uint } from "../alias.ts";
+import { Endpt } from "./alias.ts";
 import { $facil_node, $ovlap } from "../symbols.ts";
 import { Factory } from "../util/Factory.ts";
 import { assert, fail } from "../util/trace.ts";
 import { ELoc } from "./ELoc.ts";
 /*80--------------------------------------------------------------------------*/
-
-export const enum ERanEndpt {
-  focus = 1,
-  anchr,
-}
 
 declare global {
   interface Node {
@@ -96,7 +92,7 @@ export class ERan {
   }
 
   /** @const */
-  become(rhs_x: ERan): this {
+  becomeERan(rhs_x: ERan): this {
     this.#focusELoc.ctnr_$ = rhs_x.focusCtnr;
     this.#focusELoc.offs_$ = rhs_x.focusOffs;
     this.#anchrELoc.ctnr_$ = rhs_x.anchrCtnr;
@@ -151,16 +147,16 @@ export class ERan {
   }
 
   /** @return `DOMRect` of synchronized `#endpt` */
-  getRecSync_$(_x = ERanEndpt.focus): DOMRect {
+  getRecSync_$(_x = Endpt.focus): DOMRect {
     let ret;
     // assert(this.focusCtnr);
     const ctnr = /* final switch */ {
-      [ERanEndpt.focus]: this.focusCtnr,
-      [ERanEndpt.anchr]: this.anchrCtnr,
+      [Endpt.focus]: this.focusCtnr,
+      [Endpt.anchr]: this.anchrCtnr,
     }[_x];
     const offs = /* final switch */ {
-      [ERanEndpt.focus]: this.focusOffs,
-      [ERanEndpt.anchr]: this.anchrOffs,
+      [Endpt.focus]: this.focusOffs,
+      [Endpt.anchr]: this.anchrOffs,
     }[_x];
     if (ctnr.isText) {
       this.#endpt.setEnd(ctnr, offs);

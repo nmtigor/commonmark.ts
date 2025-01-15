@@ -49,7 +49,7 @@ export class CtorRest {
   /* ~ */
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  reset(): this {
+  resetCtorRest(): this {
     // this.#rest.length = 1;
     // this.#rest[0] = undefined;
     this.#rest = undefined;
@@ -63,7 +63,7 @@ export class CtorRest {
     if (this.#rest.at(-1)) {
       this.#rest = this.#rest.at(-1) as ReplRest;
     } else {
-      this.reset();
+      this.resetCtorRest();
     }
   }
   upenRest(rest_x: ReplRest): void {

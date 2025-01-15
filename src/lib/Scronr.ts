@@ -146,8 +146,8 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   /**
    * Called by subclasses
    *
-   * This method does not need to be called, i.e., it could be `!#scrolrInited`,
-   * and `#scrolr` is not set.
+   * This method does not have to be called, i.e., it could be the state that
+   * `!#scrolrInited`, `#scrolr` are not set.
    *
    * @final
    * @headconst @param scrolr_x
@@ -180,7 +180,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
    *
    * @const @param lo_x act as a verifier if any
    */
-  syncLayout(lo_x?: Required<SetLayoutP>) {
+  syncLayout(lo_x?: SetLayoutP) {
     /*#static*/ if (INOUT) {
       assert(!lo_x?.writingMode || lo_x.writingMode === this.writingMode);
     }
@@ -246,7 +246,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
    * Also update `#clientHigt`, `#scrollHigt`
    * @final
    */
-  readonly refresh = () => {
+  readonly refreshScronr = (): void => {
     // console.log(`%crun here: refresh()`, `color:${LOG_cssc.runhere}`);
     if (!this.el$.isConnected || !this.#scrolrInited) return;
 
@@ -280,7 +280,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   #refresh_to: number | undefined;
   toRefresh() {
     clearTimeout(this.#refresh_to);
-    this.#refresh_to = setTimeout(this.refresh, 500);
+    this.#refresh_to = setTimeout(this.refreshScronr, 500);
   }
 
   readonly #resizob = new ResizeObserver(this._onResiz);
@@ -295,7 +295,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     }
     if (!this.el$.isConnected || !this.#scrolrInited) return;
 
-    this.refresh();
+    this.refreshScronr();
   }
 
   /** `in( this.#scrolrInited )` */

@@ -16,7 +16,7 @@ import type {
 } from "../alias.ts";
 import { assert } from "../util/trace.ts";
 import { BufrDir } from "../alias.ts";
-import type { Bidir } from "./alias.ts";
+import type { Bidir } from "../Bidi.ts";
 import type { Line } from "./Line.ts";
 import { Ranval } from "./Ranval.ts";
 import type { Bufr } from "./Bufr.ts";
@@ -117,7 +117,7 @@ export class Loc {
    * @const @param loff_x
    */
   constructor(line_x: Line, loff_x?: loff_t) {
-    this.set(line_x, loff_x);
+    this.setLoc(line_x, loff_x);
   }
   /**
    * @headconst @param bufr_x
@@ -134,7 +134,7 @@ export class Loc {
    * @headconst @param line_x
    * @const @param loff_x
    */
-  set(line_x: Line, loff_x?: loff_t): this {
+  setLoc(line_x: Line, loff_x?: loff_t): this {
     this.line_$ = line_x;
     this.loff_$ = loff_x === undefined ? line_x.uchrLen : loff_x;
     this.#lcol = -1;
@@ -147,7 +147,7 @@ export class Loc {
       assert(bufr_x);
     }
     const line = bufr_x!.line(lidx_x);
-    return this.set(line, loff_x);
+    return this.setLoc(line, loff_x);
   }
 
   /** @const */
@@ -163,7 +163,7 @@ export class Loc {
    * @final
    * @const @param loc_x
    */
-  become(loc_x: Loc): this {
+  becomeLoc(loc_x: Loc): this {
     this.line_$ = loc_x.line_$;
     this.loff_$ = loc_x.loff_$;
     this.tabsize$ = loc_x.tabsize$;
@@ -181,7 +181,7 @@ export class Loc {
    * @const
    */
   using() {
-    return g_loc_fac.setLine(this.line_$).oneMore().become(this);
+    return g_loc_fac.setLine(this.line_$).oneMore().becomeLoc(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -486,7 +486,7 @@ export class Loc {
     if (hintLoff_x === this.loff_$) return this.#lcol = hintLcol_x;
 
     let ret = hintLcol_x;
-    using loc_ = this.using().set(this.line_$, hintLoff_x);
+    using loc_ = this.using().setLoc(this.line_$, hintLoff_x);
     for (; loc_.loff_$ < this.loff_$; ++loc_.loff_$) {
       if (loc_.ucod === /* "\t" */ 9) {
         ret += this.tabsize$ - ret % this.tabsize$;
@@ -658,7 +658,7 @@ class LocFac_ extends Factory<Loc> {
   }
 
   protected override reuseVal$(i_x: uint) {
-    return this.get(i_x).set(this.#line, 0);
+    return this.get(i_x).setLoc(this.#line, 0);
   }
 }
 export const g_loc_fac = new LocFac_();

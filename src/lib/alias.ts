@@ -83,15 +83,11 @@ export const zRatio = z.number().finite();
 export type Dulstr = string;
 // export type Dulstr = Brand<string, "Dulstr">; //jjjj try to use this
 
-/**
- * Type of `"(😄)"[0]`, `"(😄)"[1]`, `"(😄)"[2]`, etc
- */
+/** Type of `"(😄)"[0]`, `"(😄)"[1]`, `"(😄)"[2]`, etc */
 export type UChr = string;
 // export type UChr = Brand<string, "UChr">; //jjjj try to use this
 
-/**
- * Type of each element of `[..."(😄)"]`
- */
+/** Type of each element of `[..."(😄)"]` */
 export type Chr = Brand<string, "Chr">;
 
 // deno-fmt-ignore
@@ -145,9 +141,7 @@ export type CSSStyleName = keyof {
 
 export type CSSStyle = Partial<Record<CSSStyleName, string | number>>;
 
-/**
- * @deprecated Use `CSSStyle` instead.
- */
+/** @deprecated Use `CSSStyle` instead. */
 export type Style = Record<string, string>;
 /*64----------------------------------------------------------*/
 
@@ -186,9 +180,9 @@ export const scrollO: ScrollToOptions = {
 };
 /*80--------------------------------------------------------------------------*/
 
-export interface Runr {
+export type Runr = {
   run(): void | Promise<void>;
-}
+};
 // export class DumRunr implements Runr {
 //   run() {}
 // }

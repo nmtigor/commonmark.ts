@@ -17,9 +17,7 @@ import type { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class Block extends MdextSN {
-  /**
-   * @headconst @param _lexr_x
-   */
+  /** @headconst @param _lexr_x */
   continue(_lexr_x: MdextLexr): BlockCont {
     return BlockCont.break;
   }
@@ -56,30 +54,26 @@ export abstract class Block extends MdextSN {
   /** "iS" */
   #_inlineSkipd = false;
 
-  /**
-   * For compiling only
-   */
+  /** For compiling only */
   #oldLastLidx: lnum_t | -1 = -1;
   get oldLastLidx() {
     return this.#oldLastLidx;
   }
 
   /** @final */
-  reuse(): this {
+  reuseBlock(): this {
     this.#open = true;
     this.#complete = false;
     this.#_inlineSkipd = false;
     this.invalidateBdry();
     return this;
   }
-  /**
-   * Will be invoked FIRSTLY by subclasses
-   */
-  reset(): this {
+  /** Will be invoked FIRSTLY by subclasses */
+  resetBlock(): this {
     this.#oldLastLidx = this.parent?.isCompiling(this)
       ? this.sntLastLidx_1
       : -1;
-    return this.reuse();
+    return this.reuseBlock();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -108,16 +102,12 @@ export abstract class Block extends MdextSN {
     return this.parent!;
   }
 
-  /**
-   * @headconst @param _lexr_x
-   */
+  /** @headconst @param _lexr_x */
   reference(_lexr_x: MdextLexr): this {
     return this;
   }
 
-  /**
-   * @headconst @param _lexr_x
-   */
+  /** @headconst @param _lexr_x */
   protected inline_impl$(_lexr_x: MdextLexr) {}
   /**
    * @final
@@ -139,9 +129,7 @@ export abstract class Block extends MdextSN {
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  /**
-   * @const @param loc_x
-   */
+  /** @const @param loc_x */
   lidxOf(_loc_x: Loc): lnum_t | -1 {
     return -1;
   }

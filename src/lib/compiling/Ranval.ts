@@ -8,6 +8,7 @@ import { PRF } from "../../global.ts";
 import { Moo, type MooEq } from "../Moo.ts";
 import type { lnum_t, loff_t } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
+import type { Ran } from "./Ran.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -42,15 +43,25 @@ export class Ranval extends Array<lnum_t | loff_t> {
   constructor(_2: lnum_t, _3: loff_t, _0?: lnum_t, _1?: loff_t) {
     super(4);
 
-    this.reset(_2, _3, _0, _1);
+    this.setRanval(_2, _3, _0, _1);
   }
 
-  reset(_2: lnum_t, _3: loff_t, _0?: lnum_t, _1?: loff_t): this {
+  setRanval(_2: lnum_t, _3: loff_t, _0?: lnum_t, _1?: loff_t): this {
     this[2] = _2;
     this[3] = _3;
     this[0] = _0 === undefined ? _2 : _0;
     this[1] = _1 === undefined ? _3 : _1;
     return this;
+  }
+
+  /** @primaryconst @param _x */
+  setByRan(_x: Ran): this {
+    return this.setRanval(
+      _x.frstLine.lidx_1,
+      _x.strtLoff,
+      _x.lastLine.lidx_1,
+      _x.stopLoff,
+    );
   }
 
   /** @const */
@@ -64,34 +75,33 @@ export class Ranval extends Array<lnum_t | loff_t> {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @const */
+  get order(): -1 | 0 | 1 {
+    if (this[0] > this[2]) return 1;
+    if (this[0] < this[2]) return -1;
+    if (this[1] > this[3]) return 1;
+    if (this[1] < this[3]) return -1;
+    return 0;
+  }
+  /** @const */
   get collapsed() {
-    return this[0] === this[2] && this[1] === this[3];
+    return this.order === 0;
   }
 
-  collapseToFocus() {
+  collapseToFocus(): void {
     this[2] = this[0];
     this[3] = this[1];
   }
-  collapseToAnchr() {
+  collapseToAnchr(): void {
     this[0] = this[2];
     this[1] = this[3];
   }
-
-  /** @const */
-  get positiv(): boolean {
-    return this[2] < this[0] || this[2] === this[0] && this[3] < this[1];
+  collapseToHead(): void {
+    if (this.order > 0) this.collapseToFocus();
+    else this.collapseToAnchr();
   }
-  /** @const */
-  get nonnegativ(): boolean {
-    return this.positiv || this.collapsed;
-  }
-  /** @const */
-  get negativ(): boolean {
-    return this[0] < this[2] || this[0] === this[2] && this[1] < this[3];
-  }
-  /** @const */
-  get nonpositiv(): boolean {
-    return this.negativ || this.collapsed;
+  collapseToTail(): void {
+    if (this.order < 0) this.collapseToFocus();
+    else this.collapseToAnchr();
   }
 
   override reverse(): this {

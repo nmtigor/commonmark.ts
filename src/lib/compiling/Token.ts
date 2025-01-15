@@ -83,7 +83,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * @const @param tok_x
    */
   setStrt(loc_x: Loc, tok_x?: T): this {
-    this.sntStrtLoc.become(loc_x);
+    this.sntStrtLoc.becomeLoc(loc_x);
     if (tok_x) this.value = tok_x;
     return this.syncRanvalAnchr();
   }
@@ -114,7 +114,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * @const @param tok_x
    */
   setStop(loc_x: Loc, tok_x?: T): this {
-    this.sntStopLoc.become(loc_x);
+    this.sntStopLoc.becomeLoc(loc_x);
     if (tok_x) this.value = tok_x;
     return this.syncRanvalFocus();
   }
@@ -267,31 +267,31 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return new Token(this.lexr_$, this.ran_$.dup(), this.#value);
   }
 
-  /**
-   * Move fields from `tk_x` EXCEPT `prevToken_$`, `nextToken_$`, `lexr_$`
-   * ! MUST NOT keep using `tk_x` after `become()`
-   */
-  become(tk_x: Token<T>): this {
-    /*#static*/ if (INOUT) {
-      assert(this.lexr_$ === tk_x.lexr_$);
-    }
-    this.ran_$.become(tk_x.ran_$);
+  // /**
+  //  * Move fields from `tk_x` EXCEPT `prevToken_$`, `nextToken_$`, `lexr_$`
+  //  * ! MUST NOT keep using `tk_x` after `become()`
+  //  */
+  // becomeToken(tk_x: Token<T>): this {
+  //   /*#static*/ if (INOUT) {
+  //     assert(this.lexr_$ === tk_x.lexr_$);
+  //   }
+  //   this.ran_$.becomeRan(tk_x.ran_$);
 
-    this.value = tk_x.value;
-    this.lexdInfo = tk_x.lexdInfo;
+  //   this.value = tk_x.value;
+  //   this.lexdInfo = tk_x.lexdInfo;
 
-    this.#oldRanval = tk_x.#oldRanval;
-    this.#errMsg_a.become(tk_x.#errMsg_a);
-    this.stnod_$ = tk_x.stnod_$;
-    return this;
-  }
+  //   this.#oldRanval = tk_x.#oldRanval;
+  //   this.#errMsg_a.become(tk_x.#errMsg_a);
+  //   this.stnod_$ = tk_x.stnod_$;
+  //   return this;
+  // }
 
   /**
    * @param value_x
    * @const @param strtLoc_x
    * @const @param stopLoc_x
    */
-  reset(
+  resetToken(
     value_x = BaseTok.unknown as T,
     strtLoc_x?: Loc,
     stopLoc_x?: Loc,
@@ -790,7 +790,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return `${this._name}${this.ran_$}${this.lexdInfo ? this.lexdInfo : ""}`;
   }
 
-  override get _oldInfo(): string {
+  override get _oldInfo_(): string {
     return `${this._name}${this.#oldRanval ?? `*${this.ran_$}`}`;
   }
 
@@ -803,7 +803,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return this;
   }
 
-  _Repr(prevN_x?: uint, nextN_x?: uint): [string[], string, string[]] {
+  _Repr_(prevN_x?: uint, nextN_x?: uint): [string[], string, string[]] {
     /*#static*/ if (INOUT) {
       if (prevN_x !== undefined) zUint.parse(prevN_x);
       if (nextN_x !== undefined) zUint.parse(nextN_x);

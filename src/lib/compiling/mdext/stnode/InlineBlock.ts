@@ -293,7 +293,7 @@ export class ILoc extends TokLoc<MdextTok> {
    * @final
    * @primaryconst
    */
-  refresh(): void {
+  refreshILoc(): void {
     const curTk = this.curTk_$;
     if (this.posE(curTk.sntStopLoc) && !this.reachEoh) {
       const nextSnt = this.host$.snt_a_$[this.iCurSnt_$ + 1];
@@ -319,7 +319,7 @@ export class ILoc extends TokLoc<MdextTok> {
         break;
       }
     }
-    return super.become(loc_x);
+    return super.becomeLoc(loc_x);
   }
 
   /**
@@ -330,7 +330,7 @@ export class ILoc extends TokLoc<MdextTok> {
    */
   toTk(endp_x: "strt" | "stop", tk_x = this.curTk_$): this {
     if (this.valid && tk_x === this.curTk_$) {
-      this.become(endp_x === "strt" ? tk_x.sntStrtLoc : tk_x.sntStopLoc);
+      this.becomeLoc(endp_x === "strt" ? tk_x.sntStrtLoc : tk_x.sntStopLoc);
     } else {
       this.toLoc(endp_x === "strt" ? tk_x.sntStrtLoc : tk_x.sntStopLoc);
     }
@@ -360,7 +360,7 @@ export class ILoc extends TokLoc<MdextTok> {
    */
   toSnt(endp_x: "strt" | "stop", snt_x = this.curSnt_$): this {
     if (snt_x === this.curSnt_$) {
-      this.become(endp_x === "strt" ? snt_x.sntStrtLoc : snt_x.sntStopLoc);
+      this.becomeLoc(endp_x === "strt" ? snt_x.sntStrtLoc : snt_x.sntStopLoc);
     } else {
       this.toLoc(endp_x === "strt" ? snt_x.sntStrtLoc : snt_x.sntStopLoc);
     }
@@ -419,7 +419,7 @@ export class ILoc extends TokLoc<MdextTok> {
       /* Notice the difference here to `forwSetTks_inline()`, which will not
       remove token. */
       nextTk = curTk.removeSelf("next")!;
-      nextTk.sntStrtLoc.become(curTk.sntStrtLoc);
+      nextTk.sntStrtLoc.becomeLoc(curTk.sntStrtLoc);
       if (curTk === this.curSnt_$) {
         this.host$.snt_a_$.splice(this.iCurSnt_$, 1);
       }
@@ -433,29 +433,29 @@ export class ILoc extends TokLoc<MdextTok> {
       let reusd = false;
       if (lexr_x.reusdSnt_sa_$.includes(curTk)) {
         lexr_x.reusdSnt_sa_$.delete(curTk);
-        lexr_x._reusdSnt_2_sa.add(curTk);
+        lexr_x._reusdSnt_2_sa_.add(curTk);
         if (curTk.value === value_x && curTk.sntStopLoc.posE(tkStopLoc)) {
           reusd = true;
         }
       } else if (
-        lexr_x._reusdSnt_2_sa.includes(curTk) &&
+        lexr_x._reusdSnt_2_sa_.includes(curTk) &&
         curTk.value === value_x && curTk.sntStopLoc.posE(tkStopLoc)
       ) {
         reusd = true;
       }
       if (!reusd) {
-        curTk.reset(value_x, tkStrtLoc, tkStopLoc);
+        curTk.resetToken(value_x, tkStrtLoc, tkStopLoc);
       }
       ret = curTk;
-      this.become(stopLoc);
+      this.becomeLoc(stopLoc);
     } else {
       ret = new MdextTk(lexr_x, new TokRan(this.dup()), value_x)
         .syncRanvalAnchr() //!
         .setStop(tkStopLoc);
-      this.become(stopLoc);
+      this.becomeLoc(stopLoc);
       this.host$.splice_$(ret, tkStrtLoc);
     }
-    this.refresh();
+    this.refreshILoc();
 
     if (lexdInfo_x !== undefined) ret.lexdInfo = lexdInfo_x;
     return ret;
@@ -530,8 +530,8 @@ export abstract class InlineBlock extends Block {
     return this.children$ = ret;
   }
 
-  override reset(): this {
-    super.reset();
+  override resetBlock(): this {
+    super.resetBlock();
     this.children$ = undefined; //!
     this.snt_a_$.length = 0;
     return this;
@@ -933,7 +933,7 @@ export abstract class InlineBlock extends Block {
   //     lexr_x.reusdSnt_sa_$.delete(curSnt);
   //     iloc.toSnt("stop");
   //     if (blankEnd(iloc)) {
-  //       lexr_x._reusdSnt_2_sa.add(curSnt);
+  //       lexr_x._reusdSnt_2_sa_.add(curSnt);
   //       reusd = true;
   //     } else {
   //       lexr_x.abadnSnt_sa_$.add(curSnt);

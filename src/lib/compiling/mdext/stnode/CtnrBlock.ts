@@ -72,8 +72,8 @@ export abstract class CtnrBlock extends Block {
     this.children$ = [];
   }
 
-  override reset(): this {
-    super.reset();
+  override resetBlock(): this {
+    super.resetBlock();
     this.children.length = 0;
     this.#iCurChild = -1;
     return this;

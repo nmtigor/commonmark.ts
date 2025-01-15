@@ -5,13 +5,12 @@
 
 import { LOG_cssc } from "../../alias.ts";
 import { INOUT, PRF } from "../../global.ts";
-import type { id_t, lnum_t, loff_t } from "../alias.ts";
-import type { uint } from "../alias.ts";
+import type { id_t, lnum_t, loff_t, uint } from "../alias.ts";
 import { zUint } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
 import { assert } from "../util/trace.ts";
 import { Line } from "./Line.ts";
-import { Loc, LocCompared } from "./Loc.ts";
+import { Loc } from "./Loc.ts";
 import { Ran } from "./Ran.ts";
 import { Tfmr } from "./Tfmr.ts";
 import { TLoc } from "./TLoc.ts";
@@ -132,10 +131,10 @@ export class TSeg {
 
     this.#length = -1; //!
     if (ln_.bufr !== this.#bufr) {
-      this.#ran.reset(this.#bufr); //!
+      this.#ran.resetRan(this.#bufr); //!
     }
     if (this.tline.bufr !== this.#tbufr) {
-      this.#tloc.set(this.#tbufr.frstLine_$, 0); //!
+      this.#tloc.setLoc(this.#tbufr.frstLine_$, 0); //!
     }
 
     if (this.nextTSeg_$ && this.prevTSeg_$) {
@@ -337,7 +336,7 @@ export class TSeg {
     return this;
   }
 
-  _Repr(prevN_x?: uint, nextN_x?: uint): [string[], string, string[]] {
+  _Repr_(prevN_x?: uint, nextN_x?: uint): [string[], string, string[]] {
     /*#static*/ if (INOUT) {
       if (prevN_x !== undefined) zUint.parse(prevN_x);
       if (nextN_x !== undefined) zUint.parse(nextN_x);
@@ -377,10 +376,10 @@ export class TSegFac extends Factory<TSeg> {
 
   constructor(tfmr_x: Tfmr) {
     super();
-    this.reset(tfmr_x);
+    this.setTSegFac(tfmr_x);
   }
 
-  reset(tfmr_x: Tfmr, hard_x?: "hard") {
+  setTSegFac(tfmr_x: Tfmr, hard_x?: "hard") {
     this.#tfmr = tfmr_x;
 
     this.init(hard_x);

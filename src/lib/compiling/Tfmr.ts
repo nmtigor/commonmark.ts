@@ -59,11 +59,9 @@ export abstract class Tfmr {
   #adjustStrtTSeg = false;
   #adjustStopTSeg = false;
 
-  /**
-   * @headconst @param bufr_x
-   */
+  /** @headconst @param bufr_x */
   constructor(bufr_x: Bufr) {
-    this.reset(bufr_x);
+    this.resetTfmr(bufr_x);
   }
 
   /**
@@ -71,12 +69,12 @@ export abstract class Tfmr {
    * @final
    * @headconst @param bufr_x
    */
-  reset(bufr_x?: Bufr, tbufr_x?: TBufr) {
+  resetTfmr(bufr_x?: Bufr, tbufr_x?: TBufr) {
     if (bufr_x) this.bufr$ = bufr_x;
     this.tbufr$ = tbufr_x ?? new TBufr(this.bufr$);
 
     if (this.tseg_fac$) {
-      this.tseg_fac$.reset(this, "hard");
+      this.tseg_fac$.setTSegFac(this, "hard");
     } else {
       this.tseg_fac$ = new TSegFac(this);
     }
@@ -112,9 +110,7 @@ export abstract class Tfmr {
     /*#static*/ if (INOUT) {
       assert(oldRan_x.bufr === this.bufr$);
     }
-    if (!this.curTSeg$ && !this.stopTSeg$) {
-      return;
-    }
+    if (!this.curTSeg$ && !this.stopTSeg$) return;
     this.#oldStopLoff = oldRan_x.stopLoff;
 
     const regressed = this.curTSeg$ === this.stopTSeg$;
@@ -181,6 +177,7 @@ export abstract class Tfmr {
    * @final
    * @headconst @param newRan_x is the `outran` of `Repl.#repl_impl()`
    */
+  @traceOut(_TRACE)
   adjust_$(newRan_x: Ran): this {
     /*#static*/ if (_TRACE) {
       console.log(
@@ -190,10 +187,7 @@ export abstract class Tfmr {
     /*#static*/ if (INOUT) {
       assert(newRan_x.bufr === this.bufr$);
     }
-    if (!this.curTSeg$ && !this.stopTSeg$) {
-      /*#static*/ if (_TRACE) global.outdent;
-      return this;
-    }
+    if (!this.curTSeg$ && !this.stopTSeg$) return this;
 
     if (this.#adjustStrtTSeg) {
       const strtLn_src = this.curTSeg$!.line;
@@ -224,8 +218,8 @@ export abstract class Tfmr {
       if (stopLn_src !== stopLn_tgt || dtLoff !== 0) {
         let tseg: TSeg | undefined = this.stopTSeg$!;
         do {
-          tseg.strtLoc.set(stopLn_tgt, tseg.strtLoff + dtLoff);
-          tseg.stopLoc.set(stopLn_tgt, tseg.stopLoff + dtLoff);
+          tseg.strtLoc.setLoc(stopLn_tgt, tseg.strtLoff + dtLoff);
+          tseg.stopLoc.setLoc(stopLn_tgt, tseg.stopLoff + dtLoff);
 
           if (stopLn_src !== stopLn_tgt) {
             if (stopLn_src.isStrtByTSeg_$(tseg)) {
@@ -242,7 +236,6 @@ export abstract class Tfmr {
         } while (tseg?.line === stopLn_src);
       }
     }
-    /*#static*/ if (_TRACE) global.outdent;
     return this;
   }
 
@@ -255,6 +248,10 @@ export abstract class Tfmr {
   }
 
   /** @final */
+  @traceOut(_TRACE)
+  @out((_, self: Tfmr) => {
+    assert(self.curTSeg$ === self.stopTSeg$);
+  })
   tfm() {
     /*#static*/ if (_TRACE) {
       console.log(`${global.indent}>>>>>>> ${this._type_id}.tfm() >>>>>>>`);
@@ -263,11 +260,6 @@ export abstract class Tfmr {
       this.tfm_impl$();
     }
     this.tseg_fac$.gcWith((tseg_y) => !tseg_y.valid);
-    /*#static*/ if (INOUT) {
-      assert(this.curTSeg$ === this.stopTSeg$);
-    }
-    /*#static*/ if (_TRACE) global.outdent;
-    return;
   }
 
   /**

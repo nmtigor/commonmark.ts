@@ -29,9 +29,9 @@ export class SortedStnod_depth extends SortedArray<Stnode<any>> {
 
 /** @final */
 export class SortedStnod_id extends SortedIdo<Stnode<any>> {
-  _repr(): string[] {
+  _repr_(): string[] {
     const ret: string[] = [];
-    for (const v of this) ret.push(v._oldInfo);
+    for (const v of this) ret.push(v._oldInfo_);
     return ret;
   }
 }
@@ -666,25 +666,25 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   }
   //jjjj TOCLEANUP
   // /** @final */
-  // get _oldInfo(): string {
+  // get _oldInfo_(): string {
   //   return `${this._info}[ ` +
   //     `${this.frstToken$?._name}${this.frstToken$?.oldRanval}, ` +
   //     `${this.lastToken$?._name}${this.lastToken$?.oldRanval} ]`;
   // }
   /** @final */
-  override get _oldInfo(): string {
+  override get _oldInfo_(): string {
     return this.frstToken === this.lastToken
-      ? `${this._info} [ ${this.frstToken._oldInfo} ]`
-      : `${this._info} [ ${this.frstToken._oldInfo}, ${this.lastToken._oldInfo} ]`;
+      ? `${this._info} [ ${this.frstToken._oldInfo_} ]`
+      : `${this._info} [ ${this.frstToken._oldInfo_}, ${this.lastToken._oldInfo_} ]`;
   }
   /** @final */
-  get _newInfo(): string {
+  get _newInfo_(): string {
     return this.frstToken === this.lastToken
       ? `${this._info} [ ${this.frstToken} ]`
       : `${this._info} [ ${this.frstToken}, ${this.lastToken} ]`;
   }
 
-  _repr(): unknown {
+  _repr_(): unknown {
     return this._info;
   }
 

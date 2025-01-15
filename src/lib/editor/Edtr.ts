@@ -40,7 +40,7 @@ import { ERan, g_eran_fac } from "./ERan.ts";
 import type { EdtrBaseCI, EdtrScronr } from "./EdtrBase.ts";
 import { EdtrBase, EdtrBaseScrolr } from "./EdtrBase.ts";
 import type { EdtrShortcut, EdtrState } from "./alias.ts";
-import { EdtrFuncName, EdtrShortcut_m, EdtrType } from "./alias.ts";
+import { EdtrFuncName, EdtrShortcut_m, EdtrType, Endpt } from "./alias.ts";
 import type { InlineOf, Sameline } from "./util.ts";
 import {
   sameline_bot,
@@ -118,9 +118,10 @@ export abstract class Edtr<T extends Tok = BaseTok, CI extends EdtrCI = EdtrCI>
   //   return this.scrolr$ as EdtrScrolr<T>;
   // }
 
-  override init(scrolr_x: EdtrScrolr<T, CI>) {
-    super.init(scrolr_x);
-  }
+  //jjjj TOCLEANUP
+  // override init(scrolr_x: EdtrScrolr<T, CI>) {
+  //   super.init(scrolr_x);
+  // }
 }
 /*64----------------------------------------------------------*/
 
@@ -129,7 +130,7 @@ export abstract class EdtrScrolr<
   CI extends EdtrCI = EdtrCI,
 > extends EdtrBaseScrolr<CI> {
   /* eline_m */
-  override readonly eline_m = new Map<TokLine<T>, ELine<T>>();
+  declare readonly eline_m: Map<TokLine<T>, ELine<T>>;
   /** @final */
   protected get frstELine$(): ELine<T> | undefined {
     return this.eline_m.get(this.bufr$.frstLine);
@@ -184,7 +185,6 @@ export abstract class EdtrScrolr<
   readonly #draggedM_mo = new Moo({ val: false });
 
   #composingRepl: Repl | undefined;
-  readonly #replText_a: string[] = [];
 
   /**
    * @headconst @param host_x
@@ -203,7 +203,7 @@ export abstract class EdtrScrolr<
     //     this.caret_a$[i].caretrvm?.[1].refresh();
     //   }
 
-    //   this.bufr$.lastView_ts = Date.now(); //!
+    //   this.bufr$.lastRead_ts = Date.now(); //!
     // });
 
     this.#dragingM_mo.registHandler((n_y) => {
@@ -276,7 +276,7 @@ export abstract class EdtrScrolr<
     if (this.bufr$.oldRan_a.length) this.prereplace_$();
   };
   /** `in( this.bufr$ )` */
-  #onBufr_sufrepl2idle = (_: BufrReplState) => {
+  #onBufr_sufrepl = (_: BufrReplState) => {
     if (this.bufr$.newRan_a.length) this.replace_$();
   };
 
@@ -318,14 +318,14 @@ export abstract class EdtrScrolr<
           },
         );
         this.bufr$.repl_mo.removeHandler(
-          this.#onBufr_sufrepl2idle,
+          this.#onBufr_sufrepl,
           {
             o: BufrReplState.sufrepl,
             n: BufrReplState.sufrepl_edtr,
           },
         );
 
-        this.bufr$.edtr_sa.delete(this);
+        this.bufr$.remEdtr(this);
       }
 
       this.bufr$ = bufr_x;
@@ -348,7 +348,7 @@ export abstract class EdtrScrolr<
         },
       );
       bufr_x.repl_mo.registHandler(
-        this.#onBufr_sufrepl2idle,
+        this.#onBufr_sufrepl,
         {
           o: BufrReplState.sufrepl,
           n: BufrReplState.sufrepl_edtr,
@@ -356,37 +356,9 @@ export abstract class EdtrScrolr<
       );
       // console.log(bufr_x.repl_mo.nCb);
 
-      this.bufr$.edtr_sa.add(this);
+      this.bufr$.addEdtr(this);
       this.resetCarets$(this.bufr$.edtr_sa);
     }
-
-    return this;
-  }
-
-  /**
-   * `in( this.el$.isConnected )`
-   * @final
-   */
-  refresh(): this {
-    // /*#static*/ if (_TRACE) {
-    //   console.log(`${global.indent}>>>>>>> ${this._type_id}.refresh() >>>>>>>`);
-    // }
-    // this.reset$();
-
-    // createSetELines(this, this.bufr$.frstLine, this.bufr$.lastLine);
-    // /*#static*/ if (DEV) {
-    //   ++count.newVuu;
-    // }
-    // this.bufr$.refresh();
-
-    for (const caret of this.caret_a$) {
-      if (caret.realBody?.shown) {
-        caret.shadowShow();
-      } else {
-        caret.hideAll();
-      }
-    }
-    // /*#static*/ if (_TRACE && RESIZ) global.outdent;
     return this;
   }
 
@@ -400,7 +372,7 @@ export abstract class EdtrScrolr<
 
   //   this.#bcr = this.el$.getBoundingClientRect(); /** @member { DOMRect } */
   //   // console.log( this.#bcr );
-  //   this.bufr$.lastView_ts = Date.now(); //!
+  //   this.bufr$.lastRead_ts = Date.now(); //!
 
   //   // for( let i = this.main_el.childNodes.length; i--; )
   //   // {
@@ -474,17 +446,13 @@ export abstract class EdtrScrolr<
    */
   #calcRanP(oldRan_x: Ran, caret_x: Caret): void {
     const rv_ = caret_x.ranval_$ = this.getRanvalBy$(caret_x.eran!);
-    [caret_x.ranpF_$, caret_x.offsF_$] = oldRan_x.calcRanP(
-      rv_.focusLidx,
-      rv_.focusLoff,
-    );
+    [caret_x.ranpF_$, caret_x.offsF_$] = oldRan_x
+      .calcRanP(rv_.focusLidx, rv_.focusLoff);
     if (rv_.collapsed) {
       [caret_x.ranpA_$, caret_x.offsA_$] = [caret_x.ranpF_$, caret_x.offsF_$];
     } else {
-      [caret_x.ranpA_$, caret_x.offsA_$] = oldRan_x.calcRanP(
-        rv_.anchrLidx,
-        rv_.anchrLoff,
-      );
+      [caret_x.ranpA_$, caret_x.offsA_$] = oldRan_x
+        .calcRanP(rv_.anchrLidx, rv_.anchrLoff);
     }
   }
   /**
@@ -493,18 +461,22 @@ export abstract class EdtrScrolr<
    * `in( this.bufr.oldRan_a.length )`
    * @final
    */
+  @traceOut(_TRACE)
   prereplace_$(): void {
     /*#static*/ if (_TRACE) {
       console.log(
         `${global.indent}>>>>>>> ${this._type_id}.prereplace_$() >>>>>>>`,
       );
     }
+    /* Carets in non-current Edtr will be `#syncAllCaret()`. */
+    if (this.bufr$.curEdtrId !== this.id) return;
+
     if (this.bufr$.oldRan_a.length > 1) {
       fail("Not implemented"); //kkkk
     }
 
     const oldRan = this.bufr$.oldRan_a[0];
-    let mc_ = this.proactiveCaret;
+    const mc_ = this.proactiveCaret;
     if (
       mc_.eran &&
       (mc_.st === CaretState.staring || mc_.st === CaretState.blinking)
@@ -538,8 +510,6 @@ export abstract class EdtrScrolr<
         c_.ranpF_$ = RanP.unknown;
       }
     }
-    /*#static*/ if (_TRACE) global.outdent;
-    return;
   }
 
   // get pazer() { return this.pazr$; }
@@ -558,7 +528,6 @@ export abstract class EdtrScrolr<
     return ret_x;
   }
   /**
-   * `in( this.eline_m.get(ret_x.bline_$) === ret_x )`
    * @final
    * @headconst @param ret_x
    */
@@ -586,76 +555,92 @@ export abstract class EdtrScrolr<
     return ret_x;
   }
 
-  /**
-   * @headconst @param newRan_x
-   * @const @param ranp_x
-   * @const @param offs_x
-   * @const @param loff_x
-   * @out @headconst @param out_a
-   */
-  #replace_adjust_impl(
-    newRan_x: Ran,
-    ranp_x: RanP,
-    offs_x: loff_t | lnum_t,
-    loff_x: loff_t,
-    out_a: [lnum_t, loff_t],
-  ) {
-    /* final switch */ ({
-      [RanP.ranLinesBefor]: () => {
-        out_a[0] = offs_x as lnum_t;
-        out_a[1] = loff_x;
-      },
-      [RanP.ranLinesAfter]: () => {
-        out_a[0] = (newRan_x.lastLine.lidx_1 + offs_x) as lnum_t;
-        out_a[1] = loff_x;
-      },
-      [RanP.lastLineAfter]: () => {
-        out_a[0] = newRan_x.lastLine.lidx_1;
-        out_a[1] = newRan_x.stopLoff + offs_x;
-      },
-      [RanP.frstLineBefor]: () => {
-        out_a[0] = newRan_x.frstLine.lidx_1;
-        out_a[1] = loff_x;
-      },
-      [RanP.inOldRan]: () => {
-        out_a[0] = newRan_x.lastLine.lidx_1;
-        out_a[1] = newRan_x.stopLoff;
-      },
-      [RanP.unknown]: () => {
-        fail();
-      },
-    }[ranp_x])();
-  }
-  /**
-   * Set `caret_x.ranval_$`\
-   * `in( caret_x.ranpF_$ !== RanP.unknown )`
-   * @headconst @param newRan_x
-   * @headconst @param caret_x
-   * @const @param collapsed_x
-   */
-  #replace_adjust(newRan_x: Ran, caret_x: Caret, collapsed_x = false) {
-    const out_a: [lnum_t, loff_t] = [0 as lnum_t, 0];
-    this.#replace_adjust_impl(
-      newRan_x,
-      caret_x.ranpF_$,
-      caret_x.offsF_$,
-      caret_x.ranval_$.focusLoff,
-      out_a,
-    );
-    caret_x.ranval_$.focusLidx = out_a[0];
-    caret_x.ranval_$.focusLoff = out_a[1];
-    if (collapsed_x) {
-      caret_x.ranval_$.collapseToFocus();
+  /** @primaryconst @param newRan_x */
+  #adjustCarets(newRan_x: Ran) {
+    /**
+     * Set `caret_x.ranval_$`\
+     * `in( caret_x.ranpF_$ !== RanP.unknown )`
+     * @headconst @param caret_y
+     * @const @param collapsed_y
+     */
+    const adjustCaret = (caret_y: Caret, collapsed_y = false) => {
+      /**
+       * @const @param endpt_x
+       * @out @headconst @param out_a
+       */
+      const impl_ = (endpt_x: Endpt, out_a: [lnum_t, loff_t]) => {
+        let ranp!: RanP, offs: loff_t | lnum_t, loff: loff_t;
+        /* final switch */ ({
+          [Endpt.focus]: () => {
+            ranp = caret_y.ranpF_$;
+            offs = caret_y.offsF_$;
+            loff = caret_y.ranval_$.focusLoff;
+          },
+          [Endpt.anchr]: () => {
+            ranp = caret_y.ranpA_$;
+            offs = caret_y.offsA_$;
+            loff = caret_y.ranval_$.anchrLoff;
+          },
+        }[endpt_x])();
+        /* final switch */ ({
+          [RanP.ranLinesBefor]: () => {
+            out_a[0] = offs as lnum_t;
+            out_a[1] = loff;
+          },
+          [RanP.ranLinesAfter]: () => {
+            out_a[0] = (newRan_x.lastLine.lidx_1 + offs) as lnum_t;
+            out_a[1] = loff;
+          },
+          [RanP.lastLineAfter]: () => {
+            out_a[0] = newRan_x.lastLine.lidx_1;
+            out_a[1] = newRan_x.stopLoff + offs;
+          },
+          [RanP.frstLineBefor]: () => {
+            out_a[0] = newRan_x.frstLine.lidx_1;
+            out_a[1] = loff;
+          },
+          [RanP.inOldRan]: () => {
+            out_a[0] = newRan_x.lastLine.lidx_1;
+            out_a[1] = newRan_x.stopLoff;
+          },
+          [RanP.unknown]: () => {
+            fail("Should throw but not.");
+          },
+        }[ranp])();
+      };
+
+      const rv_ = caret_y.ranval_$;
+      const out_a: [lnum_t, loff_t] = [0 as lnum_t, 0];
+      impl_(Endpt.focus, out_a);
+      [rv_.focusLidx, rv_.focusLoff] = out_a;
+      impl_(Endpt.anchr, out_a);
+      [rv_.anchrLidx, rv_.anchrLoff] = out_a;
+      if (collapsed_y) rv_.collapseToHead();
+    };
+
+    const mc_ = this.proactiveCaret;
+    if (mc_.ranpF_$ === RanP.unknown) {
+      /* In passive `EdtrScrolr`, where its `proactiveCaret` does not `blink()`
+      or `stare()` yet. */
     } else {
-      this.#replace_adjust_impl(
-        newRan_x,
-        caret_x.ranpA_$,
-        caret_x.offsA_$,
-        caret_x.ranval_$.anchrLoff,
-        out_a,
-      );
-      caret_x.ranval_$.anchrLidx = out_a[0];
-      caret_x.ranval_$.anchrLoff = out_a[1];
+      if (
+        this.bufr$.doState === BufrDoState.undoing ||
+        this.bufr$.doState === BufrDoState.redoing
+      ) {
+        mc_.ranval_$.setByRan(newRan_x);
+      } else {
+        adjustCaret(mc_, true);
+      }
+    }
+
+    for (let i = 1; i < this.caret_a$.length; i++) {
+      const c_ = this.caret_a$[i];
+      if (c_.ranpF_$ === RanP.unknown) {
+        /* In proactive `EdtrScrolr`, where its passive `Caret`s do not
+        `stare()` yet. */
+      } else {
+        adjustCaret(c_);
+      }
     }
   }
 
@@ -665,6 +650,7 @@ export abstract class EdtrScrolr<
    * `in( this.bufr$.newRan && this.bufr$.oldRan )`
    * @final
    */
+  @traceOut(_TRACE)
   replace_$(): void {
     /*#static*/ if (_TRACE) {
       console.log(
@@ -675,39 +661,17 @@ export abstract class EdtrScrolr<
       fail("Not implemented"); //kkkk
     }
 
-    // const oldRan = this.bufr$.oldRan;
-    const newRan = this.bufr$.newRan_a[0];
-    const mc_ = this.proactiveCaret;
-    if (mc_.ranpF_$ === RanP.unknown) {
-      /* In passive `EdtrScrolr`, where its `proactiveCaret` does not `blink()` or
-      `stare()` yet. */
-    } else {
-      if (
-        this.bufr$.doState === BufrDoState.undoing ||
-        this.bufr$.doState === BufrDoState.redoing
-      ) {
-        mc_.ranval_$.focusLidx = newRan.lastLine.lidx_1;
-        mc_.ranval_$.focusLoff = newRan.stopLoff;
-        mc_.ranval_$.anchrLidx = newRan.frstLine.lidx_1;
-        mc_.ranval_$.anchrLoff = newRan.strtLoff;
-      } else {
-        this.#replace_adjust(newRan, mc_, true);
-      }
-    }
-
-    for (let i = 1; i < this.caret_a$.length; i++) {
-      const c_ = this.caret_a$[i];
-      if (c_.ranpF_$ === RanP.unknown) {
-        /* In proactive `EdtrScrolr`, where its passive `Caret`s do not `stare()` yet. */
-      } else {
-        this.#replace_adjust(newRan, c_);
-      }
+    /* Carets in non-current Edtr will be `#syncAllCaret()`. */
+    if (this.bufr$.curEdtrId === this.id) {
+      this.#adjustCarets(this.bufr$.newRan_a[0]);
     }
 
     this.replace_impl$();
 
-    for (const c_ of this.caret_a$) {
-      this.getERanBy_$(c_.ranval_$, c_.eran);
+    if (this.bufr$.curEdtrId === this.id) {
+      for (const c_ of this.caret_a$) {
+        this.getERanBy_$(c_.ranval_$, c_.eran);
+      }
     }
 
     // if( eran0 )
@@ -745,8 +709,6 @@ export abstract class EdtrScrolr<
     //   }
     //   else assert(0);
     // }
-    /*#static*/ if (_TRACE) global.outdent;
-    return;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -1038,7 +1000,7 @@ export abstract class EdtrScrolr<
     let rv_: Ranval;
     if (mc_.st === CaretState.staring) {
       rv_ = this.getRanvalBy$(mc_.eran!);
-      mc_.setByRanval(rv_, true);
+      mc_.setByRanval(rv_, "force");
 
       // mc_.blink();
     } else if (this.setSel$()) {
@@ -1046,7 +1008,10 @@ export abstract class EdtrScrolr<
       mc_.setERanBySel_$(this.sel$!);
 
       rv_ = this.getRanvalBy$(mc_.eran!);
-      mc_.setByRanval(rv_, mc_.st !== CaretState.blinking);
+      mc_.setByRanval(
+        rv_,
+        mc_.st !== CaretState.blinking ? "force" : undefined,
+      );
       // mc_.setByRanval( rv_, true );
 
       // if( !mc_.caretrvm ) mc_.createCaretRvM_$( this.bufr$ );
@@ -1137,28 +1102,32 @@ export abstract class EdtrScrolr<
   // getBran$( eran ) { assert(0); }
 
   /**
-   * @const @param forceOnce_x E.g., through `deleteUChr$()`, `ranval_$` will
-   *    not change `caretrvm![1].val`, so must `forceOnce_x` to update
-   *    `eran.focusCtnr`, etc in `Caret._onRanvalChange()`.
+  //jjjj TOCLEANUP
+  //  * @const @param force_x E.g., through `deleteUChr$()`, `ranval_$` will
+  //  *    not change `caretrvm![1].val`, so must `force()` to update
+  //  *    `#eran`, `#fat_eran` in `Caret._onRanvalChange()`.
    */
-  #syncAllCaret(forceOnce_x?: boolean) {
+  #syncAllCaret() {
     // if (!this.proactiveCaret.caretrvm) {
     //   this.proactiveCaret.createCaretRvM_$(this.bufr$);
     // }
-    // In reverse order to make sure that the main caret is handled last
+    /* In reverse order to make sure that the main caret is handled lastly */
     for (let i = this.caret_a$.length; i--;) {
       const caret = this.caret_a$[i];
       if (caret.active && caret.ranpF_$ !== RanP.unknown) {
-        if (forceOnce_x !== undefined) {
-          caret.caretrvm![1].forceOnce = forceOnce_x;
-        }
+        /* Always `force()` because even for cases `frstLineBefor`,
+        `ranLinesBefor`, the below `Text` or `Element` may still be replaced by
+        a new one, so `#eran`, `#fat_eran` need to be updated. */
+        // if (caret.ranpA_$ & RanP_unstable || caret.ranpF_$ & RanP_unstable) {
+        caret.caretrvm![1].force();
+        // }
         // console.log(`caret.ranval_$ = [${caret.ranval_$}]`);
         caret.caretrvm![1].val = caret.ranval_$;
       }
     }
   }
-  _syncAllCaret(forceOnce_x?: boolean) {
-    return this.#syncAllCaret(forceOnce_x);
+  _syncAllCaret_() {
+    return this.#syncAllCaret();
   }
 
   protected get shortcut$(): EdtrShortcut {
@@ -1268,6 +1237,7 @@ export abstract class EdtrScrolr<
       else this.deleteUChr$();
     } else if (key === "ArrowLeft") {
       if (evt_x.altKey) {
+        ///
       } else if (evt_x.ctrlKey) {
         if (evt_x.shiftKey) {
           func_ = this.#funcOf(`${Key.Control}+${Key.Shift}+${Key.ArrowLeft}`);
@@ -1275,6 +1245,7 @@ export abstract class EdtrScrolr<
           func_ = this.#funcOf(`${Key.Control}+${Key.ArrowLeft}`);
         }
       } else if (evt_x.metaKey) {
+        ///
       } else if (evt_x.shiftKey) {
         func_ = this.#funcOf(`${Key.Shift}+${Key.ArrowLeft}`);
       } else {
@@ -1282,6 +1253,7 @@ export abstract class EdtrScrolr<
       }
     } else if (key === "ArrowRight") {
       if (evt_x.altKey) {
+        ///
       } else if (evt_x.ctrlKey) {
         if (evt_x.shiftKey) {
           func_ = this.#funcOf(`${Key.Control}+${Key.Shift}+${Key.ArrowRight}`);
@@ -1289,6 +1261,7 @@ export abstract class EdtrScrolr<
           func_ = this.#funcOf(`${Key.Control}+${Key.ArrowRight}`);
         }
       } else if (evt_x.metaKey) {
+        ///
       } else if (evt_x.shiftKey) {
         func_ = this.#funcOf(`${Key.Shift}+${Key.ArrowRight}`);
       } else {
@@ -1296,6 +1269,7 @@ export abstract class EdtrScrolr<
       }
     } else if (key === "ArrowUp") {
       if (evt_x.altKey) {
+        ///
       } else if (evt_x.ctrlKey) {
         if (evt_x.shiftKey) {
           func_ = this.#funcOf(`${Key.Control}+${Key.Shift}+${Key.ArrowUp}`);
@@ -1303,6 +1277,7 @@ export abstract class EdtrScrolr<
           func_ = this.#funcOf(`${Key.Control}+${Key.ArrowUp}`);
         }
       } else if (evt_x.metaKey) {
+        ///
       } else if (evt_x.shiftKey) {
         func_ = this.#funcOf(`${Key.Shift}+${Key.ArrowUp}`);
       } else {
@@ -1310,6 +1285,7 @@ export abstract class EdtrScrolr<
       }
     } else if (key === "ArrowDown") {
       if (evt_x.altKey) {
+        ///
       } else if (evt_x.ctrlKey) {
         if (evt_x.shiftKey) {
           func_ = this.#funcOf(`${Key.Control}+${Key.Shift}+${Key.ArrowDown}`);
@@ -1317,6 +1293,7 @@ export abstract class EdtrScrolr<
           func_ = this.#funcOf(`${Key.Control}+${Key.ArrowDown}`);
         }
       } else if (evt_x.metaKey) {
+        ///
       } else if (evt_x.shiftKey) {
         func_ = this.#funcOf(`${Key.Shift}+${Key.ArrowDown}`);
       } else {
@@ -1326,9 +1303,11 @@ export abstract class EdtrScrolr<
       if (evt_x.ctrlKey && evt_x.shiftKey) {
         func_ = this.#funcOf(`${Key.Control}+${Key.Shift}+${Key.Home}`);
       } else if (evt_x.altKey) {
+        ///
       } else if (evt_x.ctrlKey) {
         func_ = this.#funcOf(`${Key.Control}+${Key.Home}`);
       } else if (evt_x.metaKey) {
+        ///
       } else if (evt_x.shiftKey) {
         func_ = this.#funcOf(`${Key.Shift}+${Key.Home}`);
       } else {
@@ -1338,9 +1317,11 @@ export abstract class EdtrScrolr<
       if (evt_x.ctrlKey && evt_x.shiftKey) {
         func_ = this.#funcOf(`${Key.Control}+${Key.Shift}+${Key.End}`);
       } else if (evt_x.altKey) {
+        ///
       } else if (evt_x.ctrlKey) {
         func_ = this.#funcOf(`${Key.Control}+${Key.End}`);
       } else if (evt_x.metaKey) {
+        ///
       } else if (evt_x.shiftKey) {
         func_ = this.#funcOf(`${Key.Shift}+${Key.End}`);
       } else {
@@ -1367,83 +1348,83 @@ export abstract class EdtrScrolr<
     return;
   };
 
-  /**
-   * See [why](https://stackoverflow.com/questions/63273548/why-input-event-has-event-type-of-event-instead-of-inputevent)
-   * `Event` rather than `InputEvent`?
-   * @deprecated
-   */
-  #onInput = (evt_x: Event) => {
-    /*#static*/ if (_TRACE && EDITOR) {
-      console.log(
-        `${global.indent}>>>>>>> ${this._type_id}.#onInput() >>>>>>>`,
-      );
-      console.log(
-        `${global.dent}inputType = "${(evt_x as InputEvent).inputType}"`,
-      );
-      console.log(`${global.dent}data = "${(evt_x as InputEvent).data}"`);
-    }
-    if (!(evt_x instanceof InputEvent)) {
-      /*#static*/ if (_TRACE && EDITOR) global.outdent;
-      return;
-    }
-    if (!this.#keydown_unidentified) {
-      /*#static*/ if (_TRACE && EDITOR) global.outdent;
-      return;
-    }
+  // /**
+  //  * See [why](https://stackoverflow.com/questions/63273548/why-input-event-has-event-type-of-event-instead-of-inputevent)
+  //  * `Event` rather than `InputEvent`?
+  //  * @deprecated
+  //  */
+  // #onInput = (evt_x: Event) => {
+  //   /*#static*/ if (_TRACE && EDITOR) {
+  //     console.log(
+  //       `${global.indent}>>>>>>> ${this._type_id}.#onInput() >>>>>>>`,
+  //     );
+  //     console.log(
+  //       `${global.dent}inputType = "${(evt_x as InputEvent).inputType}"`,
+  //     );
+  //     console.log(`${global.dent}data = "${(evt_x as InputEvent).data}"`);
+  //   }
+  //   if (!(evt_x instanceof InputEvent)) {
+  //     /*#static*/ if (_TRACE && EDITOR) global.outdent;
+  //     return;
+  //   }
+  //   if (!this.#keydown_unidentified) {
+  //     /*#static*/ if (_TRACE && EDITOR) global.outdent;
+  //     return;
+  //   }
 
-    evt_x.preventDefault();
-    // evt_x.stopPropagation();
+  //   evt_x.preventDefault();
+  //   // evt_x.stopPropagation();
 
-    const mc_ = this.proactiveCaret;
-    /*#static*/ if (INOUT) {
-      assert(mc_.eran && mc_.active && mc_.st === CaretState.blinking);
-    }
-    switch (evt_x.inputType) {
-      case "insertText":
-        console.log(
-          `%c${global.dent}run here: "insertText"`,
-          `color:${LOG_cssc.runhere}`,
-        );
-        this.insertUChr$(evt_x.data!);
-        break;
-      case "deleteContentBackward":
-        console.log(
-          `%c${global.dent}run here: "deleteContentBackward"`,
-          `color:${LOG_cssc.runhere}`,
-        );
-        this.deletePrevUChr$();
-        break;
-      case "insertCompositionText":
-        if (evt_x.data) {
-          if (this.#composingRepl) {
-            console.log(
-              `%c${global.dent}run here: #composingRepl = true`,
-              `color:${LOG_cssc.runhere}`,
-            );
-            this.#composingRepl.replFRun(evt_x.data);
-          } else {
-            console.log(
-              `%c${global.dent}run here: #composingRepl = false`,
-              `color:${LOG_cssc.runhere}`,
-            );
-            this.#composingRepl = new Repl(
-              this.bufr$,
-              this.getRanvalBy$(mc_.eran!),
-              evt_x.data,
-            );
-            this.#composingRepl.replFRun();
-          }
-          this.#syncAllCaret(true);
-        }
-        break;
-    }
-    // const sel = window.getSelection();
-    // console.log( `sel.anchorOffset=${sel.anchorOffset}, sel.focusOffs=${sel.focusOffs}` );
-    // // evt.preventDefault();
-    // // evt.stopPropagation();
-    /*#static*/ if (_TRACE && EDITOR) global.outdent;
-    return;
-  };
+  //   const mc_ = this.proactiveCaret;
+  //   /*#static*/ if (INOUT) {
+  //     assert(mc_.eran && mc_.active && mc_.st === CaretState.blinking);
+  //   }
+  //   switch (evt_x.inputType) {
+  //     case "insertText":
+  //       console.log(
+  //         `%c${global.dent}run here: "insertText"`,
+  //         `color:${LOG_cssc.runhere}`,
+  //       );
+  //       this.insertUChr$(evt_x.data!);
+  //       break;
+  //     case "deleteContentBackward":
+  //       console.log(
+  //         `%c${global.dent}run here: "deleteContentBackward"`,
+  //         `color:${LOG_cssc.runhere}`,
+  //       );
+  //       this.deletePrevUChr$();
+  //       break;
+  //     case "insertCompositionText":
+  //       if (evt_x.data) {
+  //         if (this.#composingRepl) {
+  //           console.log(
+  //             `%c${global.dent}run here: #composingRepl = true`,
+  //             `color:${LOG_cssc.runhere}`,
+  //           );
+  //           this.#composingRepl.replFRun(evt_x.data);
+  //         } else {
+  //           console.log(
+  //             `%c${global.dent}run here: #composingRepl = false`,
+  //             `color:${LOG_cssc.runhere}`,
+  //           );
+  //           this.#composingRepl = new Repl(
+  //             this.bufr$,
+  //             this.getRanvalBy$(mc_.eran!),
+  //             evt_x.data,
+  //           );
+  //           this.#composingRepl.replFRun();
+  //         }
+  //         this.#syncAllCaret(true);
+  //       }
+  //       break;
+  //   }
+  //   // const sel = window.getSelection();
+  //   // console.log( `sel.anchorOffset=${sel.anchorOffset}, sel.focusOffs=${sel.focusOffs}` );
+  //   // // evt.preventDefault();
+  //   // // evt.stopPropagation();
+  //   /*#static*/ if (_TRACE && EDITOR) global.outdent;
+  //   return;
+  // };
 
   @bind
   @traceOut(_TRACE && EDITOR)
@@ -1463,8 +1444,7 @@ export abstract class EdtrScrolr<
       "",
     );
     this.#composingRepl.replFRun(evt_x.data);
-    this.#replText_a.become(this.#composingRepl!.replText_a!);
-    this.#syncAllCaret(true);
+    this.#syncAllCaret();
 
     // evt_x.preventDefault();
     // evt_x.stopPropagation();
@@ -1491,7 +1471,7 @@ export abstract class EdtrScrolr<
       console.log(`${global.dent}data = "${evt_x.data}"`);
     }
     this.#composingRepl!.replFRun(evt_x.data);
-    this.#syncAllCaret(true);
+    this.#syncAllCaret();
 
     // evt_x.preventDefault();
     // evt_x.stopPropagation();
@@ -1516,12 +1496,10 @@ export abstract class EdtrScrolr<
     if (evt_x.data) {
       this.bufr$.doqOnly(this.#composingRepl!);
     } else {
-      this.#composingRepl!.replText_a!.become(this.#replText_a);
       this.#composingRepl!.replBRun();
-      this.#syncAllCaret(true);
+      this.#syncAllCaret();
     }
     this.#composingRepl = undefined;
-    // this.#replText_a.length = 0;
 
     // if( evt_x.data )
     // {
@@ -1572,7 +1550,7 @@ export abstract class EdtrScrolr<
     }
 
     if (efr === EdtrFuncRet.caret) {
-      this.bufr$.Do(rv_, "");
+      this.bufr$.Do(rv_, "", this.id);
       this.#syncAllCaret();
 
       // this.restoreSel$();
@@ -1582,6 +1560,7 @@ export abstract class EdtrScrolr<
   // kCtrlDelete$( caret ) { return false; }
   // kShiftDelete$( caret ) { return false; }
   /** @see {@linkcode deletePrevUChr$()} */
+  @traceOut(_TRACE && EDITOR)
   protected deleteUChr$(): void {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
@@ -1604,13 +1583,11 @@ export abstract class EdtrScrolr<
     }
 
     if (efr === EdtrFuncRet.caret) {
-      this.bufr$.Do(rv_, "");
-      this.#syncAllCaret(true);
+      this.bufr$.Do(rv_, "", this.id);
+      this.#syncAllCaret();
 
       // this.restoreSel$();
     }
-    /*#static*/ if (_TRACE && EDITOR) global.outdent;
-    return;
   }
 
   /**
@@ -1720,11 +1697,21 @@ export abstract class EdtrScrolr<
     const offs = eran_x!.anchrOffs;
     ctnr[$rec_utx_a] ??= [];
     let ret = ctnr[$rec_utx_a].at(offs);
-    if (!ret || ret[$uts] < this.bufr$.lastView_ts) {
+    /* When cypress testing, font loading may strangely bypass updating
+    `lastView_ts` to cause `ctnr[$rec_utx_a][offs]` not to update, so always run
+    into the branch regardless `lastView_ts`. */
+    if (
+      CYPRESS ||
+      (ret?.[$uts] ?? 0) <
+        Math.max(this.bufr$.lastRead_ts, this.coo$.lastView_ts)
+    ) {
+      // console.log(
+      //   `%c${global.dent}run here: offs: ${rv_x}`,
+      //   `color:${LOG_cssc.runhere}`,
+      // );
       ret =
         ctnr[$rec_utx_a][offs] =
           eran_x!.syncRange_$().getBoundingClientRect();
-      ret[$uts] = Date.now() as ts_t;
       // console.log(`>>>>>>>>>>> ${rv_x}`);
       // console.log(
       //   `x=${ret.x}, l=${ret.left}, y=${ret.y}, t=${ret.top}, r=${ret.right}, b=${ret.bottom}`,
@@ -1734,11 +1721,12 @@ export abstract class EdtrScrolr<
       // console.log(
       //   `x=${ret.x}, l=${ret.left}, y=${ret.y}, t=${ret.top}, r=${ret.right}, b=${ret.bottom}`,
       // );
+      ret[$uts] = Date.now_1();
     }
     /*#static*/ if (CYPRESS) {
       ctnr["cy.rec_utx_a"] = ctnr[$rec_utx_a];
     }
-    return ret;
+    return ret!;
   }
 
   /**
@@ -1782,6 +1770,7 @@ export abstract class EdtrScrolr<
    * @out @headconst @param rv_x
    * @headconst @param mc_x
    */
+  // @traceOut(_TRACE)
   private _prevRow(rv_x: Ranval, mc_x: Caret): EdtrFuncRet {
     // // #if _TRACE
     //   console.log(`${global.indent}>>>>>>> ${this._type_id}._prevRow() >>>>>>>`);
@@ -1805,18 +1794,15 @@ export abstract class EdtrScrolr<
     /* `anchrRecOf_$()` could modify its `eran_x`, so not to use `mc_x.eran`
     directly, because if return `EdtrFuncRet.nope`, `mc_x.eran` will have no
     chance to be corrected back. */
-    using eran_0 = g_eran_fac.oneMore().become(mc_x.eran!);
+    using eran_0 = g_eran_fac.oneMore().becomeERan(mc_x.eran!);
     const rec_0 = this.anchrRecOf_$(rv_x, eran_0);
 
-    using rv_1 = g_ranval_fac.oneMore().reset(rv_x.anchrLidx, 0);
-    using eran_1 = g_eran_fac.oneMore().become(mc_x.eran!);
+    using rv_1 = g_ranval_fac.oneMore().setRanval(rv_x.anchrLidx, 0);
+    using eran_1 = g_eran_fac.oneMore().becomeERan(mc_x.eran!);
     let rec_1 = this.anchrRecOf_$(rv_1, eran_1);
     if (sameline(rec_1, blockOf(rec_0))) {
       if (rv_x.anchrLidx === 0) {
         // console.log("run here 1");
-        // // #if _TRACE
-        //   global.outdent;
-        // // #endif
         return EdtrFuncRet.nope;
       }
 
@@ -1851,9 +1837,6 @@ export abstract class EdtrScrolr<
         inlineMidOf,
       );
     }
-    // // #if _TRACE
-    //   global.outdent;
-    // // #endif
     return EdtrFuncRet.caret;
   }
   // /**
@@ -1882,7 +1865,10 @@ export abstract class EdtrScrolr<
    * @headconst @param mc_x
    */
   private _focusPrevRow(rv_x: Ranval, mc_x: Caret): EdtrFuncRet {
-    using rv_ = g_ranval_fac.oneMore().reset(rv_x.focusLidx, rv_x.focusLoff);
+    using rv_ = g_ranval_fac.oneMore().setRanval(
+      rv_x.focusLidx,
+      rv_x.focusLoff,
+    );
     const ret = this._prevRow(rv_, mc_x);
     rv_x.focusLidx = rv_.anchrLidx;
     rv_x.focusLoff = rv_.anchrLoff;
@@ -1926,6 +1912,7 @@ export abstract class EdtrScrolr<
     }
   }
   /** @see {@linkcode _prevRow()} */
+  // @traceOut(_TRACE)
   private _nextRow(rv_x: Ranval, mc_x: Caret): EdtrFuncRet {
     // // #if _TRACE
     //   console.log(`${global.indent}>>>>>>> ${this._type_id}._nextRow() >>>>>>>`);
@@ -1949,21 +1936,16 @@ export abstract class EdtrScrolr<
     /* `anchrRecOf_$()` could modify its `eran_x`, so not to use `mc_x.eran`
     directly, because if return `EdtrFuncRet.nope`, `mc_x.eran` will have no
     chance to be corrected back. */
-    using eran_0 = g_eran_fac.oneMore().become(mc_x.eran!);
+    using eran_0 = g_eran_fac.oneMore().becomeERan(mc_x.eran!);
     const rec_0 = this.anchrRecOf_$(rv_x, eran_0);
 
-    using rv_1 = g_ranval_fac.oneMore().reset(
-      rv_x.anchrLidx,
-      Number.MAX_SAFE_INTEGER,
-    );
-    using eran_1 = g_eran_fac.oneMore().become(mc_x.eran!);
+    using rv_1 = g_ranval_fac.oneMore()
+      .setRanval(rv_x.anchrLidx, Number.MAX_SAFE_INTEGER);
+    using eran_1 = g_eran_fac.oneMore().becomeERan(mc_x.eran!);
     let rec_1 = this.anchrRecOf_$(rv_1, eran_1);
     if (sameline(rec_1, blockOf(rec_0))) {
       if (rv_x.anchrLidx >= this.bufr$.lineN - 1) {
         // console.log("run here 1");
-        // // #if _TRACE
-        //   global.outdent;
-        // // #endif
         return EdtrFuncRet.nope;
       }
 
@@ -1999,9 +1981,6 @@ export abstract class EdtrScrolr<
         inlineMidOf,
       );
     }
-    // // #if _TRACE
-    //   global.outdent;
-    // // #endif
     return EdtrFuncRet.caret;
   }
   // /** @see {@linkcode _anchrPrevRow()} */
@@ -2014,7 +1993,8 @@ export abstract class EdtrScrolr<
   // }
   /** @see {@linkcode _focusPrevRow()} */
   private _focusNextRow(rv_x: Ranval, mc_x: Caret): EdtrFuncRet {
-    using rv_ = g_ranval_fac.oneMore().reset(rv_x.focusLidx, rv_x.focusLoff);
+    using rv_ = g_ranval_fac.oneMore()
+      .setRanval(rv_x.focusLidx, rv_x.focusLoff);
     const ret = this._nextRow(rv_, mc_x);
     rv_x.focusLidx = rv_.anchrLidx;
     rv_x.focusLoff = rv_.anchrLoff;
@@ -2612,7 +2592,8 @@ export abstract class EdtrScrolr<
   }
 
   /** @see {@linkcode moveCaretLeft()} */
-  protected undo(mc_x: Caret): EdtrFuncRet {
+  @traceOut(_TRACE)
+  protected undo(_mc_x: Caret): EdtrFuncRet {
     /*#static*/ if (_TRACE) {
       console.log(`${global.indent}>>>>>>> ${this._type_id}.undo() >>>>>>>`);
     }
@@ -2622,17 +2603,17 @@ export abstract class EdtrScrolr<
       this.#composingRepl = undefined;
     }
 
-    const got = this.bufr$.undo();
+    const got = this.bufr$.undo(this.id);
     if (got) {
-      this.#syncAllCaret(true);
+      this.#syncAllCaret();
 
       // this.restoreSel$();
     }
-    /*#static*/ if (_TRACE) global.outdent;
     return got ? EdtrFuncRet.caret : EdtrFuncRet.nope;
   }
   /** @see {@linkcode moveCaretLeft()} */
-  protected redo(mc_x: Caret) {
+  @traceOut(_TRACE)
+  protected redo(_mc_x: Caret) {
     /*#static*/ if (_TRACE) {
       console.log(`${global.indent}>>>>>>> ${this._type_id}.redo() >>>>>>>`);
     }
@@ -2642,13 +2623,12 @@ export abstract class EdtrScrolr<
       this.#composingRepl = undefined;
     }
 
-    const got = this.bufr$.redo();
+    const got = this.bufr$.redo(this.id);
     if (got) {
-      this.#syncAllCaret(true);
+      this.#syncAllCaret();
 
       // this.restoreSel$();
     }
-    /*#static*/ if (_TRACE) global.outdent;
     return got ? EdtrFuncRet.caret : EdtrFuncRet.nope;
   }
 
@@ -2758,19 +2738,18 @@ export abstract class EdtrScrolr<
    * @final
    * @const @param uchr_x
    */
-  protected insertUChr$(uchr_x: UChr) {
+  @traceOut(_TRACE && EDITOR)
+  protected insertUChr$(uchr_x: UChr): void {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
         `${global.indent}>>>>>>> ${this._type_id}.insertUChr$( "${uchr_x}" ) >>>>>>>`,
       );
     }
     const rv_ = this.getRanvalBy$(this.proactiveCaret.eran!);
-    this.bufr$.Do(rv_, uchr_x);
+    this.bufr$.Do(rv_, uchr_x, this.id);
     this.#syncAllCaret();
 
     // this.restoreSel$();
-    /*#static*/ if (_TRACE && EDITOR) global.outdent;
-    return;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 

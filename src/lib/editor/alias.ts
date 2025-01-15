@@ -15,6 +15,12 @@ export const enum EdtrType {
   mdext_rich,
 }
 
+export const enum Endpt {
+  focus = 1,
+  anchr,
+}
+/*80--------------------------------------------------------------------------*/
+
 /* Stacking context: EdtrBaseScrolr */
 export const Imevu_z = 20; //jjjj TOCHECK
 export const Ovlap_proactive_z = 14; //jjjj TOCHECK

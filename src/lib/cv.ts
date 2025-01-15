@@ -11,9 +11,7 @@ import { $vuu } from "./symbols.ts";
 import type { ReportedError } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
-/**
- * Inwards API, i.e., API called from outside of `Coo`.
- */
+/** Inwards API, i.e., API called from outside of `Coo`. */
 export interface CooInterface {
   reportError?(error: unknown): void | Promise<void>;
 }
@@ -109,9 +107,7 @@ export abstract class Vuu<C extends Coo = Coo, E extends Element = Element> {
     return node?.[$vuu];
   }
 
-  /**
-   * @headconst @param node_x
-   */
+  /** @headconst @param node_x */
   static of(node_x: Node): Vuu | undefined {
     let node: Node | null = node_x;
     while (node && !node[$vuu]) node = node.parentNode;
@@ -234,9 +230,7 @@ export class SVGVuu<C extends Coo = Coo, E extends SVGElement = SVGElement>
   }
 }
 
-/**
- * It is a `Coo` functionally.
- */
+/** It is a `Coo` functionally. */
 export interface HTMLVCo<
   CI extends CooInterface = CooInterface,
   E extends HTMLElement = HTMLElement,
@@ -251,9 +245,7 @@ export abstract class HTMLVCo<CI extends CooInterface, E extends HTMLElement>
     return this.#ci;
   }
 
-  /**
-   * @headconst @param el_x
-   */
+  /** @headconst @param el_x */
   constructor(el_x: E) {
     super(undefined as any, el_x);
     this.coo$ = this;
@@ -280,9 +272,7 @@ export abstract class SVGVCo<CI extends CooInterface, E extends SVGElement>
     return this.#ci;
   }
 
-  /**
-   * @headconst @param el_x
-   */
+  /** @headconst @param el_x */
   constructor(el_x: E) {
     super(undefined as any, el_x);
     this.coo$ = this;

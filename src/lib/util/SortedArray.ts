@@ -83,7 +83,7 @@ export class SortedArray<T> extends Array<T> {
     this.#less = less_x;
   }
 
-  reset(): this {
+  resetSortedArray(): this {
     this.length = 0;
     this.#index = 0; //!
     this.#tmp_a = undefined;

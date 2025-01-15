@@ -108,8 +108,8 @@ export class HTMLBlock extends Block {
     // this.#l1stText = l1stText_x;
   }
 
-  override reset(): this {
-    super.reset();
+  override resetBlock(): this {
+    super.resetBlock();
     this.#chunkTk_a.length = 0;
     return this;
   }

@@ -30,11 +30,12 @@ export interface EdtrBaseCI extends CooInterface {
   get writingMode(): WritingMode;
   get scrolr(): EdtrBaseScrolr;
 
-  /**
-   * `in( this.el$.isConnected )`
-   * @final
-   */
-  refresh(): void;
+  //jjjj TOCLEANUP
+  // /**
+  //  * `in( this.el$.isConnected )`
+  //  * @final
+  //  */
+  // refreshEdtrScronr(): void;
 
   // onRanvalChange(
   //   handler_x: MooHandler<Ranval>,
@@ -90,6 +91,14 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
     return this.#scronr?.writingMode ?? this.#writingMode;
   }
 
+  #lastView_ts = 0 as ts_t;
+  get lastView_ts() {
+    return this.#lastView_ts;
+  }
+  updateLastViewTs(): ts_t {
+    return this.#lastView_ts = Date.now_1();
+  }
+
   /** */
   constructor() {
     super(div());
@@ -101,9 +110,15 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
       this.el$.id = this._type_id;
     }
 
-    Object.assign(this.ci, {
-      refresh: () => this._refresh(),
-    } as EdtrBaseCI);
+    /* Some common settings here. May be overridden by `style$()`. */
+    this.assignStylo({
+      lineBreak: "loose",
+    });
+
+    //jjjj TOCLEANUP
+    // Object.assign(this.ci, {
+    //   refreshEdtrScronr: () => this._refreshEdtrScronr(),
+    // } as EdtrBaseCI);
     Reflect.defineProperty(this.ci, "writingMode_mo", {
       get: () => this._writingMode_mo,
     });
@@ -131,15 +146,17 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
       this.#scronr.el,
     );
 
-    this._writingMode_mo.set(this.#writingMode)
-      .registHandler((n_y) => {
+    this._writingMode_mo.setMoo(this.#writingMode)
+      .registHandler(() => {
         this.scrolr$
           .invalidate_bcr()
           .refreshCarets();
       }, { i: LastCb_i });
     this.#scronr.syncLayout();
 
-    new ResizeObserver(this.#scronr.refresh).observe(this.scrolr$.main_el);
+    new ResizeObserver(this.#scronr.refreshScronr).observe(
+      this.scrolr$.main_el,
+    );
 
     /*#static*/ if (DEV) this.#scronr.observeTheme(); //!
 
@@ -162,7 +179,7 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
       ? WritingMode.vlr
       : WritingMode.htb;
     if (this.#inited) {
-      this.#scronr.writingMode_mo.set(this.#writingMode);
+      this.#scronr.writingMode_mo.setMoo(this.#writingMode);
       this.#scronr.syncLayout();
     }
 
@@ -176,8 +193,15 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
    * `in( this.el$.isConnected )`
    * @final
    */
-  _refresh() {
-    this.#scronr.refresh();
+  _refreshEdtrScronr() {
+    this.#scronr.refreshScronr();
+  }
+
+  /** @final */
+  _refreshEdtr(): this {
+    this.scrolr$.refreshEdtrScrolr()
+      .coo._refreshEdtrScronr();
+    return this;
   }
 }
 /*64----------------------------------------------------------*/
@@ -253,7 +277,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
     if (!this.#bcr) {
       this.#bcr = this.el$.getBoundingClientRect();
 
-      this.bufr$.updateLastViewTs(); //!
+      this.coo$.updateLastViewTs(); //!
     }
     return this.#bcr;
   }
@@ -320,7 +344,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
     }
   }
 
-  readonly active_mo = new Moo({ val: false });
+  readonly active_mo = new Moo({ val: false, info: this as EdtrBaseScrolr });
   get active() {
     return this.active_mo.val;
   }
@@ -353,8 +377,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
 
       autocomplete: "off",
       autocorrect: "off",
-    });
-    this.assignStylo({
+    }).assignStylo({
       position: "relative",
       // zIndex: 0,
       isolation: "isolate", //!
@@ -364,10 +387,10 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
       // backgroundColor: "#fff",
       outlineStyle: "none",
 
-      whiteSpace: "break-spaces",
+      whiteSpace: "break-spaces", // Ref. https://stackoverflow.com/questions/64699828/css-property-white-space-example-for-break-spaces
       // wordBreak: "break-all",
       // overflowWrap: "anywhere",
-      lineBreak: "anywhere",
+      // lineBreak: "loose",
       // fontFamily: fontFamily_x,
       // fontSize: fontSize_x,
 
@@ -445,7 +468,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
    * `in( this.el$.isConnected )`
    * @final
    */
-  reset(): this {
+  resetEdtrBaseScrolr(): this {
     this.main_el.removeAllChild();
     this.eline_m.clear();
     return this;
@@ -631,11 +654,14 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
   }
 
   /**
-   * Can be useful after images loaded or errored asyc'ly
+   * `refreshCarets()` vs `refresh()` is in essence
+   * `Caret.draw_$()` vs `Caret.shadowShow()`, where `draw_$()` does not care
+   * about show-hide-things, nor does it update `Caret.#eran` or
+   * `Caret.#fat_eran`.
    * @final
    */
   refreshCarets() {
-    /* In reverse order to make sure that the main caret is handled last */
+    /* In reverse order to make sure that the main caret is handled lastly */
     for (let i = this.caret_a$.length; i--;) {
       const caret = this.caret_a$[i];
       if (caret.active && caret.shown) {
@@ -660,8 +686,36 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
     /*#static*/ if (_TRACE && RESIZ) global.outdent;
     return;
   };
-  _onResiz() {
-    return this.#onResiz();
+  // _onResiz_() {
+  //   return this.#onResiz();
+  // }
+
+  /**
+   * Cf. {@linkcode refreshCarets()}\
+   * `in( this.el$.isConnected )`
+   * @final
+   */
+  refreshEdtrScrolr(): this {
+    // /*#static*/ if (_TRACE) {
+    //   console.log(`${global.indent}>>>>>>> ${this._type_id}.refresh() >>>>>>>`);
+    // }
+    // this.reset$();
+
+    // createSetELines(this, this.bufr$.frstLine, this.bufr$.lastLine);
+    // /*#static*/ if (DEV) {
+    //   ++count.newVuu;
+    // }
+    // this.bufr$.refresh();
+
+    for (const caret of this.caret_a$) {
+      if (caret.realBody?.shown) {
+        caret.shadowShow();
+      } else {
+        caret.hideAll();
+      }
+    }
+    // /*#static*/ if (_TRACE && RESIZ) global.outdent;
+    return this;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
