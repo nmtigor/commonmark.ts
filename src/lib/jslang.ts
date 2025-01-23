@@ -158,12 +158,12 @@ declare global {
      */
     eq(rhs_x: unknown, valve_x?: uint): boolean;
 
-    /**
-     * @const @param ary_x
-     */
+    /** @const @param ary_x */
     fillArray(ary_x: T[]): this;
+    /** @const @param ary_x */
     fillArrayBack(ary_x: T[]): this;
-    become(ary_x: T[]): this;
+    /** @const @param ary_x */
+    becomeArray(ary_x: T[]): this;
 
     swap(i_x: uint, j_x: uint): this;
   }
@@ -224,7 +224,7 @@ Reflect.defineProperty(Array.prototype, "fillArrayBack", {
     return this;
   },
 });
-Reflect.defineProperty(Array.prototype, "become", {
+Reflect.defineProperty(Array.prototype, "becomeArray", {
   value(this: any[], ary_x: any[]) {
     this.length = ary_x.length;
     return this.fillArrayBack(ary_x);
@@ -294,12 +294,12 @@ Number.normalize = (in_x, to_x) => {
   return ret;
 };
 
-Number.prototype.fixTo = function (this: Number, digits = 0) {
+Number.prototype.fixTo = function (this, digits = 0) {
   const mul = 10 ** digits;
   return Math.round(this.valueOf() * mul) / mul;
 };
 
-Number.prototype.reprRatio = function (this: Number, fixTo_x = 2) {
+Number.prototype.reprRatio = function (this, fixTo_x = 2) {
   let x_ = this.valueOf();
   const n_ = Number.apxS(x_, 0);
   x_ = Math.abs(x_);
@@ -493,7 +493,7 @@ declare global {
   }
 }
 
-Date.prototype.myformat = function (this: Date): string {
+Date.prototype.myformat = function (this): string {
   // let month_s;
   // switch( this.getMonth() )
   // {
@@ -534,7 +534,7 @@ Date.prototype.myformat = function (this: Date): string {
   ].join(" ");
 };
 
-Date.prototype.getShiChen = function (this: Date) {
+Date.prototype.getShiChen = function (this) {
   switch (this.getHours()) {
     case 23:
     case 0:

@@ -6,6 +6,7 @@
 import { LOG_cssc } from "../../alias.ts";
 import { INOUT, PRF, space } from "../../global.ts";
 import type { id_t, lnum_t, loff_t, uint } from "../alias.ts";
+import { Endpt } from "../editor/alias.ts";
 import { Factory } from "../util/Factory.ts";
 import { assert, out } from "../util/trace.ts";
 import type { Bufr } from "./Bufr.ts";
@@ -149,14 +150,12 @@ export class Ran {
 
   /**
    * @final
-   * @headconst @param bufr_x
    * @const @param rv_x
    */
-  setByRanval(bufr_x: Bufr, rv_x: Ranval): this {
-    return this.setRan(
-      Loc.create(bufr_x, rv_x.anchrLidx, rv_x.anchrLoff),
-      Loc.create(bufr_x, rv_x.focusLidx, rv_x.focusLoff),
-    );
+  setByRanval(rv_x: Ranval): this {
+    this.strtLoc$.setLoc_O(rv_x.anchrLidx, rv_x.anchrLoff);
+    this.stopLoc$.setLoc_O(rv_x.focusLidx, rv_x.focusLoff);
+    return this.setRan(this.strtLoc$, this.stopLoc$);
   }
 
   /**
@@ -181,7 +180,7 @@ export class Ran {
    * @final
    * @const
    */
-  using() {
+  usingDup() {
     return g_ran_fac.setBufr(this.bufr!).oneMore().becomeRan(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -332,8 +331,8 @@ export class Ran {
 
   /** @out @param ret_x */
   toRanval(ret_x?: Ranval): Ranval {
-    ret_x = this.strtLoc$.toRanval(ret_x, 2);
-    this.stopLoc$.toRanval(ret_x, 0);
+    ret_x = this.strtLoc$.toRanval(ret_x, Endpt.anchr);
+    this.stopLoc$.toRanval(ret_x, Endpt.focus);
     return ret_x;
   }
   get _rv() {

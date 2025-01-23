@@ -426,7 +426,9 @@ export type HSElement = HTMLElement | SVGElement;
 
 declare global {
   interface DOMRect {
+    apxEq(_x: DOMRect): boolean;
     contain(x_x: number, y_x: number): boolean;
+    toString(): string;
 
     [$ovlap]: boolean;
   }
@@ -443,9 +445,26 @@ declare global {
 }
 
 if (globalThis.DOMRect) {
+  DOMRect.prototype.apxEq = function (this, _x) {
+    return this === _x ||
+      Number.apxE(this.left, _x.left) &&
+        Number.apxE(this.top, _x.top) &&
+        Number.apxE(this.height, _x.height) &&
+        Number.apxE(this.width, _x.width);
+  };
+
   DOMRect.prototype.contain = function (this, x_x, y_x) {
     return this.left <= x_x && x_x < this.right &&
       this.top <= y_x && y_x < this.bottom;
+  };
+
+  DOMRect.prototype.toString = function (this) {
+    return [
+      `left: ${this.left.fixTo(2)}`,
+      `top: ${this.top.fixTo(2)}`,
+      `height: ${this.height.fixTo(2)}`,
+      `width: ${this.width.fixTo(2)}`,
+    ].join(", ");
   };
 }
 

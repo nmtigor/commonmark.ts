@@ -492,7 +492,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     //jjjj TOCLEANUP
     // const tk_0 = this.#pazr.headBdryClrTk_$ ?? this.frstLexTk;
     const drtStrtLoc = this.#drtStrtLoc!;
-    using poc = loc.using();
+    using poc = loc.usingDup();
     poc.loff = stop_x;
     if (drtStrtLoc.posGE(poc)) {
       this.reusdSnt_sa_$.add_O(snt_a);
@@ -787,7 +787,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
       /* ~ */
 
-      using poc = this.#poc.using();
+      using poc = this.#poc.usingDup();
       /** reATXHeadingMarker = /^#{1,6}(?:[ \t]+|$)/ */
       const lexATXHead = (): boolean => {
         let ucod: uint16;
@@ -820,7 +820,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     () => {
       if (this.#indented) return BlockStrt_.continue;
 
-      using poc = this.#poc.using();
+      using poc = this.#poc.usingDup();
 
       /* In case compiling ... */
       for (const sn of this.#pazr.unrelSn_sa_$) {
@@ -1035,7 +1035,7 @@ export class MdextLexr extends Lexr<MdextTok> {
         return BlockStrt_.continue;
       }
 
-      using poc = this.#poc.using();
+      using poc = this.#poc.usingDup();
 
       /* In case compiling ... */
       for (const snt of this.unrelSnt_sa_$) {
@@ -1097,7 +1097,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     () => {
       if (this.#indented) return BlockStrt_.continue;
 
-      using poc = this.#poc.using();
+      using poc = this.#poc.usingDup();
       const ln_ = poc.line_$;
 
       /* In case compiling ... */
@@ -1200,7 +1200,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     (ctnr_x: Block) => {
       if (this.#indented) return BlockStrt_.continue;
 
-      using poc = this.#poc.using();
+      using poc = this.#poc.usingDup();
       /** ucod of one of  "*", "+", "-", ")", "." */
       let sign = 0 as uint16;
       let mrkrSize: loff_t = 0;
@@ -2019,7 +2019,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     }
     /* ~ */
 
-    using poc = this.#poc.using();
+    using poc = this.#poc.usingDup();
     /** reClosingCodeFence = /^(?:`{3,}|~{3,})(?=[ \t]*$)/ */
     const lexFenceTail = (): boolean => {
       if (this.#indented) return false;
@@ -2131,7 +2131,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     /*#static*/ if (INOUT) {
       assert(outTk_a_x.length === 1);
     }
-    using loc = iloc_x.using();
+    using loc = iloc_x.usingDup();
 
     /** seen "]"? */
     let seen = false;
@@ -2319,7 +2319,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     /*#static*/ if (INOUT) {
       assert(!outTk_a_x.length);
     }
-    using loc = iloc_x.using();
+    using loc = iloc_x.usingDup();
 
     /** seen ">"? */
     let seen: boolean | undefined;
@@ -2449,7 +2449,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     ) return false;
 
     const lastUCod = frstUCod === /* "(" */ 0x28 ? /* ")" */ 0x29 : frstUCod;
-    using loc = iloc_x.using();
+    using loc = iloc_x.usingDup();
 
     /** seen `lastUCod`? */
     let seen = false;
@@ -2538,7 +2538,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     if (iloc_x.ucod !== /* "[" */ 0x5B) return false;
 
     /** Loc for fallback */
-    using loc_fb = iloc_x.using();
+    using loc_fb = iloc_x.usingDup();
 
     const curSnt = iloc_x.curSnt_$;
     if (
@@ -2715,7 +2715,7 @@ export class MdextLexr extends Lexr<MdextTok> {
         const TOK = MdextTok.backtick_string;
         const size_0 = backtickSize(iloc_x);
         const frstTk = iloc_x.setCurTk(this, size_0, TOK);
-        using loc_fb = iloc_x.using();
+        using loc_fb = iloc_x.usingDup();
         let hasTail, size;
         while (
           (hasTail = toNextBacktick()) &&
@@ -2732,7 +2732,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       }
       case /* "*" */ 0x2A:
       case /* "_" */ 0x5F: {
-        using loc = iloc_x.using();
+        using loc = iloc_x.usingDup();
         const prevUCod = loc.atSol
           ? /* "\n" */ 0xA as uint16
           : loc.peek_ucod(-1); //! Use normal `Loc` rather than `ILoc`
@@ -2788,7 +2788,7 @@ export class MdextLexr extends Lexr<MdextTok> {
         break;
       }
       case /* "!" */ 0x21: {
-        using loc = iloc_x.using().forw();
+        using loc = iloc_x.usingDup().forw();
         if (loc.ucod === /* "[" */ 0x5B) {
           /* "!" and "[" must not be seperated. */
           const tk_ = iloc_x.setCurTk(this, 2, MdextTok.bang_bracket);
@@ -2803,7 +2803,7 @@ export class MdextLexr extends Lexr<MdextTok> {
         handled = true;
         break;
       case /* "<" */ 0x3C: {
-        using loc = iloc_x.using().forw();
+        using loc = iloc_x.usingDup().forw();
         if (!linkhead_(loc.ucod)) break;
 
         let s_ = iloc_x.getText();
@@ -3030,7 +3030,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     /* Check to see if we have a link/image */
     let matched = false;
     /** Loc for fallback */
-    using loc_fb = iloc_x.using();
+    using loc_fb = iloc_x.usingDup();
 
     /* Inline link? */
     if (loc_fb.peek_ucod(1) === /* "(" */ 0x28) {
@@ -3147,7 +3147,7 @@ export class MdextLexr extends Lexr<MdextTok> {
       assert(textClozTk!.sntStrtLoc.posE(loc_fb));
     }
 
-    using loc_save = iloc_x.using();
+    using loc_save = iloc_x.usingDup();
     iloc_x.toLoc(loc_fb);
     this.lexEmphasis_$(iloc_x, opener.emphdelims);
     iloc_x.toLoc(loc_save);

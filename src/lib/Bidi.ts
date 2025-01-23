@@ -14,7 +14,7 @@ import { _TRACE, global, INOUT } from "../global.ts";
 import type { Chr, id_t, loff_t, uint, uint8 } from "./alias.ts";
 import { BufrDir, ChrTyp } from "./alias.ts";
 import { canonicalOf, chrTypOf, closingOf, openingOf } from "./loadBidi.ts";
-import { assert, traceOut } from "./util/trace.ts";
+import { assert, out, traceOut } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
 const ISOLATE_INIT = ChrTyp.LRI | ChrTyp.RLI | ChrTyp.FSI;
@@ -985,28 +985,29 @@ export class Bidi {
 
   /** [ 0, #wrap_a.length ) */
   #lastRow: uint | -1 = -1;
+  //jjjj TOCLEANUP
   // get _lastRow() {
   //   return this.#lastRow;
   // }
   /**
-   * `#lastRow` could be changed
-   * @const @param l_x [ 0, #text.length ]
+   * Set `#lastRow`
+   * @const @param v_x [ 0, #text.length ]
    * @return `#lastRow`
    */
-  rowOf(l_x: loff_t) {
+  @out((ret, self: Bidi) => {
+    assert(0 <= ret! && ret! < self.rowN);
+  })
+  rowOf(v_x: loff_t) {
     let ret: uint;
-    for (let r = 0; r < this.rowN; ++r) {
-      if (l_x < this.#wrap_a[r]) {
+    for (let r = 0, rR = this.rowN; r < rR; ++r) {
+      if (v_x < this.#wrap_a[r]) {
         ret = r;
         break;
       }
-      if (l_x === this.#wrap_a[r]) {
+      if (v_x === this.#wrap_a[r]) {
         ret = r + 1 === this.#lastRow ? r + 1 : r;
         break;
       }
-    }
-    /*#static*/ if (INOUT) {
-      assert(0 <= ret! && ret! < this.rowN);
     }
     return this.#lastRow = ret!;
   }
@@ -1031,7 +1032,7 @@ export class Bidi {
   #lrOf(l_x: loff_t): ChrTyp.R | ChrTyp.L {
     return (this.#embedLevels!.levels[l_x] & 1) ? ChrTyp.R : ChrTyp.L;
   }
-  get _lr_a() {
+  get _lr_a_() {
     if (!this.#embedLevels) this.validate();
 
     const ret = new Array<string>(this.#text.length);
@@ -1043,7 +1044,7 @@ export class Bidi {
   /* ~ */
 
   #visul_a: loff_t[] | undefined;
-  get _visul_a() {
+  get _visul_a_() {
     return this.#visul_a;
   }
   /**
@@ -1052,51 +1053,57 @@ export class Bidi {
    * [ 0, #text.length ]
    */
   #lastVisul: loff_t | -1 = -1;
+  //jjjj TOCLEANUP
   // get _lastVisul() {
   //   return this.#lastVisul;
   // }
   /**
-   * `#lastVisul` could be changed
+   * Set `#lastVisul`
    * @const @param l_x [ 0, #text.length ]
-   * @const @param row_x
+  //  * @const @param row_x
    * @return `#lastVisul`
    */
-  #visulOf(l_x: loff_t, row_x: uint): loff_t {
+  #visulOf(l_x: loff_t): loff_t {
     if (!this.#visul_a) this.validate();
 
-    const b_0 = this.#rowStrtOf(row_x), b_1 = this.#wrap_a[row_x];
-    /*#static*/ if (INOUT) {
-      assert(b_0 <= l_x && l_x <= b_1);
-    }
-    let v_0: loff_t, v_1: loff_t;
-    if (l_x === b_1) {
-      if (l_x > b_0) {
-        v_1 = this.#visul_a![l_x - 1] +
-          (this.#lrOf(l_x - 1) === ChrTyp.R ? 0 : 1);
-      } else {
-        v_1 = b_0;
-      }
-      v_0 = v_1;
-    } else {
-      v_0 = this.#visul_a![l_x] + (this.#lrOf(l_x) === ChrTyp.R ? 1 : 0);
-      if (l_x > b_0) {
-        v_1 = this.#visul_a![l_x - 1] +
-          (this.#lrOf(l_x - 1) === ChrTyp.R ? 0 : 1);
-      } else {
-        v_1 = v_0;
-      }
-    }
-    if (v_0 === v_1) {
-      this.#lastVisul = v_0;
-    } else if (v_0 !== this.#lastVisul && v_1 !== this.#lastVisul) {
-      // The right one takes the precedence
-      this.#lastVisul = Math.max(v_0, v_1);
-    }
-    return this.#lastVisul;
+    return this.#lastVisul = this.#visul_a!.at(l_x) ?? this.#text.length;
+
+    //jjjj TOCLEANUP
+    // const b_0 = this.#rowStrtOf(row_x), b_1 = this.#wrap_a[row_x];
+    // /*#static*/ if (INOUT) {
+    //   assert(b_0 <= l_x && l_x <= b_1);
+    // }
+    // let v_0: loff_t, v_1: loff_t;
+    // if (l_x === b_1) {
+    //   if (l_x > b_0) {
+    //     // v_1 = this.#visul_a![l_x - 1] +
+    //     //   (this.#lrOf(l_x - 1) === ChrTyp.R ? 0 : 1);
+    //     v_1 = b_1;
+    //   } else {
+    //     v_1 = b_0;
+    //   }
+    //   v_0 = v_1;
+    // } else {
+    //   // v_0 = this.#visul_a![l_x] + (this.#lrOf(l_x) === ChrTyp.R ? 1 : 0);
+    //   // if (l_x > b_0) {
+    //   //   v_1 = this.#visul_a![l_x - 1] +
+    //   //     (this.#lrOf(l_x - 1) === ChrTyp.R ? 0 : 1);
+    //   // } else {
+    //   //   v_1 = v_0;
+    //   // }
+    //   v_0 = v_1 = this.#visul_a![l_x];
+    // }
+    // if (v_0 === v_1) {
+    //   this.#lastVisul = v_0;
+    // } else if (v_0 !== this.#lastVisul && v_1 !== this.#lastVisul) {
+    //   /* The right one takes the precedence. */
+    //   this.#lastVisul = Math.max(v_0, v_1);
+    // }
+    // return this.#lastVisul;
   }
 
   #logal_a: loff_t[] | undefined;
-  get _logal_a() {
+  get _logal_a_() {
     return this.#logal_a;
   }
   get valid() {
@@ -1105,37 +1112,49 @@ export class Bidi {
   /**
    * `#lastLogal` will not be changed
    * @const @param l_x [ 0, #text.length ]
-   * @const @param row_x
-   * @return [ logal of (0), logal of (1) ] in the visual "x ](0) [(1) x",
+  //jjjj TOCLEANUP
+  //  * @const @param row_x
+   * jjjj @return [ logal of (0), logal of (1) ] in the visual "x ](0) [(1) x",
    */
-  #logalOf(v_x: loff_t, row_x: uint): [loff_t, loff_t] {
+  #logalOf(v_x: loff_t) {
     if (!this.#logal_a) this.validate();
 
-    const ret = new Array(2) as [loff_t, loff_t];
-    const b_0 = this.#rowStrtOf(row_x), b_1 = this.#wrap_a[row_x];
-    /*#static*/ if (INOUT) {
-      assert(b_0 <= v_x && v_x <= b_1);
-    }
-    let l_: loff_t;
-    if (v_x === b_1) {
-      if (v_x > b_0) {
-        l_ = this.#logal_a![v_x - 1];
-        ret[0] = l_ + (this.#lrOf(l_) === ChrTyp.R ? 0 : 1);
-      } else {
-        ret[0] = b_0;
-      }
-      ret[1] = ret[0];
-    } else {
-      l_ = this.#logal_a![v_x];
-      ret[1] = l_ + (this.#lrOf(l_) === ChrTyp.R ? 1 : 0);
-      if (v_x > b_0) {
-        l_ = this.#logal_a![v_x - 1];
-        ret[0] = l_ + (this.#lrOf(l_) === ChrTyp.R ? 0 : 1);
-      } else {
-        ret[0] = ret[1];
-      }
-    }
-    return ret;
+    return this.#logal_a!.at(v_x) ?? this.#text.length;
+
+    //jjjj TOCLEANUP
+    // const ret = new Array(2) as [loff_t, loff_t];
+    // const b_0 = this.#rowStrtOf(row_x), b_1 = this.#wrap_a[row_x];
+    // /*#static*/ if (INOUT) {
+    //   assert(b_0 <= v_x && v_x <= b_1);
+    // }
+    // let l_: loff_t;
+    // if (v_x === b_1) {
+    //   // if (v_x > b_0) {
+    //   //   // l_ = this.#logal_a![v_x - 1];
+    //   //   // ret[0] = l_ + (this.#lrOf(l_) === ChrTyp.R ? 0 : 1);
+    //   //   ret[0] = this.#logal_a![v_x - 1];
+    //   // } else {
+    //   //   ret[0] = b_0;
+    //   // }
+    //   if (row_x + 1 < this.rowN) {
+    //     this.#logalOf(v_x, row_x + 1);
+    //     ret[0] = this.#lastLogal;
+    //   } else {
+    //     ret[0] = this.#text.length;
+    //   }
+    //   ret[1] = ret[0];
+    // } else {
+    //   // l_ = this.#logal_a![v_x];
+    //   // ret[1] = l_ + (this.#lrOf(l_) === ChrTyp.R ? 1 : 0);
+    //   // if (v_x > b_0) {
+    //   //   l_ = this.#logal_a![v_x - 1];
+    //   //   ret[0] = l_ + (this.#lrOf(l_) === ChrTyp.R ? 0 : 1);
+    //   // } else {
+    //   //   ret[0] = ret[1];
+    //   // }
+    //   ret[1] = ret[0] = this.#logal_a![v_x];
+    // }
+    // return ret;
   }
 
   /**
@@ -1148,10 +1167,10 @@ export class Bidi {
     return this.#lastLogal;
   }
 
-  get _lastVL() {
+  get _lastVL_() {
     return [this.#lastVisul, this.#lastLogal];
   }
-  get _lastRVL() {
+  get _lastRVL_() {
     return [this.#lastRow, this.#lastVisul, this.#lastLogal];
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
@@ -1208,16 +1227,16 @@ export class Bidi {
         i_ = iI;
       }
     }
-    /*#static*/ if (_TRACE) {
-      console.log(`${global.dent}`, [...this.#text]);
-      console.log(`${global.dent}[${this.#wrap_a}]`);
-      console.log(
-        `${global.dent}#embedLevels.levels = [${this.#embedLevels.levels}]`,
-      );
-      console.log(`${global.dent}[${this._lr_a}]`);
-      console.log(`${global.dent}#visul_a = [${this.#visul_a}]`);
-      console.log(`${global.dent}#logal_a = [${this.#logal_a}]`);
-    }
+    // /*#static*/ if (_TRACE) {
+    //   console.log(`${global.dent}`, [...this.#text]);
+    //   console.log(`${global.dent}[${this.#wrap_a}]`);
+    //   console.log(
+    //     `${global.dent}#embedLevels.levels = [${this.#embedLevels.levels}]`,
+    //   );
+    //   console.log(`${global.dent}[${this._lr_a_}]`);
+    //   console.log(`${global.dent}#visul_a = [${this.#visul_a}]`);
+    //   console.log(`${global.dent}#logal_a = [${this.#logal_a}]`);
+    // }
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -1225,108 +1244,134 @@ export class Bidi {
   /**
    * Set `#lastVisul`, `#lastLogal`
    * @const @param v_x [ 0, #text.length ]
-   * @const @param row_x
-   * @rreturn `#lastLogal`
+  //jjjj TOCLEANUP
+  //  * @const @param row_x
+   * @return `#lastLogal`
    */
-  #visulFar(v_x: loff_t, row_x: uint): loff_t {
+  #visulFar(v_x: loff_t): loff_t {
     this.#lastVisul = v_x;
-    const [l_0, l_1] = this.#logalOf(v_x, row_x);
-    if (l_0 === l_1) {
-      this.#lastLogal = l_0;
-    } else if (l_0 !== this.#lastLogal && l_1 !== this.#lastLogal) {
-      // The right one takes the precedence
-      this.#lastLogal = Math.max(l_0, l_1);
-    }
+    this.#lastLogal = this.#logalOf(v_x);
+    //jjjj TOCLEANUP
+    // const [l_0, l_1] = this.#logalOf(v_x, row_x);
+    // if (l_0 === l_1) {
+    //   this.#lastLogal = l_0;
+    // } else if (l_0 !== this.#lastLogal && l_1 !== this.#lastLogal) {
+    //   /* The right one takes the precedence */
+    //   this.#lastLogal = Math.max(l_0, l_1);
+    // }
     return this.#lastLogal;
   }
   /**
    * Set `#lastRow`, `#lastVisul`, `#lastLogal`
    * @const @param row_x
-   * @rreturn `#lastLogal`
+   * @return `#lastLogal`
    */
   visulFarleften(row_x = this.#dir === "rtl" ? this.rowN - 1 : 0): loff_t {
     this.#lastRow = row_x;
-    return this.#visulFar(this.#rowStrtOf(row_x), row_x);
+    return this.#visulFar(this.#rowStrtOf(row_x));
   }
   /** @see {@linkcode visulFarleften()} */
   visulFarrigten(row_x = this.#dir === "rtl" ? 0 : this.rowN - 1): loff_t {
     this.#lastRow = row_x;
-    return this.#visulFar(this.#wrap_a[row_x], row_x);
+    return this.#visulFar(this.#wrap_a[row_x]);
   }
 
   /**
    * Set `#lastRow`, `#lastVisul`, `#lastLogal`
    * @const @param l_x
-   * @return effective or not
-   *    Not to checking whether `#lastLogal`, `#lastVisul`, `#lastRow` are
-   *    changed, because there are effective cases that all of them are
-   *    unchanged.
+   * @return effective or not\
+   *    Not check whether `#lastLogal`, `#lastVisul`, `#lastRow` are changed,
+   *    because there are effective cases that all of them are unchanged.
    */
   visulLeften(l_x: loff_t): boolean {
-    const row = this.rowOf(l_x);
-    this.#visulOf(l_x, row);
-    if (this.#lastVisul === this.#rowStrtOf(row)) {
+    //jjjj TOCLEANUP
+    // assert(valve_x--, "Cycle call!");
+    const vis = this.#visulOf(l_x);
+    const row = this.rowOf(vis);
+    if (vis === this.#rowStrtOf(row)) {
       if (this.#dir === "rtl") {
         if (row === this.rowN - 1) {
-          // this.visulFarleften();
+          //jjjj TOCLEANUP
+          // if (this.#lastLogal !== this.#text.length) {
+          //   this.#lastLogal = this.#text.length;
+          //   return true;
+          // } else {
           return false;
+          // }
         } else {
           this.visulFarrigten(row + 1);
+          //jjjj TOCLEANUP
+          // this.visulLeften(this.#lastLogal, valve_x);
           return true;
         }
       } else {
         if (row === 0) {
-          // this.visulFarleften();
           return false;
         } else {
           this.visulFarrigten(row - 1);
+          //jjjj TOCLEANUP
+          // this.visulLeften(this.#lastLogal, valve_x);
           return true;
         }
       }
     }
 
-    let [l_0, l_1] = this.#logalOf(this.#lastVisul, row);
-    if (l_0 === l_1 || l_0 === this.#lastLogal) {
-      this.#lastVisul -= 1;
-      [l_0, l_1] = this.#logalOf(this.#lastVisul, row);
-      this.#lastLogal = l_1;
-    } else {
-      this.#lastLogal = l_0;
-    }
+    //jjjj TOCLEANUP
+    // let [l_0, l_1] = this.#logalOf(this.#lastVisul, row);
+    // if (l_0 === l_1 || l_0 === this.#lastLogal) {
+    //   this.#lastVisul -= 1;
+    //   [l_0, l_1] = this.#logalOf(this.#lastVisul, row);
+    //   this.#lastLogal = l_1;
+    // } else {
+    //   this.#lastLogal = l_0;
+    // }
+    this.#lastLogal = this.#logalOf(--this.#lastVisul);
     return true;
   }
   /** @see {@linkcode visulLeften()} */
   visulRigten(l_x: loff_t): boolean {
-    const row = this.rowOf(l_x);
-    this.#visulOf(l_x, row);
-    if (this.#lastVisul === this.#wrap_a[row]) {
+    //jjjj TOCLEANUP
+    // assert(valve_x--, "Cycle call!");
+    const vis = this.#visulOf(l_x);
+    const row = this.rowOf(vis);
+    if (vis === this.#wrap_a[row]) {
       if (this.#dir === "rtl") {
         if (row === 0) {
-          // this.visulFarrigten();
           return false;
         } else {
           this.visulFarleften(row - 1);
+          //jjjj TOCLEANUP
+          // this.visulRigten(this.#lastLogal, valve_x);
           return true;
         }
       } else {
         if (row === this.rowN - 1) {
-          // this.visulFarrigten();
+          //jjjj TOCLEANUP
+          // if (this.#lastLogal !== this.#text.length) {
+          //   this.#lastLogal = this.#text.length;
+          //   return true;
+          // } else {
           return false;
+          // }
         } else {
           this.visulFarleften(row + 1);
+          //jjjj TOCLEANUP
+          // this.visulRigten(this.#lastLogal, valve_x);
           return true;
         }
       }
     }
 
-    let [l_0, l_1] = this.#logalOf(this.#lastVisul, row);
-    if (l_0 === l_1 || l_1 === this.#lastLogal) {
-      this.#lastVisul += 1;
-      [l_0, l_1] = this.#logalOf(this.#lastVisul, row);
-      this.#lastLogal = l_0;
-    } else {
-      this.#lastLogal = l_1;
-    }
+    //jjjj TOCLEANUP
+    // let [l_0, l_1] = this.#logalOf(this.#lastVisul, row);
+    // if (l_0 === l_1 || l_1 === this.#lastLogal) {
+    //   this.#lastVisul += 1;
+    //   [l_0, l_1] = this.#logalOf(this.#lastVisul, row);
+    //   this.#lastLogal = l_0;
+    // } else {
+    //   this.#lastLogal = l_1;
+    // }
+    this.#lastLogal = this.#logalOf(++this.#lastVisul);
     return true;
   }
 }

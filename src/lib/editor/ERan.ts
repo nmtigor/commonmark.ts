@@ -146,7 +146,10 @@ export class ERan {
     return true;
   }
 
-  /** @return `DOMRect` of synchronized `#endpt` */
+  /**
+   * Assign `#endpt` only, and return its `DOMRect`.
+   * @return `DOMRect` of synchronized `#endpt`
+   */
   getRecSync_$(_x = Endpt.focus): DOMRect {
     let ret;
     // assert(this.focusCtnr);
@@ -187,6 +190,7 @@ export class ERan {
   }
 
   /**
+   * Assign `#range` only.\
    * ! Range's start is always ahead of end, otherwise `collapsed`.
    * @return synchronized `#range`
    */

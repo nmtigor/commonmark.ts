@@ -3,6 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import { LOG_cssc } from "@fe-src/alias.ts";
 import { _TRACE, CYPRESS, DEV, EDITOR, global, INOUT } from "../../global.ts";
 import type { id_t, lnum_t, loff_t } from "../alias.ts";
 import { WritingDir } from "../alias.ts";
@@ -16,11 +17,11 @@ import "../jslang.ts";
 import { $ovlap } from "../symbols.ts";
 import { assert, bind, out, traceOut } from "../util/trace.ts";
 import { Caret_passive_z, Caret_proactive_z, Endpt } from "./alias.ts";
-import type { EdtrScrolr } from "./Edtr.ts";
 import type { EdtrBase, EdtrBaseScrolr } from "./EdtrBase.ts";
 import { ELoc } from "./ELoc.ts";
 import { ERan } from "./ERan.ts";
 import { SelecFac } from "./Selec.ts";
+import { genInlineMidOf } from "./util.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type CaretRvM = [proactiveCaret: Caret, ranval_mo: RanvalMo];
@@ -29,6 +30,7 @@ export type CaretRvM = [proactiveCaret: Caret, ranval_mo: RanvalMo];
 export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   static #ID = 0 as id_t;
   override readonly id = ++Caret.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /* Pale */
   #proactiveBg = Pale.get("lib.editor.Caret.proactiveBg");
@@ -60,6 +62,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     this.#passiveFatOl.registCsscHandler(this.#onPassiveFatOlCssc);
   }
   /* ~ */
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   get edtr() {
     return this.coo._scrolr;
@@ -100,8 +103,6 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   }
   /* ~ */
 
-  readonly ranval = new Ranval(0 as lnum_t, 0);
-
   /* #focused */
   /** For main caret only */
   #focused = false;
@@ -128,6 +129,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     /*#static*/ if (_TRACE && EDITOR) global.outdent;
     return;
   }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   //jjjj TOCLEANUP
   // /** Keep (if not undefiend) until `focused = true` */
@@ -136,6 +138,8 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   //   this.#ranval_kept = rv_x;
   // }
   /* ~ */
+
+  readonly ranval = new Ranval(0 as lnum_t, 0);
 
   #eran?: ERan;
   get eran() {
@@ -225,6 +229,15 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
       assert(!this.#shown);
     }
   }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  //jjjj TOCLEANUP
+  // #lastFat?: DOMRect;
+  // #lastSin?: DOMRect;
+  // #focusMoved = false;
+  // get focusMoved() {
+  //   return this.#focusMoved;
+  // }
 
   /* vInline_$ */
   /** Viewport inline within `edtr` to keep */
@@ -384,17 +397,17 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
         `${global.indent}>>>>>>> ${this._type_id}._onRanvalChange([${rv_x}]) >>>>>>>`,
       );
     }
-    this.ranval.become(rv_x);
+    this.ranval.becomeArray(rv_x);
     /*#static*/ if (CYPRESS) {
-      this.el$["cy.any"] = this.ranval.toString();
+      this.el$["cy.any"] = rv_x.toString();
     }
-    this.#eran = this.edtr.getERanBy_$(this.ranval, this.#eran);
+    this.#eran = this.edtr.getERanOf_$(rv_x, this.#eran);
     // if( !this.#eran.focusCtnr.isText ) { this.hide(); return; }
     // console.log(this.#eran);
     using fat_rv = g_ranval_fac.oneMore()
       .setRanval(rv_x.focusLidx, rv_x.focusLoff);
     fat_rv.focusLoff += 1;
-    this.#fat_eran = this.edtr.getERanBy_$(fat_rv, this.#fat_eran);
+    this.#fat_eran = this.edtr.getERanOf_$(fat_rv, this.#fat_eran);
 
     this.draw_$();
 
@@ -421,12 +434,12 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
       assert(this.active);
     }
     const rv_0 = this.#caretrvm![1].val;
-    using rv_ = g_ranval_fac.oneMore().become(rv_0);
-    this.#eran = this.edtr.getERanBy_$(rv_, this.#eran);
+    using rv_u = rv_0.usingDup();
+    this.#eran = this.edtr.getERanOf_$(rv_u, this.#eran);
     using fat_rv = g_ranval_fac.oneMore()
       .setRanval(rv_0.focusLidx, rv_0.focusLoff);
     fat_rv.focusLoff += 1;
-    this.#fat_eran = this.edtr.getERanBy_$(fat_rv, this.#fat_eran);
+    this.#fat_eran = this.edtr.getERanOf_$(fat_rv, this.#fat_eran);
 
     this.draw_$();
 
@@ -555,6 +568,8 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
       assert(this.#eran);
     }
     this.#drawFocus();
+    //jjjj TOCLEANUP
+    // if (this.#focusMoved)
     this.#drawRange();
   }
 
@@ -585,13 +600,14 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     const edtr = this.edtr;
     const wm_ = this.coo._writingMode;
     /**
-     * blockSizei
+     * blockSize
      *
      * ! Firefox does not correctly implement vertical `writingMode` about this.
      */
     const bs_ = wm_ & WritingDir.h ? h_x : w_x;
     /** inlineSize */
     const is_ = Math.clamp(1, bs_ * .1, 5);
+    // console.log(`%crun here: bs_: ${bs_}, is_: ${is_}`, `color:${LOG_cssc.runhere}`);
     // const scrollLeft_save = edtr.el.scrollLeft;
     // const scrollTop_save = edtr.el.scrollTop;
     // const edtrWidth_save = edtr.el.clientWidth;
@@ -663,7 +679,11 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     // }
   }
 
-  /** `in( this.#eran )` */
+  /**
+  //jjjj TOCLEANUP
+  //  * Also assign `#lastFat`, `#lastSin`, `#focusMoved`
+   * `in( this.#eran )`
+   */
   @traceOut(_TRACE && EDITOR)
   #drawFocus() {
     /*#static*/ if (_TRACE && EDITOR) {
@@ -672,28 +692,40 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
       );
     }
     const edtr = this.edtr;
-    // console.log(`${global.dent}vInline_$ = ${this.vInline_$.fixTo(1)}`);
-    const rec = this.#eran!.getRecSync_$();
-    // console.log( rec );
+    const sin = this.#eran!.getRecSync_$();
+    sin.x -= edtr.vpLeft;
+    sin.y -= edtr.vpTop;
+    const fat = this.#fat_eran!.syncRange_$().getBoundingClientRect();
+    fat.x -= edtr.vpLeft;
+    fat.y -= edtr.vpTop;
+    /* In chrome, there are strange cases that `sin.width` is very large, e.g.
+      "abc אמנון" with `rv_x` being "[0-4,0-5)". */
+    if (Number.apxG(sin.width, fat.width)) sin.width = 0;
+    if (Number.apxG(sin.height, fat.height)) sin.height = 0;
+    /* ~ */
+
+    //jjjj TOCLEANUP
+    // this.#focusMoved = !this.#lastFat || !this.#lastSin ||
+    //   !this.#lastFat.apxE(fat) ||
+    //   !Number.apxE(this.#lastSin.left, sin.left) ||
+    //   !Number.apxE(this.#lastSin.top, sin.top);
+    // if (!this.#focusMoved) return;
+    // this.#lastFat = fat;
+    // this.#lastSin = sin;
+    // // console.log(`${global.dent}🚀 ~ Caret ~ #drawFocus ~ fat: ${fat}`);
+    // // console.log(`${global.dent}🚀 ~ Caret ~ #drawFocus ~ sin: ${sin}`);
+
     this.#setPosSiz(
       this.el$,
-      rec.left - edtr.vpLeft,
-      rec.top - edtr.vpTop,
-      rec.width,
-      rec.height,
-      // rec[$ovlap],
+      sin.left,
+      sin.top,
+      sin.width,
+      sin.height,
+      // sin[$ovlap],
     );
-    // const rec1 = this.#eran.getRecSync_$();
-    // if( rec1.left !== rec.left || rec1.top !== rec.top )
-    // {
-    //   console.log( {rec,rec1} );
-    // }
-
-    const range = this.#fat_eran!.syncRange_$();
-    const fat = range.getBoundingClientRect();
     this.#fat_el.assignStylo({
-      top: `${fat.top - edtr.vpTop}px`,
-      left: `${fat.left - edtr.vpLeft}px`,
+      top: `${fat.top}px`,
+      left: `${fat.left}px`,
       zIndex: this.#zCssc,
 
       width: `${fat.width}px`,
@@ -702,17 +734,10 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     });
 
     if (!this.keepVLInlineOnce_$) {
-      // this.vInline_$ = edtr.writingMode & WritingDir.h
-      //   ? rec.left - edtr.vpLeft
-      //   : rec.top - edtr.vpTop;
-      /* It's better to use midpoint because `EdtrScrolr.prevRow()`,
-      EdtrScrolr._nextRow()` use midpoints. */
-      this.vInline_$ = this.coo._writingMode & WritingDir.h
-        ? (fat.left + fat.right) / 2 - edtr.vpLeft
-        : (fat.top + fat.bottom) / 2 - edtr.vpTop;
+      this.vInline_$ = genInlineMidOf(this.coo._writingMode)(sin);
+      // console.log("🚀 ~ Caret ~ #drawFocus ~ vInline_$:", this.vInline_$);
     }
     this.keepVLInlineOnce_$ = false;
-    // console.log(`${global.dent}vInline_$ = ${this.vInline_$.fixTo(1)}`);
   }
 
   /** `in( this.#eran )` */

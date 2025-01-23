@@ -410,8 +410,8 @@ export class ILoc extends TokLoc<MdextTok> {
       assert(size_t > 0);
     }
     /** @primaryconst */
-    using tkStrtLoc = (strtLoc_x ?? this).using();
-    using tkStopLoc = this.using();
+    using tkStrtLoc = (strtLoc_x ?? this).usingDup();
+    using tkStopLoc = this.usingDup();
     tkStopLoc.loff = tkStrtLoc.loff_$ + size_t;
     let curTk = this.curTk_$;
     let nextTk = curTk.nextToken_$;
@@ -928,7 +928,7 @@ export abstract class InlineBlock extends Block {
   //   if (!(curSnt instanceof Linkdef)) return false;
 
   //   let reusd = false;
-  //   using loc_fb = iloc.using();
+  //   using loc_fb = iloc.usingDup();
   //   if (lexr_x.reusdSnt_sa_$.includes(curSnt)) {
   //     lexr_x.reusdSnt_sa_$.delete(curSnt);
   //     iloc.toSnt("stop");

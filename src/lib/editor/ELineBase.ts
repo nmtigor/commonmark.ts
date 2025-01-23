@@ -20,8 +20,8 @@ import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
 import { g_eran_fac } from "./ERan.ts";
 import { StnodeV } from "./StnodeV.ts";
 import { TextV } from "./TextV.ts";
-import type { BlockOf, Sameline } from "./util.ts";
-import { sameline_bot, sameline_left, sameline_rigt } from "./util.ts";
+import type { BlockOf, SameRow } from "./util.ts";
+import { samerow_bot, samerow_left, samerow_rigt } from "./util.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -154,33 +154,32 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     }
     const edtr = this.coo;
     const bln = this.bline_$;
-    using rv_ = g_ranval_fac.oneMore().setRanval(bln.lidx_1, 0);
-    using eran = g_eran_fac.oneMore();
-    let rec = edtr._scrolr.anchrRecOf_$(rv_, eran);
+    using rv_u = g_ranval_fac.oneMore().setRanval(bln.lidx_1, 0);
+    let fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
     const LEN = bln.uchrLen;
     this.#wrap_a.length = 0;
-    const impl_ = (blockOf_y: BlockOf, sameline_y: Sameline) => {
-      let block_0 = blockOf_y(rec);
+    const impl_ = (blockOf_y: BlockOf, sameline_y: SameRow) => {
+      let block_0 = blockOf_y(fsrec.fat);
       // const _a_ = [];
       for (let i = 1; i < LEN; ++i) {
-        rv_.anchrLoff = i;
-        rec = edtr._scrolr.anchrRecOf_$(rv_, eran);
-        // _a_.push(rec.top.fixTo(1));
-        if (sameline_y(rec, block_0)) continue;
+        rv_u.anchrLoff = i;
+        fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
+        // _a_.push(fsrec.top.fixTo(1));
+        if (sameline_y(fsrec.fat, block_0)) continue;
 
-        this.#wrap_a.push(rv_.anchrLoff);
-        block_0 = blockOf_y(rec);
+        this.#wrap_a.push(rv_u.anchrLoff);
+        block_0 = blockOf_y(fsrec.fat);
       }
     };
     /* final switch */ ({
       [WritingMode.htb]: () => {
-        impl_((rec_z) => rec_z.bottom, sameline_bot);
+        impl_((rec_z) => rec_z.bottom, samerow_bot);
       },
       [WritingMode.vrl]: () => {
-        impl_((rec_z) => rec_z.left, sameline_left);
+        impl_((rec_z) => rec_z.left, samerow_left);
       },
       [WritingMode.vlr]: () => {
-        impl_((rec_z) => rec_z.right, sameline_rigt);
+        impl_((rec_z) => rec_z.right, samerow_rigt);
       },
     }[edtr._writingMode])();
     this.#wrap_a.push(LEN);

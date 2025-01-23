@@ -119,12 +119,14 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
 
   #focusLoc: TokLoc<T> | undefined;
   /**
-   * @out @headconst @param rv_x `rv_x.focusLidx`, `rv_x.focusLoff` will be corrected
-   * @return `#focusLoc`
+   * @out @param rv_x `focusLidx`, `focusLoff` will be corrected
+   * @return `#focusLoc`,
+   *    so suggest to `.usingDup()` it to prevent being affected by further
+   *    calls of `getFocusLoc()`.
    */
   getFocusLoc(rv_x: Ranval): TokLoc<T> {
     if (this.#focusLoc) {
-      this.#focusLoc.set_O(rv_x.focusLidx, rv_x.focusLoff, this);
+      this.#focusLoc.setLoc_O(rv_x.focusLidx, rv_x.focusLoff, this);
     } else {
       this.#focusLoc = TokLoc.create(this, rv_x.focusLidx, rv_x.focusLoff);
     }
@@ -134,12 +136,14 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
   }
   #anchrLoc: TokLoc<T> | undefined;
   /**
-   * @out @headconst @param rv_x `rv_x.anchrLidx`, `rv_x.anchrLoff` will be corrected
-   * @return `#anchrLoc`
+   * @out @param rv_x `anchrLidx`, `anchrLoff` will be corrected
+   * @return `#anchrLoc`,
+   *    so suggest to `.usingDup()` it to prevent being affected by further
+   *    calls of `getAnchrLoc()`.
    */
   getAnchrLoc(rv_x: Ranval): TokLoc<T> {
     if (this.#anchrLoc) {
-      this.#anchrLoc.set_O(rv_x.anchrLidx, rv_x.anchrLoff, this);
+      this.#anchrLoc.setLoc_O(rv_x.anchrLidx, rv_x.anchrLoff, this);
     } else {
       this.#anchrLoc = TokLoc.create(this, rv_x.anchrLidx, rv_x.anchrLoff);
     }

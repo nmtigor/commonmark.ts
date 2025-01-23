@@ -35,7 +35,7 @@ export class Bufr {
   get _type_id() {
     return `${this.constructor.name}_${this.id}`;
   }
-  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /* dir_mo */
   readonly dir_mo = new Moo({ val: BufrDir.ltr, active: true });
@@ -439,13 +439,13 @@ export class Bufr {
     const doState_save = this.#doState;
     this.#doState = BufrDoState.doing;
 
-    using rv_ = g_ranval_fac.oneMore();
-    rv_.anchrLidx = 0 as lnum_t;
-    rv_.anchrLoff = 0;
-    rv_.focusLidx = this.lastLine_$.lidx_1;
-    rv_.focusLoff = this.lastLine_$.uchrLen;
+    using rv_u = g_ranval_fac.oneMore();
+    rv_u.anchrLidx = 0 as lnum_t;
+    rv_u.anchrLoff = 0;
+    rv_u.focusLidx = this.lastLine_$.lidx_1;
+    rv_u.focusLoff = this.lastLine_$.uchrLen;
 
-    new Repl(this, rv_, text_x ?? this.getTexta()).replFRun();
+    new Repl(this, rv_u, text_x ?? this.getTexta()).replFRun();
 
     this.#doState = doState_save;
   }

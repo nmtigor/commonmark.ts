@@ -6,13 +6,20 @@
 import { LOG_cssc } from "../../alias.ts";
 import { PRF } from "../../global.ts";
 import { Moo, type MooEq } from "../Moo.ts";
-import type { lnum_t, loff_t } from "../alias.ts";
+import type { id_t, lnum_t, loff_t } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
-import type { Ran } from "./Ran.ts";
+import type { Bufr } from "./Bufr.ts";
+import type { Loc } from "./Loc.ts";
+import { g_ran_fac, type Ran } from "./Ran.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
 export class Ranval extends Array<lnum_t | loff_t> {
+  /* Adding `id` needs to change comparisons in "Repl_test.ts" correspondingly. */
+  // static #ID = 0 as id_t;
+  // readonly id = ++Ranval.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
   // override readonly length = 4; // TypeError: Cannot redefine property: length
 
   get focusLidx() {
@@ -53,15 +60,28 @@ export class Ranval extends Array<lnum_t | loff_t> {
     this[1] = _1 === undefined ? _3 : _1;
     return this;
   }
-
-  /** @primaryconst @param _x */
-  setByRan(_x: Ran): this {
+  /** @primaryconst @param ran_x */
+  setByRan(ran_x: Ran): this {
     return this.setRanval(
-      _x.frstLine.lidx_1,
-      _x.strtLoff,
-      _x.lastLine.lidx_1,
-      _x.stopLoff,
+      ran_x.frstLine.lidx_1,
+      ran_x.strtLoff,
+      ran_x.lastLine.lidx_1,
+      ran_x.stopLoff,
     );
+  }
+  /** @primaryconst @param loc_x */
+  setFocus(loc_x: Loc, collapse_x?: "collapse"): this {
+    this[0] = loc_x.line_$.lidx_1;
+    this[1] = loc_x.loff_$;
+    if (collapse_x) this.collapseToFocus();
+    return this;
+  }
+  /** @primaryconst @param loc_x */
+  setAnchr(loc_x: Loc, collapse_x?: "collapse"): this {
+    this[2] = loc_x.line_$.lidx_1;
+    this[3] = loc_x.loff_$;
+    if (collapse_x) this.collapseToAnchr();
+    return this;
   }
 
   /** @const */
@@ -71,6 +91,14 @@ export class Ranval extends Array<lnum_t | loff_t> {
 
   [Symbol.dispose]() {
     g_ranval_fac.revoke(this);
+  }
+
+  /**
+   * @final
+   * @const
+   */
+  usingDup() {
+    return g_ranval_fac.oneMore().becomeArray(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -87,21 +115,21 @@ export class Ranval extends Array<lnum_t | loff_t> {
     return this.order === 0;
   }
 
-  collapseToFocus(): void {
+  collapseToFocus(): this {
     this[2] = this[0];
     this[3] = this[1];
+    return this;
   }
-  collapseToAnchr(): void {
+  collapseToAnchr(): this {
     this[0] = this[2];
     this[1] = this[3];
+    return this;
   }
-  collapseToHead(): void {
-    if (this.order > 0) this.collapseToFocus();
-    else this.collapseToAnchr();
+  collapseToHead(): this {
+    return this.order > 0 ? this.collapseToFocus() : this.collapseToAnchr();
   }
-  collapseToTail(): void {
-    if (this.order < 0) this.collapseToFocus();
-    else this.collapseToAnchr();
+  collapseToTail(): this {
+    return this.order < 0 ? this.collapseToFocus() : this.collapseToAnchr();
   }
 
   override reverse(): this {
@@ -112,6 +140,12 @@ export class Ranval extends Array<lnum_t | loff_t> {
     this[1] = this[3];
     this[3] = t_;
     return this;
+  }
+
+  /** @headconst @param bufr_x  */
+  getTextFrom(bufr_x: Bufr) {
+    using ran_u = g_ran_fac.setBufr(bufr_x).oneMore().setByRanval(this);
+    return ran_u.getText();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

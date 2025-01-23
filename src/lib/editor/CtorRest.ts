@@ -59,7 +59,7 @@ export class CtorRest {
   dnenRest(rest_x: ReplRest): void {
     if (!this.#rest) return;
 
-    rest_x.become(this.#rest);
+    rest_x.becomeArray(this.#rest);
     if (this.#rest.at(-1)) {
       this.#rest = this.#rest.at(-1) as ReplRest;
     } else {

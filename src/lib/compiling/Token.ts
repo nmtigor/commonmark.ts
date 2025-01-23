@@ -50,7 +50,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     // this.syncRanval();
 
     this.#oldRanval ??= new Ranval(0 as lnum_t, 0);
-    this.#oldRanval.become(this.ran_$.ranval);
+    this.#oldRanval.becomeArray(this.ran_$.ranval);
   }
   /* ~ */
 

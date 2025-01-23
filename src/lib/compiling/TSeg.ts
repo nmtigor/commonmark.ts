@@ -233,9 +233,9 @@ export class TSeg {
     // const next = this.nextTSeg_$;
     this.reset_$();
 
-    this.strtLoc.set_O(lidx_0_x, loff_0_x);
-    this.stopLoc.set_O(lidx_0_x, loff_0_x + length_x);
-    this.#tloc.set_O(lidx_1_x, loff_1_x);
+    this.strtLoc.setLoc_O(lidx_0_x, loff_0_x);
+    this.stopLoc.setLoc_O(lidx_0_x, loff_0_x + length_x);
+    this.#tloc.setLoc_O(lidx_1_x, loff_1_x);
 
     this.#correct_line_tseg();
     // if( prev ) this.linkPrev( prev );

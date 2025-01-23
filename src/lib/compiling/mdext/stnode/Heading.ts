@@ -240,7 +240,7 @@ export class SetextHeading extends Heading {
 
   constructor(para_x: Paragraph, tailTk_x: MdextTk) {
     super();
-    this.snt_a_$.become(para_x.snt_a_$);
+    this.snt_a_$.becomeArray(para_x.snt_a_$);
     this.#tailTk = tailTk_x;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/

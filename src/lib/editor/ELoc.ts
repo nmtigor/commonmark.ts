@@ -14,7 +14,7 @@ export class ELoc {
 
   ctnr_$: Node;
   /**
-   * ! In logical ordering rather than visual ordering
+   * ! in logical ordering rather than visual ordering
    */
   offs_$: uint;
   get loff(): loff_t {

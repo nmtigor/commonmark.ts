@@ -108,8 +108,8 @@ export class Repl {
       );
       this.#replText_a2 = Array.from({ length: rv_x.length }, () => []);
     }
-    using rv_ = g_ranval_fac.oneMore().setRanval(0 as lnum_t, 0);
-    this.#tmpRan = Ran.create(this.#bufr, rv_);
+    using rv_u = g_ranval_fac.oneMore().setRanval(0 as lnum_t, 0);
+    this.#tmpRan = Ran.create(this.#bufr, rv_u);
   }
 
   /**
@@ -251,8 +251,9 @@ export class Repl {
       inRan_a.length = (inRv_x as Ranval[]).length;
 
       for (let i = (inRv_x as Ranval[]).length; i--;) {
-        inRan_a[i] = this.#tmpRan.using()
-          .setByRanval(this.#bufr, (inRv_x as Ranval[])[i]);
+        inRan_a[i] = this.#tmpRan.usingDup().setByRanval(
+          (inRv_x as Ranval[])[i],
+        );
         inRan_a[i].syncRanval_$(); //!
         /*#static*/ if (INOUT) {
           if (inRan_a.at(i + 1)) inRan_a[i].posS(inRan_a[i + 1]);
@@ -261,8 +262,7 @@ export class Repl {
     } else {
       inRan_a.length = 1;
 
-      inRan_a[0] = this.#tmpRan.using()
-        .setByRanval(this.#bufr, inRv_x as Ranval);
+      inRan_a[0] = this.#tmpRan.usingDup().setByRanval(inRv_x as Ranval);
       inRan_a[0].syncRanval_$(); //!
       // const lnN_inRan = inRan.lineN_1;
     }
@@ -314,7 +314,7 @@ export class Repl {
           }
           tailToNext = prevToHead;
         }
-        outRan_a[i] = this.#tmpRan.using();
+        outRan_a[i] = this.#tmpRan.usingDup();
       }
     } else {
       this.#repl_impl(
@@ -327,7 +327,7 @@ export class Repl {
       //   console.log( `outRv_x=${outRv_x.toString()}` );
       //   console.log( outTxt_a_x );
       // // #endif
-      outRan_a[0] = this.#tmpRan.using();
+      outRan_a[0] = this.#tmpRan.usingDup();
       // this.#bufr.dtLineN_$ = this.#bufr.newRan_$.lineN_1 - lnN_inRan;
     }
 
@@ -451,12 +451,12 @@ export class Repl {
         this.#replText_a2_0 ??= this.#replText_a2!.slice();
 
         for (let i = this.#ranval_rev_a!.length; i--;) {
-          this.#ranval_a![i].become(this.#ranval_rev_a![i]);
+          this.#ranval_a![i].becomeArray(this.#ranval_rev_a![i]);
         }
       } else {
         this.#replText_a_0 ??= this.#replText_a!.slice();
 
-        this.#ranval!.become(this.#ranval_rev!);
+        this.#ranval!.becomeArray(this.#ranval_rev!);
       }
       /* ..., then could continue to `this.replFRun(txt_x)` */
 

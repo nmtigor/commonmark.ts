@@ -19,10 +19,10 @@ import { Factory } from "../util/Factory.ts";
 import { SortedArray } from "../util/SortedArray.ts";
 import { assert } from "../util/trace.ts";
 import { Caret, type CaretRvM } from "./Caret.ts";
-import { ELine } from "./ELine.ts";
-import type { ELineBase } from "./ELineBase.ts";
+import { ELineBase } from "./ELineBase.ts";
 import { ERan } from "./ERan.ts";
-import { EdtrMain_z, type EdtrType } from "./alias.ts";
+import type { EdtrType, FSRec } from "./alias.ts";
+import { EdtrMain_z } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 export interface EdtrBaseCI extends CooInterface {
@@ -245,6 +245,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
   extends Scrolr<EdtrBase<CI>> {
   static #ID = 0 as id_t;
   override readonly id = ++EdtrBaseScrolr.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   readonly type: EdtrType;
 
@@ -516,7 +517,7 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
       ctnr = ctnr_a_x[i];
       if (ctnr) {
         // const out_o = {};
-        // const bline = ELine.getBLine( ctnr, out_o );
+        // const bline = ELineBase.getBLine( ctnr, out_o );
         // const offset = out_o.np === NodeInELine.indent ?
         //   ctnr.textContent.length :
         //   bline.uchrLen - out_o.vuu.indent;
@@ -567,8 +568,8 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
     const offs_0 = range.startOffset;
     const offs_1 = range.endOffset;
 
-    const bln_0 = ELine.getBLine(ctnr_0);
-    const bln_1 = ELine.getBLine(ctnr_1);
+    const bln_0 = ELineBase.getBLine(ctnr_0);
+    const bln_1 = ELineBase.getBLine(ctnr_1);
     const bloff_1 = (ctnr_1 as Text).loff(offs_1);
 
     let ctnr = ctnr_0;
@@ -728,38 +729,40 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
    */
   protected getRanvalBy$(eran_x: ERan, ret_x?: Ranval): Ranval {
     ret_x ??= new Ranval(0 as lnum_t, 0);
-    ret_x.focusLidx = ELine.getBLine(eran_x.focusCtnr).lidx_1;
+    ret_x.focusLidx = ELineBase.getBLine(eran_x.focusCtnr).lidx_1;
     ret_x.focusLoff = eran_x.focusLoff;
     if (eran_x.collapsed) {
       ret_x.collapseToFocus();
     } else {
-      ret_x.anchrLidx = ELine.getBLine(eran_x.anchrCtnr).lidx_1;
+      ret_x.anchrLidx = ELineBase.getBLine(eran_x.anchrCtnr).lidx_1;
       ret_x.anchrLoff = eran_x.anchrLoff;
     }
     return ret_x;
   }
 
-  /** @headconst @param rv_x will be corrected */
-  abstract getEFocusBy_$(rv_x: Ranval, ret_x?: ERan): ERan;
-  /** @headconst @param rv_x will be corrected */
-  abstract getEAnchrBy_$(rv_x: Ranval, out_x: ERan): void;
+  /**
+   * Assign `ret_x.#focusELoc` only.
+   * @headconst @param rv_x will be corrected
+   */
+  abstract getEFocusOf_$(rv_x: Ranval, ret_x?: ERan): ERan;
+  /**
+   * Assign `ret_x.#anchrELoc` only.
+   * @headconst @param rv_x will be corrected
+   */
+  abstract getEAnchrOf_$(rv_x: Ranval, out_x: ERan): void;
   /**
    * @final
    * @headconst @param rv_x will be corrected
    */
-  getERanBy_$(rv_x: Ranval, ret_x?: ERan) {
+  getERanOf_$(rv_x: Ranval, ret_x?: ERan) {
     // console.log(rv_x);
-    ret_x = this.getEFocusBy_$(rv_x, ret_x);
-    this.getEAnchrBy_$(rv_x, ret_x);
+    ret_x = this.getEFocusOf_$(rv_x, ret_x);
+    this.getEAnchrOf_$(rv_x, ret_x);
     return ret_x;
   }
 
-  /**
-   * Get `rec` of the "fat" rather than the "thin"
-   * @headconst @param rv_x will be corrected
-   * @param eran_x could be modified if any
-   */
-  abstract anchrRecOf_$(rv_x: Ranval, eran_x?: ERan): DOMRect;
+  /** @headconst @param rv_x will be modified */
+  abstract anchrRecOf_$(rv_x: Ranval): FSRec;
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   // /** @final */
