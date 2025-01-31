@@ -3,20 +3,21 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { DEV } from "../../global.ts";
+import { _TRACE, DEV, global } from "../../global.ts";
 import type { id_t, uint } from "../alias.ts";
 import type { Cssc } from "../color/alias.ts";
 import { Pale } from "../color/Pale.ts";
-import { span } from "../dom.ts";
 import { HTMLVuu } from "../cv.ts";
+import { span } from "../dom.ts";
 import { Factory } from "../util/Factory.ts";
+import { traceOut } from "../util/trace.ts";
 import {
   Ovlap_passive_z,
   Ovlap_proactive_z,
   Selec_passive_z,
   Selec_proactive_z,
 } from "./alias.ts";
-import type { EdtrBase, EdtrBaseScrolr } from "./EdtrBase.ts";
+import type { EdtrBase } from "./EdtrBase.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -52,6 +53,7 @@ class Selec extends HTMLVuu<EdtrBase, HTMLSpanElement> {
     this.#passiveBgOvlap_p.removeCsscHandler(this.#onPassiveBgCssc);
   }
   /* ~ */
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /* proactive_$ */
   proactive_$ = false;
@@ -86,20 +88,31 @@ class Selec extends HTMLVuu<EdtrBase, HTMLSpanElement> {
       // width: `5px`,
       // height: `20px`,
     });
+
+    // this.on("pointerdown", this.#onPointerDown.bind(this));
   }
   static create(coo_x: EdtrBase) {
-    return new Selec(coo_x).reuseSelec();
+    return new Selec(coo_x).reuse_Selec();
   }
 
-  reuseSelec(): this {
+  reuse_Selec(): this {
     /*#static*/ if (DEV) this.observeTheme();
     return this;
   }
-  resetSelec(): this {
+  reset_Selec(): this {
     /*#static*/ if (DEV) this.unobserveTheme();
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  // @traceOut(_TRACE)
+  // #onPointerDown(_evt_x: PointerEvent) {
+  //   /*#static*/ if (_TRACE) {
+  //     console.log(
+  //       `${global.indent}>>>>>>> ${this._type_id_}.#onPointerDown() >>>>>>>`,
+  //     );
+  //   }
+  // }
 
   /**
    * @const @param x_x
@@ -173,10 +186,10 @@ export class SelecFac extends Factory<Selec> {
   }
 
   protected override resetVal$(i_x: uint) {
-    return this.get(i_x).resetSelec().hide_$();
+    return this.get(i_x).reset_Selec().hide_$();
   }
   protected override reuseVal$(i_x: uint) {
-    const ret = this.get(i_x).reuseSelec();
+    const ret = this.get(i_x).reuse_Selec();
     ret.proactive_$ = this.#proactive;
     return ret;
   }

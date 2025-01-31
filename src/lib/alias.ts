@@ -62,7 +62,6 @@ export const MAX_lnum = 1_000_000 as lnum_t;
 /** Type of unix timestamp */
 export type ts_t = Brand_int64<"ts_t">;
 export const zTs = zInt64;
-/*49-------------------------------------------*/
 
 /** Recommand [0,1] */
 export type Ratio = number;
@@ -77,7 +76,7 @@ export const zRatio = z.number().finite();
 // export type Hex8 = `${HexDigitChar}${HexDigitChar}`;
 
 /**
- * Dull string
+ * Dull string\
  * String of characters 0x20 ~ 0x0_126
  */
 export type Dulstr = string;
@@ -188,6 +187,11 @@ export type Runr = {
 // }
 /*80--------------------------------------------------------------------------*/
 
+export const enum Endpt {
+  focus = 1,
+  anchr,
+}
+
 export const enum Sortart {
   asc,
   desc,
@@ -206,16 +210,19 @@ export const enum Pointer {
 }
 /*80--------------------------------------------------------------------------*/
 
-export type UpdateTheme_PUT = {
-  theme_j: string;
-};
+// export type UpdateTheme_PUT = {
+//   theme_j: string;
+// };
 /*80--------------------------------------------------------------------------*/
 
 export type Constructor<T = object> = new (...args: any[]) => T;
 export type AbstractConstructor<T = object> = abstract new (
   ...args: any[]
 ) => T;
-export type Func<This = any> = (this: This, ...args: any[]) => any;
+export type Func<This = any, Return = any, Args extends any[] = any[]> = (
+  this: This,
+  ...args: Args
+) => Return;
 // export type Id<T> = (_x: T) => T;
 /*80--------------------------------------------------------------------------*/
 
@@ -252,8 +259,8 @@ export type IndexOf<T extends readonly any[], S extends number[] = []> =
 //#region ArrEl<>
 /* Ref. https://stackoverflow.com/questions/41253310/typescript-retrieve-element-type-information-from-array-type */
 
-export type ArrEl<ArrayType extends readonly unknown[]> = ArrayType extends
-  readonly (infer ElementType)[] ? ElementType : never;
+export type ArrEl<Arr extends readonly unknown[]> = Arr extends
+  readonly (infer El)[] ? El : never;
 //#endregion
 
 //#region Prettify<>

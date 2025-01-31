@@ -972,6 +972,7 @@ function getReorderedIndices(
 export class Bidi {
   static #ID = 0 as id_t;
   readonly id = ++Bidi.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   #text!: string;
   #dir!: "ltr" | "rtl";
@@ -994,7 +995,7 @@ export class Bidi {
    * @const @param v_x [ 0, #text.length ]
    * @return `#lastRow`
    */
-  @out((ret, self: Bidi) => {
+  @out((self: Bidi, ret) => {
     assert(0 <= ret! && ret! < self.rowN);
   })
   rowOf(v_x: loff_t) {
@@ -1175,7 +1176,7 @@ export class Bidi {
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  resetBidi(
+  reset_Bidi(
     text_x: string,
     dir_x: BufrDir,
     wrap_a_x = [text_x.length],
@@ -1192,6 +1193,7 @@ export class Bidi {
     this.#logal_a = undefined;
     return this;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** Assign `#embedLevels`, `#logal_a`, `#visul_a` */
   @traceOut(_TRACE)
@@ -1239,7 +1241,6 @@ export class Bidi {
     // }
     return this;
   }
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
    * Set `#lastVisul`, `#lastLogal`

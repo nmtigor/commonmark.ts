@@ -29,6 +29,7 @@ export function createColranQRaw(dim_x: uint): ColranQRaw {
 export class ColranQ extends Moo<ColranQ> {
   static #ID = 0 as id_t;
   override readonly id = ++ColranQ.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   // readonly dim: uint;
   readonly #colran_a: Colran[];

@@ -66,6 +66,7 @@ export function createColranRaw(): ColranRaw {
 export class Colran {
   static #ID = 0 as id_t;
   readonly id = ++Colran.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   #typ: ColranTyp;
   get typ() {
@@ -155,8 +156,8 @@ export class Colran {
         `${global.indent}>>>>>>> Colran_${this.id}.#onColr0() >>>>>>>`,
       );
     }
-    this.#setRan(0, n_y);
-    this.#setRan(1, this.colr_1); //! `#typ` could change
+    this.#set_Ran(0, n_y);
+    this.#set_Ran(1, this.colr_1); //! `#typ` could change
     if (this.#correctRan(1)) {
       this.#setColr(1);
       this.colr_1.removeHandler(this.#onColr1);
@@ -172,8 +173,8 @@ export class Colran {
         `${global.indent}>>>>>>> Colran_${this.id}.#onColr1() >>>>>>>`,
       );
     }
-    this.#setRan(1, n_y);
-    this.#setRan(0, this.colr_0); //! `#typ` could change
+    this.#set_Ran(1, n_y);
+    this.#set_Ran(0, this.colr_0); //! `#typ` could change
     if (this.#correctRan(0)) {
       this.#setColr(0);
       this.colr_0.removeHandler(this.#onColr0);
@@ -184,7 +185,7 @@ export class Colran {
     return;
   };
 
-  #setRan(tgt_x: 0 | 1, colr_x: Colr) {
+  #set_Ran(tgt_x: 0 | 1, colr_x: Colr) {
     if (this.#typ === "rgb" || this.#typ === "rgba") {
       this.#redran[tgt_x] = colr_x.red;
       this.#greenran[tgt_x] = colr_x.green;

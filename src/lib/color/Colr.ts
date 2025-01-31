@@ -90,6 +90,7 @@ type ColrTyp_ =
 export class Colr {
   static #ID = 0 as id_t;
   readonly id = ++Colr.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   #hex: CsscHexNorm | undefined;
 
@@ -183,6 +184,10 @@ export class Colr {
         },
       }[typ_x])();
     }
+  }
+
+  dup_Colr() {
+    return (new Colr()).setByColr(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -342,10 +347,7 @@ export class Colr {
     this.#mo?.refreshMoo();
     return this;
   }
-
-  dup() {
-    return (new Colr()).setByColr(this);
-  }
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   #getHex(valve_x = 10): CsscHexNorm {
     if (this.#hex !== undefined) return this.#hex;
@@ -597,7 +599,7 @@ export class Colr {
     return this;
   }
   SetRed(val_x: red_t): Colr {
-    return this.dup().setRed(val_x);
+    return this.dup_Colr().setRed(val_x);
   }
   /**
    * "g50"\
@@ -621,7 +623,7 @@ export class Colr {
     return this;
   }
   SetGreen(val_x: red_t): Colr {
-    return this.dup().setGreen(val_x);
+    return this.dup_Colr().setGreen(val_x);
   }
   /**
    * "b50"\
@@ -645,7 +647,7 @@ export class Colr {
     return this;
   }
   SetBlue(val_x: red_t): Colr {
-    return this.dup().setBlue(val_x);
+    return this.dup_Colr().setBlue(val_x);
   }
 
   /**
@@ -672,7 +674,7 @@ export class Colr {
     return this;
   }
   SetHue(val_x: hue_t): Colr {
-    return this.dup().setHue(val_x);
+    return this.dup_Colr().setHue(val_x);
   }
   /**
    * "c50"\
@@ -695,7 +697,7 @@ export class Colr {
     return this;
   }
   SetChroma(val_x: chroma_t): Colr {
-    return this.dup().setChroma(val_x);
+    return this.dup_Colr().setChroma(val_x);
   }
   /**
    * "t50"\
@@ -719,7 +721,7 @@ export class Colr {
     return this;
   }
   SetTone(val_x: tone_t): Colr {
-    return this.dup().setTone(val_x);
+    return this.dup_Colr().setTone(val_x);
   }
 
   /**
@@ -743,7 +745,7 @@ export class Colr {
     return this;
   }
   SetHCT(h_x: hue_t, c_x: chroma_t, t_x: tone_t): Colr {
-    return this.dup().setHCT(h_x, c_x, t_x);
+    return this.dup_Colr().setHCT(h_x, c_x, t_x);
   }
 
   // /**
@@ -807,7 +809,7 @@ export class Colr {
     return this;
   }
   SetAlpha(val_x: alpha_t): Colr {
-    return this.dup().setAlpha(val_x);
+    return this.dup_Colr().setAlpha(val_x);
   }
 
   /**
@@ -826,7 +828,7 @@ export class Colr {
     return this;
   }
   Enchroma(ratio_x: Ratio): Colr {
-    return this.dup().enchroma(ratio_x);
+    return this.dup_Colr().enchroma(ratio_x);
   }
   /**
    * "c-.5"
@@ -844,7 +846,7 @@ export class Colr {
     return this;
   }
   Unchroma(ratio_x: Ratio): Colr {
-    return this.dup().unchroma(ratio_x);
+    return this.dup_Colr().unchroma(ratio_x);
   }
 
   /**
@@ -861,7 +863,7 @@ export class Colr {
     return this;
   }
   Entone(ratio_x: Ratio): Colr {
-    return this.dup().entone(ratio_x);
+    return this.dup_Colr().entone(ratio_x);
   }
   /**
    * "t-.5"
@@ -877,7 +879,7 @@ export class Colr {
     return this;
   }
   Untone(ratio_x: Ratio): Colr {
-    return this.dup().untone(ratio_x);
+    return this.dup_Colr().untone(ratio_x);
   }
 
   get cssc(): Cssc {
@@ -1110,13 +1112,16 @@ export class M3KeyColrs {
    * @const @param src_x
    */
   constructor(src_x: Colr) {
-    this.a1 = src_x.dup().setTone(40);
-    this.a2 = src_x.dup().setChroma(src_x.chroma / 3).setTone(40);
-    this.a3 = src_x.dup()
+    this.a1 = src_x.dup_Colr().setTone(40);
+    this.a2 = src_x.dup_Colr().setChroma(src_x.chroma / 3).setTone(40);
+    this.a3 = src_x.dup_Colr()
       .setHue((src_x.hue + 60) % 360).setChroma(src_x.chroma / 2).setTone(40);
-    this.n1 = src_x.dup().setChroma(Math.min(src_x.chroma / 12, 4)).setTone(98);
-    this.n2 = src_x.dup().setChroma(Math.min(src_x.chroma / 6, 8)).setTone(90);
-    this.error = src_x.dup().setHue(25).setChroma(84).setTone(40);
+    this.n1 = src_x.dup_Colr().setChroma(Math.min(src_x.chroma / 12, 4))
+      .setTone(98);
+    this.n2 = src_x.dup_Colr().setChroma(Math.min(src_x.chroma / 6, 8)).setTone(
+      90,
+    );
+    this.error = src_x.dup_Colr().setHue(25).setChroma(84).setTone(40);
   }
 
   toJSON() {

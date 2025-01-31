@@ -14,10 +14,9 @@ import { HTMLVuu, Vuu } from "../cv.ts";
 import { div, textnode } from "../dom.ts";
 import "../jslang.ts";
 import { $tail_ignored, $vuu } from "../symbols.ts";
-import { count } from "../util/performance.ts";
+import { g_count } from "../util/performance.ts";
 import { assert, traceOut } from "../util/trace.ts";
 import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
-import { g_eran_fac } from "./ERan.ts";
 import { StnodeV } from "./StnodeV.ts";
 import { TextV } from "./TextV.ts";
 import type { BlockOf, SameRow } from "./util.ts";
@@ -26,6 +25,7 @@ import { samerow_bot, samerow_left, samerow_rigt } from "./util.ts";
 
 /** @final */
 export class TailV extends TextV {
+  /** @headconst @param host_x  */
   constructor(host_x: ELineBase) {
     super(host_x, "|", host_x.bline_$.uchrLen);
 
@@ -38,7 +38,7 @@ export class TailV extends TextV {
       color: "transparent",
     });
 
-    (this.el$.firstChild as Text)[$tail_ignored] = true;
+    this.text[$tail_ignored] = true;
   }
 }
 
@@ -47,6 +47,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   implements Bidir {
   static #ID = 0 as id_t;
   override readonly id = ++ELineBase.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   bline_$;
   //jjjj TOCLEANUP
@@ -83,7 +84,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     this.bline_$ = bln_x;
 
     /*#static*/ if (CYPRESS) {
-      this.el$.cyName = this._type_id;
+      this.el$.cyName = this._type_id_;
     }
     // this.assignStylo({});
 
@@ -91,7 +92,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   }
 
   /** @final */
-  protected resetELineBase$() {
+  protected reset_ELineBase$() {
     this.el$.removeAllChild();
     return this;
   }
@@ -102,10 +103,10 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   refreshPlain(): this {
     // /*#static*/ if (_TRACE) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id}.refreshPlain() >>>>>>>`,
+    //     `${global.indent}>>>>>>> ${this._type_id_}.refreshPlain() >>>>>>>`,
     //   );
     // }
-    this.resetELineBase$();
+    this.reset_ELineBase$();
 
     if (!this.empty) {
       this.el$.append(textnode(this.bline_$.text));
@@ -130,9 +131,9 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     //   this.empty$ ? new TokLoc(bln,this.indent_) : new TokLoc(bln) );
     // this.el$.firstChild[ ranseq_sym ] = new Ranseq( [ran] );
 
-    /*#static*/ if (DEV) {
-      ++count.newVuu;
-    }
+    // /*#static*/ if (DEV) {
+    //   ++g_count.newVuu;
+    // }
     // /*#static*/ if (INOUT) {
     //   assert(this.el$.childNodes.length === 2 && this.el$.firstChild!.isText);
     // }
@@ -146,7 +147,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   protected setBidi$(): void {
     /*#static*/ if (_TRACE) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id}.setBidi$() >>>>>>>`,
+        `${global.indent}>>>>>>> ${this._type_id_}.setBidi$() >>>>>>>`,
       );
     }
     /*#static*/ if (INOUT) {
@@ -158,14 +159,14 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     let fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
     const LEN = bln.uchrLen;
     this.#wrap_a.length = 0;
-    const impl_ = (blockOf_y: BlockOf, sameline_y: SameRow) => {
+    const impl_ = (blockOf_y: BlockOf, samerow_y: SameRow) => {
       let block_0 = blockOf_y(fsrec.fat);
       // const _a_ = [];
       for (let i = 1; i < LEN; ++i) {
         rv_u.anchrLoff = i;
         fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
         // _a_.push(fsrec.top.fixTo(1));
-        if (sameline_y(fsrec.fat, block_0)) continue;
+        if (samerow_y(fsrec.fat, block_0)) continue;
 
         this.#wrap_a.push(rv_u.anchrLoff);
         block_0 = blockOf_y(fsrec.fat);
@@ -186,7 +187,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     // console.log(this.#wrap_a);
     // console.log(_a_);
 
-    this.bidi$.resetBidi(
+    this.bidi$.reset_Bidi(
       bln.text,
       edtr._scrolr.bufrDir,
       this.#wrap_a,
@@ -200,7 +201,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
 
     /*#static*/ if (_TRACE && RESIZ) {
       console.log(
-        `%c${global.indent}>>>>>>> ${this._type_id}.#onResiz() (${this.bline_$._type_id}) >>>>>>>`,
+        `%c${global.indent}>>>>>>> ${this._type_id_}.#onResiz() (${this.bline_$._type_id_}) >>>>>>>`,
         `color:${LOG_cssc.resiz}`,
       );
     }
@@ -240,7 +241,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
           );
         }
         if (subNd[$vuu] instanceof TailV) {
-          ret = subNd.firstChild as Text;
+          ret = subNd[$vuu].text;
           break;
         }
 

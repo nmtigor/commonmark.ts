@@ -6,7 +6,7 @@
 import { LOG_cssc } from "../../alias.ts";
 import { INOUT, PRF } from "../../global.ts";
 import type { id_t, loff_t, uint } from "../alias.ts";
-import { Endpt } from "./alias.ts";
+import { Endpt } from "../alias.ts";
 import { $facil_node, $ovlap } from "../symbols.ts";
 import { Factory } from "../util/Factory.ts";
 import { assert, fail } from "../util/trace.ts";
@@ -31,6 +31,7 @@ declare global {
 export class ERan {
   static #ID = 0 as id_t;
   readonly id = ++ERan.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /* #anchrELoc */
   readonly #anchrELoc: ELoc;
@@ -85,14 +86,14 @@ export class ERan {
    */
   constructor(focusELoc_x: ELoc, anchrELoc_x?: ELoc) {
     this.#focusELoc = focusELoc_x;
-    this.#anchrELoc = anchrELoc_x ?? focusELoc_x.dup();
+    this.#anchrELoc = anchrELoc_x ?? focusELoc_x.dupELoc();
     /*#static*/ if (INOUT) {
       assert(this.#focusELoc !== this.#anchrELoc);
     }
   }
 
   /** @const */
-  becomeERan(rhs_x: ERan): this {
+  become_ERan(rhs_x: ERan): this {
     this.#focusELoc.ctnr_$ = rhs_x.focusCtnr;
     this.#focusELoc.offs_$ = rhs_x.focusOffs;
     this.#anchrELoc.ctnr_$ = rhs_x.anchrCtnr;

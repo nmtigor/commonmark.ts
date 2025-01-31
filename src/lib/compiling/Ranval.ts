@@ -6,7 +6,7 @@
 import { LOG_cssc } from "../../alias.ts";
 import { PRF } from "../../global.ts";
 import { Moo, type MooEq } from "../Moo.ts";
-import type { id_t, lnum_t, loff_t } from "../alias.ts";
+import { type lnum_t, type loff_t } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
 import type { Bufr } from "./Bufr.ts";
 import type { Loc } from "./Loc.ts";
@@ -85,7 +85,7 @@ export class Ranval extends Array<lnum_t | loff_t> {
   }
 
   /** @const */
-  dup() {
+  dup_Ranval() {
     return new Ranval(this[2] as lnum_t, this[3], this[0] as lnum_t, this[1]);
   }
 
@@ -98,7 +98,7 @@ export class Ranval extends Array<lnum_t | loff_t> {
    * @const
    */
   usingDup() {
-    return g_ranval_fac.oneMore().becomeArray(this);
+    return g_ranval_fac.oneMore().become_Array(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -142,6 +142,38 @@ export class Ranval extends Array<lnum_t | loff_t> {
     return this;
   }
 
+  static posSE(
+    lidx_0_x: number,
+    loff_0_x: number,
+    lidx_1_x: number,
+    loff_1_x: number,
+  ) {
+    return lidx_0_x < lidx_1_x || lidx_0_x === lidx_1_x && loff_0_x <= loff_1_x;
+  }
+  contain(rv_x: Ranval): boolean {
+    const o_ = this.order;
+    const o_1 = rv_x.order;
+    if (o_ > 0) {
+      if (o_1 > 0) {
+        return Ranval.posSE(this[2], this[3], rv_x[2], rv_x[3]) &&
+          Ranval.posSE(rv_x[0], rv_x[1], this[0], this[1]);
+      } else {
+        return Ranval.posSE(this[2], this[3], rv_x[0], rv_x[1]) &&
+          Ranval.posSE(rv_x[2], rv_x[3], this[0], this[1]);
+      }
+    } else if (o_ < 0) {
+      if (o_1 > 0) {
+        return Ranval.posSE(this[0], this[1], rv_x[2], rv_x[3]) &&
+          Ranval.posSE(rv_x[0], rv_x[1], this[2], this[3]);
+      } else {
+        return Ranval.posSE(this[0], this[1], rv_x[0], rv_x[1]) &&
+          Ranval.posSE(rv_x[2], rv_x[3], this[2], this[3]);
+      }
+    } else {
+      return false;
+    }
+  }
+
   /** @headconst @param bufr_x  */
   getTextFrom(bufr_x: Bufr) {
     using ran_u = g_ran_fac.setBufr(bufr_x).oneMore().setByRanval(this);
@@ -168,24 +200,15 @@ export class RanvalMo extends Moo<Ranval> {
 /*64----------------------------------------------------------*/
 
 // export class SortedRanval extends SortedArray<Ranval> {
-//   static #less: Less<Ranval> = (a_x, b_x) => {
-//     if (a_x.nonnegativ) {
-//       if (b_x.nonnegativ) {
-//         return a_x[0] < b_x[2] || a_x[0] === b_x[2] && a_x[1] < b_x[3];
-//       } else {
-//         return a_x[0] < b_x[0] || a_x[0] === b_x[0] && a_x[1] < b_x[1];
-//       }
-//     } else {
-//       if (b_x.nonnegativ) {
-//         return a_x[2] < b_x[2] || a_x[2] === b_x[2] && a_x[3] < b_x[3];
-//       } else {
-//         return a_x[2] < b_x[0] || a_x[2] === b_x[0] && a_x[3] < b_x[1];
-//       }
-//     }
-//   };
+//   static #less(endpt_x: Endpt): Less<Ranval> {
+//     return endpt_x === Endpt.anchr
+//       ? (a_y, b_y) => Ranval.posSE(a_y[2], a_y[3], b_y[2], b_y[3])
+//       : (a_y, b_y) => Ranval.posSE(a_y[0], a_y[1], b_y[0], b_y[1]);
+//   }
 
-//   constructor(val_a_x?: Ranval[]) {
-//     super(SortedRanval.#less, val_a_x);
+//   constructor(val_a_x?: Ranval[], endpt_x = Endpt.anchr) {
+//     super(SortedRanval.#less(endpt_x), val_a_x);
+//     this.resort();
 //   }
 // }
 /*64----------------------------------------------------------*/

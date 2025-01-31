@@ -35,7 +35,7 @@ export class TokLoc<T extends Tok> extends Loc {
     return new TokLoc<U>(bufr_x.line(lidx_x), loff_x);
   }
 
-  override dup() {
+  override dup_Loc() {
     return new TokLoc<T>(this.line_$ as TokLine<T>, this.loff_$);
   }
 

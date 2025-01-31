@@ -201,6 +201,7 @@ export class Moo<T extends {} | null, D = any, I = any> {
   static #ID = 0 as id_t;
   readonly id = ++Moo.#ID as id_t;
   readonly _name_: string | undefined;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   readonly #initval: T;
   readonly #eq: MooEq<T>;
@@ -268,7 +269,7 @@ export class Moo<T extends {} | null, D = any, I = any> {
     this.#forcing = forcing;
     this._name_ = _name_;
 
-    this.resetMoo();
+    this.reset_Moo();
   }
 
   /**
@@ -281,7 +282,7 @@ export class Moo<T extends {} | null, D = any, I = any> {
   }
 
   /** @final */
-  resetMoo(): this {
+  reset_Moo(): this {
     this.setMoo(this.#initval);
     if (this.nCb) {
       this.#handler_db_ = undefined;

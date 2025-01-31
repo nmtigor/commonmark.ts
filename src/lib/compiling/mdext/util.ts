@@ -4,7 +4,6 @@
  ******************************************************************************/
 
 import { INOUT } from "@fe-src/global.ts";
-import { Linkdef } from "@fe-src/lib/compiling/mdext/stnode/Linkdef.ts";
 import type { loff_t, uint, uint16 } from "../../alias.ts";
 import {
   domParser,
@@ -12,11 +11,11 @@ import {
   isDecimalDigit,
   isHexDigit,
 } from "../../util/general.ts";
-import { assert, fail } from "../../util/trace.ts";
+import { assert } from "../../util/trace.ts";
 import { BaseTok } from "../BaseTok.ts";
 import type { Line } from "../Line.ts";
 import type { Loc } from "../Loc.ts";
-import { Snt, SortedSnt_id } from "../Snt.ts";
+import { SortedSnt_id } from "../Snt.ts";
 import { MdextTk } from "../Token.ts";
 import type { MdextLexr } from "./MdextLexr.ts";
 import { Block } from "./stnode/Block.ts";
@@ -288,33 +287,4 @@ export const gathrUnrelTk = (
   }
   return ret;
 };
-/*64----------------------------------------------------------*/
-
-export class SortedMdextSnt_id extends SortedSnt_id {
-  #n_Linkdef = 0;
-  get n_Linkdef() {
-    return this.#n_Linkdef;
-  }
-
-  constructor() {
-    super();
-  }
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
-
-  override add(val_x: Snt): uint | -1 {
-    const ret = super.add(val_x);
-    if (val_x instanceof Linkdef) this.#n_Linkdef += 1;
-    return ret;
-  }
-
-  override deleteByIndex() {
-    fail("Disabled");
-    return -1;
-  }
-  override delete(val_x: Snt): uint | -1 {
-    const ret = super.delete(val_x);
-    if (val_x instanceof Linkdef) this.#n_Linkdef -= 1;
-    return ret;
-  }
-}
 /*80--------------------------------------------------------------------------*/

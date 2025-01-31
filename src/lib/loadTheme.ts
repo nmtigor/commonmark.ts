@@ -5,7 +5,6 @@
 
 import { BeReturn } from "../alias.ts";
 import { _TRACE, DEV, global } from "../global.ts";
-import type { UpdateTheme_PUT } from "./alias.ts";
 import { Pale, type PaleRaw, zPaleRaw } from "./color/Pale.ts";
 import { type PaleName, zPaleName } from "./color/PaleCoor.ts";
 import { Moo } from "./Moo.ts";
@@ -667,7 +666,7 @@ export async function saveTheme(): Promise<BeReturn> {
   return await wretch(`${D_base_}/api/v1/updateTheme`)
     .put({
       theme_j: JSON.stringify(readTheme()),
-    } as UpdateTheme_PUT)
+    })
     .json((jo: { ret: BeReturn }) => {
       /* After everything is ok, ... */
       document[$theme].modified_mo.val = false;

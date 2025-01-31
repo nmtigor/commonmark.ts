@@ -21,9 +21,10 @@ export class SortedArray<T> extends Array<T> {
   static #ID = 0 as id_t;
   readonly id = ++SortedArray.#ID as id_t;
   /** @final */
-  get _type_id() {
+  get _type_id_() {
     return `${this.constructor.name}_${this.id}`;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   #less: Less<T>;
   setLess(_x: Less<T>): this {
@@ -83,7 +84,7 @@ export class SortedArray<T> extends Array<T> {
     this.#less = less_x;
   }
 
-  resetSortedArray(): this {
+  reset_SortedArray(): this {
     this.length = 0;
     this.#index = 0; //!
     this.#tmp_a = undefined;

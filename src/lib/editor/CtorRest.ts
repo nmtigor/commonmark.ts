@@ -40,14 +40,11 @@ export class CtorRest {
     return !this.#rest || this.#rest[0] === undefined;
   }
 
-  /**
-   * Act also as the real flag whether to use `this` or not.
-   */
+  /** Act also as the real flag whether to use `this` or not. */
   get strtLoff(): loff_t | undefined {
     return this.#inuse ? strtLoffOf_(this.#rest) : undefined;
   }
   /* ~ */
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   resetCtorRest(): this {
     // this.#rest.length = 1;
@@ -55,11 +52,12 @@ export class CtorRest {
     this.#rest = undefined;
     return this;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   dnenRest(rest_x: ReplRest): void {
     if (!this.#rest) return;
 
-    rest_x.becomeArray(this.#rest);
+    rest_x.become_Array(this.#rest);
     if (this.#rest.at(-1)) {
       this.#rest = this.#rest.at(-1) as ReplRest;
     } else {
@@ -97,7 +95,7 @@ export class CtorRest {
               `"${nd_.textContent}"`,
           );
         } else {
-          ret.push((nd_[$vuu] as StnodeV)._info);
+          ret.push((nd_[$vuu] as StnodeV)._info_);
         }
       }
     }

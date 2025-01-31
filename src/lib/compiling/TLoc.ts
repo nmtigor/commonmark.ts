@@ -22,7 +22,7 @@ export class TLoc extends Loc {
     super(line_x, loff_x);
   }
 
-  override dup() {
+  override dup_Loc() {
     return new TLoc(this.line, this.loff_$);
   }
 }

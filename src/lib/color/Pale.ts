@@ -48,6 +48,7 @@ export type PaleColr = [PaleName, PaleCidx];
 export class Pale {
   static #ID = 0 as id_t;
   readonly id = ++Pale.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   // #constructing = false;
 
@@ -176,9 +177,7 @@ export class Pale {
     this.#hex_mo.removeHandler(handler);
   }
 
-  /**
-   * @const @param raw_x
-   */
+  /** @const @param raw_x */
   private constructor(raw_x: PaleRaw) {
     // /*#static*/ if (INOUT) {
     //   assert(!this.#constructing);
@@ -243,6 +242,7 @@ export class Pale {
     //   assert(0 <= this.cidx && this.cidx < this.clen);
     // }
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   #onCoor = (_x: PaleCoor) => {
     if (this.coor_a.indexOf(_x) === this.cidx) {

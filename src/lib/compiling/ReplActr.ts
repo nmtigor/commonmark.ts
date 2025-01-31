@@ -44,9 +44,9 @@ export class ReplActr {
                   assert(this.#bufr.oldRan_a_$.at(0));
                 }
                 this.#lexr
-                  .markLexRegion_$(this.#bufr.oldRan_a_$[0] as TokRan<any>);
-                this.#pazr?.markPazRegion_$();
-                this.#tfmr?.markTfmRegion_$(this.#bufr.oldRan_a_$[0]);
+                  .lexmrk_$(this.#bufr.oldRan_a_$ as TokRan<any>[]);
+                this.#pazr?.pazmrk_$();
+                this.#tfmr?.tfmmrk_$(this.#bufr.oldRan_a_$);
               },
               target: "prerepl",
             },
@@ -60,9 +60,12 @@ export class ReplActr {
                   assert(this.#bufr.newRan_a_$.at(0));
                 }
                 this.#lexr
-                  .adjust_$(this.#bufr.newRan_a_$[0] as TokRan<any>).lex();
+                  .lexadj_$(this.#bufr.newRan_a_$ as TokRan<any>[])
+                  .lex();
                 this.#pazr?.paz();
-                this.#tfmr?.adjust_$(this.#bufr.newRan_a_$[0]).tfm();
+                this.#tfmr
+                  ?.tfmadj_$(this.#bufr.newRan_a_$)
+                  .tfm();
               },
               target: "sufrepl",
             },

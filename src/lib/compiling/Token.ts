@@ -3,10 +3,11 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { DEV, INOUT } from "../../global.ts";
+import { DEV, INOUT, PRF } from "../../global.ts";
 import type { lnum_t, loff_t, TupleOf, uint } from "../alias.ts";
 import { zUint } from "../alias.ts";
-import { assert } from "../util/trace.ts";
+import { g_count } from "../util/performance.ts";
+import { assert, out } from "../util/trace.ts";
 import { BaseTok } from "./BaseTok.ts";
 import type { LexdInfo } from "./Lexr.ts";
 import { Lexr } from "./Lexr.ts";
@@ -50,7 +51,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     // this.syncRanval();
 
     this.#oldRanval ??= new Ranval(0 as lnum_t, 0);
-    this.#oldRanval.becomeArray(this.ran_$.ranval);
+    this.#oldRanval.become_Array(this.ran_$.ranval);
   }
   /* ~ */
 
@@ -83,7 +84,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * @const @param tok_x
    */
   setStrt(loc_x: Loc, tok_x?: T): this {
-    this.sntStrtLoc.becomeLoc(loc_x);
+    this.sntStrtLoc.become_Loc(loc_x);
     if (tok_x) this.value = tok_x;
     return this.syncRanvalAnchr();
   }
@@ -114,7 +115,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * @const @param tok_x
    */
   setStop(loc_x: Loc, tok_x?: T): this {
-    this.sntStopLoc.becomeLoc(loc_x);
+    this.sntStopLoc.become_Loc(loc_x);
     if (tok_x) this.value = tok_x;
     return this.syncRanvalFocus();
   }
@@ -132,6 +133,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   }
   /* 2 ~ */
 
+  /** @const */
   get empty(): boolean {
     return this.ran_$.collapsed;
   }
@@ -198,7 +200,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
 
   /* #errMsg_a */
   readonly #errMsg_a = new Array(NErr_).fill("") as TupleOf<string, NErr_>;
-  get _err() {
+  get _err_() {
     return this.#errMsg_a.filter(Boolean);
   }
   get isErr() {
@@ -237,7 +239,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   isConcatedTo(next_x: Token<T>): boolean {
     return this.nextToken_$ === next_x && next_x.prevToken_$ === this;
   }
-  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
    * `this` is a DIRECT boundary token of `stnode`.
@@ -256,6 +258,10 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     // ran_x.syncRanval_$();
     this.ran_$ = ran_x;
     this.value = value_x ? value_x : BaseTok.unknown as T;
+
+    /*#static*/ if (PRF) {
+      g_count.newToken += 1;
+    }
   }
 
   /**
@@ -263,7 +269,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * are not influenced by `this`.
    * @const
    */
-  dup() {
+  dup_Token() {
     return new Token(this.lexr_$, this.ran_$.dup(), this.#value);
   }
 
@@ -291,8 +297,8 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * @const @param strtLoc_x
    * @const @param stopLoc_x
    */
-  resetToken(
-    value_x = BaseTok.unknown as T,
+  reset_Token(
+    value_x: T,
     strtLoc_x?: Loc,
     stopLoc_x?: Loc,
   ): this {
@@ -300,7 +306,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     if (stopLoc_x) this.setStop(stopLoc_x);
     this.value = value_x;
     if (this.isErr) this.clrErr();
-    /* `markPazRegion_$()` needs `stnod_$` of Token in dirty region. */
+    /* `pazmrk_$()` needs `stnod_$` of Token in dirty region. */
     // this.stnod_$ = undefined;
     return this;
   }
@@ -526,64 +532,62 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   //   //   }
   //   // }
   // }
-  /**
-   * Correct `frstLine.#frstToken_m`
-   */
+  /** Correct `frstLine.#frstToken_m` */
   #correct_line_frstToken(): TokLine<T> {
     const retLn = this.sntFrstLine;
     retLn.delFrstTokenBy_$(this.lexr_$);
 
-    let tk: Token<T> = this;
+    let tk_: Token<T> = this;
     const VALVE = 1_000;
     let valve = VALVE;
-    while (tk.prevToken_$?.sntFrstLine === retLn && --valve) {
-      tk = tk.prevToken_$;
+    while (tk_.prevToken_$?.sntFrstLine === retLn && --valve) {
+      tk_ = tk_.prevToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
-    if (!tk.isErr) retLn.setFrstToken_$(tk);
+    if (!tk_.isErr) retLn.setFrstToken_$(tk_);
     return retLn;
   }
-  /**
-   * Correct `lastLine.#lastToken_m`
-   */
+  /** Correct `lastLine.#lastToken_m` */
   #correct_line_lastToken(): TokLine<T> {
     const retLn = this.sntLastLine;
     retLn.delLastTokenBy_$(this.lexr_$);
 
-    let tk: Token<T> = this;
+    let tk_: Token<T> = this;
     const VALVE = 1_000;
     let valve = VALVE;
-    while (tk.nextToken_$?.sntLastLine === retLn && --valve) {
-      tk = tk.nextToken_$;
+    while (tk_.nextToken_$?.sntLastLine === retLn && --valve) {
+      tk_ = tk_.nextToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
-    if (!tk.isErr) retLn.setLastToken_$(tk);
+    if (!tk_.isErr) retLn.setLastToken_$(tk_);
     return retLn;
   }
 
   /** @return unlinked `Token<T>` */
   #unlinkPrev() {
-    const retTk = this.prevToken_$;
-    if (retTk) {
-      retTk.nextToken_$ = this.prevToken_$ = undefined;
-      // retTk.notAsLinebdry_();
-      // retTk.linked_ = false;
+    const prevTk = this.prevToken_$;
+    if (prevTk) {
+      this.prevToken_$ = undefined;
+      if (prevTk.nextToken_$ === this) prevTk.nextToken_$ = undefined;
+      // prevTk.notAsLinebdry_();
+      // prevTk.linked_ = false;
       //jjjj TOCLEANUP
-      // if (retTk !== stndKept_tk_x) retTk.stnod_$ = undefined;
+      // if (prevTk !== stndKept_tk_x) prevTk.stnod_$ = undefined;
     }
-    return retTk;
+    return prevTk;
   }
   /** @return unlinked `Token<T>` */
   #unlinkNext() {
-    const retTk = this.nextToken_$;
-    if (retTk) {
-      retTk.prevToken_$ = this.nextToken_$ = undefined;
-      // retTk.notAsLinebdry_();
-      // retTk.linked_ = false;
+    const nextTk = this.nextToken_$;
+    if (nextTk) {
+      this.nextToken_$ = undefined;
+      if (nextTk.prevToken_$ === this) nextTk.prevToken_$ = undefined;
+      // nextTk.notAsLinebdry_();
+      // nextTk.linked_ = false;
       //jjjj TOCLEANUP
-      // if (retTk !== stndKept_tk_x) retTk.stnod_$ = undefined;
+      // if (nextTk !== stndKept_tk_x) nextTk.stnod_$ = undefined;
     }
-    return retTk;
+    return nextTk;
   }
 
   /**
@@ -591,7 +595,11 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * `stnod_$`s do not change.
    * @headconst @param retTk_x
    */
-  // @out((_,self:any)=>{}) //jjjj Cause "segmentation fault"
+  @out((self: Token<T>, _, args) => {
+    assert(args[0] === self.prevToken_$);
+    assert(args[0].nextToken_$ === self);
+    // assert( args[0].linked_ && self.linked_ );
+  })
   linkPrev(retTk_x: Token<T>): Token<T> {
     /*#static*/ if (INOUT) {
       assert(retTk_x !== this);
@@ -614,11 +622,6 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     if (this.sntFrstLine !== frstLn) this.#correct_line_frstToken();
     if (this.sntLastLine !== lastLn) this.#correct_line_lastToken();
 
-    /*#static*/ if (INOUT) {
-      assert(retTk_x === this.prevToken_$);
-      assert(retTk_x.nextToken_$ === this);
-      // assert( retTk_x.linked_ && this.linked_ );
-    }
     return retTk_x;
   }
   /**
@@ -626,7 +629,11 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * `stnod_$`s do not change.
    * @headconst @param retTk_x
    */
-  // @out((_,self:any)=>{}) //jjjj Cause "segmentation fault"
+  @out((self: Token<T>, _, args) => {
+    assert(args[0] === self.nextToken_$);
+    assert(args[0].prevToken_$ === self);
+    // assert( args[0].linked_ && self.linked_ );
+  })
   linkNext(retTk_x: Token<T>): Token<T> {
     /*#static*/ if (INOUT) {
       assert(retTk_x !== this);
@@ -649,11 +656,6 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     if (this.sntFrstLine !== frstLn) this.#correct_line_frstToken();
     if (this.sntLastLine !== lastLn) this.#correct_line_lastToken();
 
-    /*#static*/ if (INOUT) {
-      assert(retTk_x === this.nextToken_$);
-      assert(retTk_x.prevToken_$ === this);
-      // assert( retTk_x.linked_ && this.linked_ );
-    }
     return retTk_x;
   }
 
@@ -693,27 +695,12 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     }
     if (this.prevToken_$) {
       this.prevToken_$.nextToken_$ = retTk_x;
+      retTk_x.#unlinkPrev();
       retTk_x.prevToken_$ = this.prevToken_$;
     } else {
-      retTk_x.prevToken_$ = undefined;
+      retTk_x.#unlinkPrev();
     }
-
-    retTk_x.nextToken_$ = this;
-    this.prevToken_$ = retTk_x;
-
-    //jjjj TOCLEANUP
-    // if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
-
-    const frstLn = retTk_x.#correct_line_frstToken();
-    const lastLn = retTk_x.#correct_line_lastToken();
-    if (this.sntFrstLine !== frstLn) this.#correct_line_frstToken();
-    if (this.sntLastLine !== lastLn) this.#correct_line_lastToken();
-
-    /*#static*/ if (INOUT) {
-      assert(retTk_x === this.prevToken_$);
-      assert(retTk_x.nextToken_$ === this);
-    }
-    return retTk_x;
+    return this.linkPrev(retTk_x);
   }
   /** @see {@linkcode insertPrev()} */
   insertNext(retTk_x: Token<T>) {
@@ -723,27 +710,12 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     }
     if (this.nextToken_$) {
       this.nextToken_$.prevToken_$ = retTk_x;
+      retTk_x.#unlinkNext();
       retTk_x.nextToken_$ = this.nextToken_$;
     } else {
-      retTk_x.nextToken_$ = undefined;
+      retTk_x.#unlinkNext();
     }
-
-    retTk_x.prevToken_$ = this;
-    this.nextToken_$ = retTk_x;
-
-    //jjjj TOCLEANUP
-    // if (retTk_x !== stndKept_tk_x) retTk_x.stnod_$ = undefined;
-
-    const frstLn = retTk_x.#correct_line_frstToken();
-    const lastLn = retTk_x.#correct_line_lastToken();
-    if (this.sntFrstLine !== frstLn) this.#correct_line_frstToken();
-    if (this.sntLastLine !== lastLn) this.#correct_line_lastToken();
-
-    /*#static*/ if (INOUT) {
-      assert(retTk_x === this.nextToken_$);
-      assert(retTk_x.prevToken_$ === this);
-    }
-    return retTk_x;
+    return this.linkNext(retTk_x);
   }
 
   // /**
@@ -877,4 +849,7 @@ export const RMLTk = Token<RMLTok>;
 
 export type JSLangTk = Token<JSLangTok>;
 export const JSLangTk = Token<JSLangTok>;
+/*80--------------------------------------------------------------------------*/
+
+//kkkk Use a `TokenFac` (ref. `TSegFac`).
 /*80--------------------------------------------------------------------------*/

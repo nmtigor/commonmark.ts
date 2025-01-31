@@ -84,15 +84,14 @@ function repr_(step_x: ColrStep): string {
 export class ColrFn extends Array<ColrStep> {
   static #ID = 0 as id_t;
   readonly id = ++ColrFn.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   // readonly modified_mo = new Moo({
   //   val: false,
   //   name: `ColrFn_${this.id}.modified_mo`,
   // });
 
-  /**
-   * @const @param raw_x
-   */
+  /** @const @param raw_x */
   constructor(raw_x?: ColrStep[]) {
     super();
 

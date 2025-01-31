@@ -44,7 +44,7 @@ export class TokRan<T extends Tok> extends Ran {
   }
 
   override dup() {
-    return new TokRan<T>(this.strtLoc.dup(), this.stopLoc.dup());
+    return new TokRan<T>(this.strtLoc.dup_Loc(), this.stopLoc.dup_Loc());
   }
 }
 /*80--------------------------------------------------------------------------*/

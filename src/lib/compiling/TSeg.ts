@@ -8,7 +8,7 @@ import { INOUT, PRF } from "../../global.ts";
 import type { id_t, lnum_t, loff_t, uint } from "../alias.ts";
 import { zUint } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
-import { assert } from "../util/trace.ts";
+import { assert, out } from "../util/trace.ts";
 import { Line } from "./Line.ts";
 import { Loc } from "./Loc.ts";
 import { Ran } from "./Ran.ts";
@@ -23,6 +23,7 @@ import { TLoc } from "./TLoc.ts";
 export class TSeg {
   static #ID = 0 as id_t;
   readonly id = ++TSeg.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   // /**
   //  * `Line` could be removed, but `this` would be used, so store
@@ -42,30 +43,32 @@ export class TSeg {
     return this.tfmr_$.tbufr;
   }
 
-  readonly #ran;
+  /* _ran */
+  private readonly _ran;
+
   get strtLoc() {
-    return this.#ran.strtLoc;
-  }
-  get stopLoc() {
-    return this.#ran.stopLoc;
+    return this._ran.strtLoc;
   }
   get strtLoff() {
     return this.strtLoc.loff_$;
   }
+
+  get stopLoc() {
+    return this._ran.stopLoc;
+  }
   get stopLoff() {
     return this.stopLoc.loff_$;
   }
+
   get line() {
-    return this.#ran.frstLine;
+    return this._ran.frstLine;
   }
   set line_$(line_x: Line) {
     this.strtLoc.line_$ = line_x;
     this.stopLoc.line_$ = line_x;
   }
 
-  /**
-   * `linkPrev()`, `linkNext()` could invalidate `this`.
-   */
+  /** `linkPrev()`, `linkNext()` could invalidate `this`. */
   get valid() {
     const ln_ = this.line;
     return ln_.bufr === this.#bufr && ln_.hasTSeg(this);
@@ -74,21 +77,26 @@ export class TSeg {
   #length: loff_t | -1 = -1;
   get length() {
     if (this.#length < 0) {
-      this.#length = this.#ran.length_1;
+      this.#length = this._ran.length_1;
     }
     return this.#length;
   }
+  /* ~ */
 
+  /* #tloc */
   readonly #tloc;
+
   get strtTLoff() {
     return this.#tloc.loff_$;
   }
   get stopTLoff() {
     return this.strtTLoff + this.length;
   }
+
   get tline() {
     return this.#tloc.line;
   }
+  /* ~ */
 
   #mapped = false;
   get mapped() {
@@ -112,29 +120,27 @@ export class TSeg {
     console.assert(this.nextTSeg_$ === undefined);
   }
 
-  /**
-   * @headconst @param tfmr_x
-   */
+  /** @headconst @param tfmr_x */
   constructor(tfmr_x: Tfmr) {
     this.tfmr_$ = tfmr_x;
-    this.#ran = new Ran(new Loc(this.#bufr.frstLine_$, 0));
+    this._ran = new Ran(new Loc(this.#bufr.frstLine_$, 0));
     this.#tloc = new TLoc(this.#tbufr.frstLine, 0);
     /*#static*/ if (INOUT) {
-      assert(this.#ran.frstLine === this.#ran.lastLine);
+      assert(this._ran.frstLine === this._ran.lastLine);
     }
   }
 
-  reset_$() {
+  resetTSeg_$() {
     const ln_ = this.line;
-    if (ln_.isStrtByTSeg_$(this)) ln_.delStrtTSeg_$(this.tfmr_$);
-    if (ln_.isStopByTSeg_$(this)) ln_.delStopTSeg_$(this.tfmr_$);
+    if (ln_.isFrstByTSeg_$(this)) ln_.delFrstTSeg_$(this.tfmr_$);
+    if (ln_.isLastByTSeg_$(this)) ln_.delLastTSeg_$(this.tfmr_$);
 
     this.#length = -1; //!
     if (ln_.bufr !== this.#bufr) {
-      this.#ran.resetRan(this.#bufr); //!
+      this._ran.reset_Ran(this.#bufr); //!
     }
     if (this.tline.bufr !== this.#tbufr) {
-      this.#tloc.setLoc(this.#tbufr.frstLine_$, 0); //!
+      this.#tloc.set_Loc(this.#tbufr.frstLine_$, 0); //!
     }
 
     if (this.nextTSeg_$ && this.prevTSeg_$) {
@@ -151,6 +157,7 @@ export class TSeg {
     this.#mapped = false;
     return this;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   revokeSelf_$() {
     this.tfmr_$.tseg_fac.revoke(this);
@@ -190,35 +197,47 @@ export class TSeg {
 
   #correct_line_tseg() {
     const ln_ = this.line;
-    let strtTSeg_old = ln_.strtTSeg_$(this.tfmr_$);
-    let stopTSeg_old = ln_.stopTSeg_$(this.tfmr_$);
+    let frstTSeg_old = ln_.frstTSeg_$(this.tfmr_$);
+    let lastTSeg_old = ln_.lastTSeg_$(this.tfmr_$);
 
     const VALVE = 1_000;
     let valve = VALVE;
     let tseg: TSeg = this;
     do {
-      if (tseg === strtTSeg_old) strtTSeg_old = undefined;
-      if (tseg === stopTSeg_old) stopTSeg_old = undefined;
+      if (tseg === frstTSeg_old) frstTSeg_old = undefined;
+      if (tseg === lastTSeg_old) lastTSeg_old = undefined;
       if (tseg.prevTSeg_$?.line !== ln_) break;
       tseg = tseg.prevTSeg_$;
     } while (--valve);
     assert(valve, `Loop ${VALVE}±1 times`);
-    ln_.strtByTSeg_$(tseg);
+    ln_.frstByTSeg_$(tseg);
 
     tseg = this;
     do {
-      if (tseg === strtTSeg_old) strtTSeg_old = undefined;
-      if (tseg === stopTSeg_old) stopTSeg_old = undefined;
+      if (tseg === frstTSeg_old) frstTSeg_old = undefined;
+      if (tseg === lastTSeg_old) lastTSeg_old = undefined;
       if (tseg.nextTSeg_$?.line !== ln_) break;
       tseg = tseg.nextTSeg_$;
     } while (--valve);
     assert(valve, `Loop ${VALVE}±1 times`);
-    ln_.stopByTSeg_$(tseg);
+    ln_.lastByTSeg_$(tseg);
 
-    strtTSeg_old?.revokeSelf_$();
-    stopTSeg_old?.revokeSelf_$();
+    frstTSeg_old?.revokeSelf_$();
+    lastTSeg_old?.revokeSelf_$();
   }
 
+  /**
+   * @const @param lidx_0_x
+   * @const @param loff_0_x
+   * @const @param lidx_1_x
+   * @const @param loff_1_x
+   * @const @param length_x
+   * @returns
+   */
+  @out((self: TSeg, _, args) => {
+    assert(self._ran.frstLine === self._ran.lastLine);
+    assert(self.length === args[4]);
+  })
   map(
     lidx_0_x: lnum_t,
     loff_0_x: loff_t,
@@ -231,11 +250,11 @@ export class TSeg {
     }
     // const prev = this.prevTSeg_$;
     // const next = this.nextTSeg_$;
-    this.reset_$();
+    this.resetTSeg_$();
 
-    this.strtLoc.setLoc_O(lidx_0_x, loff_0_x);
-    this.stopLoc.setLoc_O(lidx_0_x, loff_0_x + length_x);
-    this.#tloc.setLoc_O(lidx_1_x, loff_1_x);
+    this.strtLoc.set_Loc_O(lidx_0_x, loff_0_x);
+    this.stopLoc.set_Loc_O(lidx_0_x, loff_0_x + length_x);
+    this.#tloc.set_Loc_O(lidx_1_x, loff_1_x);
 
     this.#correct_line_tseg();
     // if( prev ) this.linkPrev( prev );
@@ -243,16 +262,10 @@ export class TSeg {
     // else this.#correct_line_tseg();
 
     this.#mapped = true;
-    /*#static*/ if (INOUT) {
-      assert(this.#ran.frstLine === this.#ran.lastLine);
-      assert(this.length === length_x);
-    }
     return this;
   }
 
-  /**
-   * @return unlinked `TSeg`
-   */
+  /** @return unlinked `TSeg` */
   #unlinkPrev() {
     const tseg = this.prevTSeg_$;
     if (tseg) {
@@ -260,9 +273,7 @@ export class TSeg {
     }
     return tseg;
   }
-  /**
-   * @return unlinked `TSeg`
-   */
+  /** @return unlinked `TSeg` */
   #unlinkNext() {
     const tseg = this.nextTSeg_$;
     if (tseg) {
@@ -275,7 +286,11 @@ export class TSeg {
    * !`ret_x.prevTSeg_$` will be untouched. (cf. `Line.linkPrev_$`)
    * @headconst @param ret_x
    */
-  linkPrev(ret_x: TSeg) {
+  @out((self: TSeg, ret) => {
+    assert(ret === self.prevTSeg_$);
+    assert(ret.nextTSeg_$ === self);
+  })
+  linkPrev(ret_x: TSeg): TSeg {
     /*#static*/ if (INOUT) {
       assert(ret_x !== this);
       assert(ret_x.posS(this));
@@ -289,16 +304,16 @@ export class TSeg {
 
     ret_x.#correct_line_tseg();
     if (this.line !== ret_x.line) this.#correct_line_tseg();
-    /*#static*/ if (INOUT) {
-      assert(ret_x === this.prevTSeg_$);
-      assert(ret_x.nextTSeg_$ === this);
-    }
     return ret_x;
   }
   /**
    * ! `ret_x.nextTSeg_$` will be untouched. (cf. `Line.linkNext_$`)
    * @headconst @param ret_x
    */
+  @out((self: TSeg, ret) => {
+    assert(ret === self.nextTSeg_$);
+    assert(ret.prevTSeg_$ === self);
+  })
   linkNext(ret_x: TSeg) {
     /*#static*/ if (INOUT) {
       assert(ret_x !== this);
@@ -313,10 +328,6 @@ export class TSeg {
 
     ret_x.#correct_line_tseg();
     if (this.tline !== ret_x.tline) this.#correct_line_tseg();
-    /*#static*/ if (INOUT) {
-      assert(ret_x === this.nextTSeg_$);
-      assert(ret_x.prevTSeg_$ === this);
-    }
     return ret_x;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -360,7 +371,7 @@ export class TSeg {
     return [prev_a, this.toString(), next_a];
   }
 
-  _repr(): [string | undefined, string, string | undefined] {
+  _repr_(): [string | undefined, string, string | undefined] {
     return [
       this.prevTSeg_$?.toString(),
       this.toString(),
@@ -386,9 +397,10 @@ export class TSegFac extends Factory<TSeg> {
   }
 
   override init(hard_x?: "hard") {
-    this.val_a$.forEach((val) => val.reset_$());
+    this.val_a$.forEach((val) => val.resetTSeg_$());
     super.init(hard_x);
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @implement */
   protected createVal$() {
@@ -407,7 +419,7 @@ export class TSegFac extends Factory<TSeg> {
   /** @implement */
   protected override resetVal$(i_x: number) {
     const ret = this.val_a$[i_x];
-    ret.reset_$();
+    ret.resetTSeg_$();
     return ret;
   }
 }

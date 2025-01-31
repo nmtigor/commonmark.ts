@@ -4,7 +4,7 @@
  ******************************************************************************/
 
 import { CYPRESS } from "../global.ts";
-import type { CSSStyle, id_t, Prettify, RemoveIndex } from "./alias.ts";
+import type { CSSStyle, id_t } from "./alias.ts";
 import { svg } from "./dom.ts";
 import { mix } from "./jslang.ts";
 import { $vuu } from "./symbols.ts";
@@ -64,9 +64,10 @@ export abstract class Vuu<C extends Coo = Coo, E extends Element = Element> {
     return this.constructor.name;
   }
   /** @final */
-  get _type_id() {
+  get _type_id_() {
     return `${this._type}_${this.id}`;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   protected coo$: C;
   get coo() {

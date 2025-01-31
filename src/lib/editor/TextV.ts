@@ -23,6 +23,15 @@ export class TextV<T extends Tok = BaseTok, CI extends EdtrBaseCI = EdtrBaseCI>
   /** @implement */
   protected snt$!: never;
 
+  get text(): Text {
+    return this.el$.firstChild as Text;
+  }
+
+  /**
+   * @headconst @param host_x
+   * @const @param text_x
+   * @const @param loff_x
+   */
   constructor(host_x: ELineBase<CI>, text_x: string, loff_x: loff_t) {
     super(host_x.coo, span());
     this.host$ = host_x;

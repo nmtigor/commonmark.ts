@@ -157,7 +157,7 @@ export const bind = (_tgt_x: unknown, ctx_x: ClassMethodDecoratorContext) => {
  * @const @param _x
  */
 export const traceOut = (_x: boolean) => {
-  return <This, Args extends any[], Return>(
+  return <This, Return, Args extends any[]>(
     tgt_x: (this: This, ...args: Args) => Return,
   ) => {
     return _x
@@ -170,14 +170,14 @@ export const traceOut = (_x: boolean) => {
   };
 };
 
-export const out = <Return, This, Args extends any[]>(
-  _x: (ret_y: Return, self_y: This, args_y: Args) => void,
+export const out = <This, Return, Args extends any[]>(
+  _x: (self_y: This, ret_y: Return, args_y: Args) => void,
 ) => {
   return (tgt_x: (this: This, ...args: Args) => Return) => {
     return /*#static*/ INOUT
       ? function (this: This, ...args: Args): Return {
         const ret = tgt_x.call(this, ...args);
-        _x(ret, this, args);
+        _x(this, ret, args);
         return ret;
       }
       : tgt_x;

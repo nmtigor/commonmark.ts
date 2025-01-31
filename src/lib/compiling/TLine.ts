@@ -24,7 +24,7 @@ export class TLine extends Line {
   }
 
   #base_a: Chr[] = [];
-  readonly text_a_$: (Chr | (Chr | Dulstr)[])[] = [];
+  readonly text_a_$: (Chr | [Chr, ...Dulstr[]])[] = [];
   get chrLen() {
     return this.text_a_$.length;
   }
@@ -48,15 +48,13 @@ export class TLine extends Line {
     return this;
   }
 
-  /**
-   * `in( !this.removed )`
-   */
+  /** `in( !this.removed )` */
   // @traceOut(_TRACE)
   override splice_$(strt_x: loff_t, stop_x: loff_t, newt_x?: string) {
     // /*#static*/ if (_TRACE) {
     //   console.log([
     //     global.indent,
-    //     `>>>>>>> ${this._type_id}.splice_$( ${strt_x}, ${stop_x}, `,
+    //     `>>>>>>> ${this._type_id_}.splice_$( ${strt_x}, ${stop_x}, `,
     //     newt_x === undefined ? "" : `"${newt_x}"`,
     //     " ) >>>>>>>",
     //   ].join(""));
@@ -103,18 +101,18 @@ export class TLine extends Line {
   private _splice_impl(strt_x: loff_t, stop_x: loff_t, chr_a_x: Chr[]): void {
     /*#static*/ if (_TRACE) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id}._splice_impl(${strt_x}, ${stop_x}, [${chr_a_x}]) >>>>>>>`,
+        `${global.indent}>>>>>>> ${this._type_id_}._splice_impl(${strt_x}, ${stop_x}, [${chr_a_x}]) >>>>>>>`,
       );
     }
     this.#base_a.splice(strt_x, stop_x - strt_x, ...chr_a_x);
     this.text_a_$.splice(strt_x, stop_x - strt_x, ...chr_a_x);
+    const tlayr = this.bufr!.tlvert;
     for (let i = strt_x, LEN = strt_x + chr_a_x.length; i < LEN; ++i) {
       const chr = this.#base_a[i];
-      const tlayr = this.bufr!.tlvert;
       if (tlayr.treat(chr)) {
-        const out: (Chr | Dulstr)[] = [chr];
-        tlayr.dull([chr], out);
-        this.text_a_$[i] = out;
+        const acc = new Set<Dulstr>();
+        tlayr.dull([chr], acc);
+        this.text_a_$[i] = [chr, ...acc];
       }
     }
     // console.log(this.#base_a);

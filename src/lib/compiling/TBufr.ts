@@ -19,14 +19,10 @@ export class TBufr extends Bufr {
     return this.lastLine_$ as TLine;
   }
 
-  override line(lidx_x: lnum_t) {
-    return super.line(lidx_x) as TLine;
-  }
-
   readonly tlvert = new TLVert();
   // readonly tlvert = new TLVert([
   //   new TLHorz([
-  //     new DgmapTL( dgmap_1 )
+  //     new DulmapTL( dgmap_1 )
   //   ])
   // ]);
 
@@ -36,12 +32,17 @@ export class TBufr extends Bufr {
     super("", bufr_x.dir);
     this.bufr = bufr_x;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   override createLine() {
     return new TLine(this);
   }
 
-  get _cnt() {
+  override line(lidx_x: lnum_t) {
+    return super.line(lidx_x) as TLine;
+  }
+
+  get _cnt_() {
     const ret: { text: string; text_a_$: any[] }[] = [];
     let tln: TLine | undefined = this.frstLine;
     const VALVE = 1_000;
@@ -60,7 +61,7 @@ export class TBufr extends Bufr {
    * @deprecated
    * @const @param txt_x
    */
-  _cntE(txt_x: ((string | string[])[])[]) {
+  _cntE_(txt_x: ((string | string[])[])[]) {
     const n = txt_x.length;
 
     let line: TLine | undefined = this.frstLine;
@@ -89,7 +90,7 @@ export class TBufr extends Bufr {
   //   const VALVE = 1_000;
   //   let valve = VALVE;
   //   while (line && --valve) {
-  //     if (line.strtTSeg_$?.tline === tline) {
+  //     if (line.frstTSeg_$?.tline === tline) {
   //       return line.tmap_$(strt_x, stop_x);
   //     }
 
@@ -103,7 +104,7 @@ export class TBufr extends Bufr {
   // search(key_x: string): Ranval[] | undefined {
   //   /*#static*/ if (_TRACE) {
   //     console.log(
-  //       `${global.indent}>>>>>>> ${this._type_id}.search("${key_x}") >>>>>>>`,
+  //       `${global.indent}>>>>>>> ${this._type_id_}.search("${key_x}") >>>>>>>`,
   //     );
   //   }
   //   key_x = key_x.split(/\r\n|\r|\n/g)[0]; // Only search first line.

@@ -10,6 +10,7 @@ import { Loc } from "./Loc.ts";
 import type { Pazr } from "./Pazr.ts";
 import { Ran } from "./Ran.ts";
 import { Ranval } from "./Ranval.ts";
+import type { Replin } from "./Repl.ts";
 import type { Tfmr } from "./Tfmr.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -48,8 +49,9 @@ export const rv = (
     focusLoff_x as loff_t | undefined,
   );
 
-export const repl = (ranval_x: Ranval, txt_x: string[] | string) =>
-  test_o.bufr.Do(ranval_x, txt_x);
+export const repl = (rv: Ranval, txt: string | string[]) =>
+  test_o.bufr.Do({ rv, txt });
+export const repla = (replin: Replin[]) => test_o.bufr.Do(replin);
 export const undo = () => test_o.bufr.undo();
 export const redo = () => test_o.bufr.redo();
 /*80--------------------------------------------------------------------------*/

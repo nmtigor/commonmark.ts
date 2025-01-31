@@ -3,11 +3,13 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { global, INOUT } from "../global.ts";
+import { INOUT } from "../global.ts";
 import type {
   AbstractConstructor,
+  Brand,
   Constructor,
   FloatArray,
+  Func,
   IntegerArray,
   ts_t,
   uint,
@@ -147,10 +149,9 @@ Reflect.defineProperty(Object.prototype, "eq", {
 declare global {
   //! Make sure non-`enumerable`
   interface Array<T> {
-    /**
-     * @deprecated Use `.at(-1)`.
-     */
-    last: T | undefined;
+    /** @const @param ary_x */
+    become_Array(ary_x: T[]): this;
+    /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
     /**
      * @headconst @param rhs
@@ -162,8 +163,6 @@ declare global {
     fillArray(ary_x: T[]): this;
     /** @const @param ary_x */
     fillArrayBack(ary_x: T[]): this;
-    /** @const @param ary_x */
-    becomeArray(ary_x: T[]): this;
 
     swap(i_x: uint, j_x: uint): this;
   }
@@ -189,9 +188,10 @@ declare global {
   // }
 }
 
-Reflect.defineProperty(Array.prototype, "last", {
-  get(this: any[]) {
-    return this[this.length - 1];
+Reflect.defineProperty(Array.prototype, "become_Array", {
+  value(this: any[], ary_x: any[]) {
+    this.length = ary_x.length;
+    return this.fillArrayBack(ary_x);
   },
 });
 
@@ -222,12 +222,6 @@ Reflect.defineProperty(Array.prototype, "fillArrayBack", {
       this[i] = ary_x[i];
     }
     return this;
-  },
-});
-Reflect.defineProperty(Array.prototype, "becomeArray", {
-  value(this: any[], ary_x: any[]) {
-    this.length = ary_x.length;
-    return this.fillArrayBack(ary_x);
   },
 });
 
@@ -450,6 +444,37 @@ Reflect.defineProperty(Float64Array.prototype, "eq", {
     return faEq_impl(this, rhs_x);
   },
 });
+/*80--------------------------------------------------------------------------*/
+
+//#region Stringified_<>
+/* Ref. https://youtu.be/z7pDvyVhUnE */
+
+type Stringified_<T> = Brand<string, T>;
+
+type JsonifiedValue_<T> = T extends string | number | boolean | null ? T
+  : T extends { toJSON(): infer R } ? R
+  : T extends undefined | Func ? never
+  : T extends object ? JsonifiedObject_<T>
+  : never;
+type JsonifiedObject_<T> = {
+  [Key in keyof T as [JsonifiedValue_<T[Key]>] extends [never] ? never : Key]:
+    JsonifiedValue_<T[Key]>;
+};
+//#endregion
+
+declare global {
+  interface JSON {
+    stringify<T>(
+      value: T,
+      replacer?: null | undefined,
+      space?: string | number,
+    ): Stringified_<T>;
+    parse<T>(
+      text: Stringified_<T>,
+      reviver?: null | undefined,
+    ): JsonifiedObject_<T>;
+  }
+}
 /*80--------------------------------------------------------------------------*/
 
 declare global {

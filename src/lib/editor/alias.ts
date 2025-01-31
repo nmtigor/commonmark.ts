@@ -16,17 +16,13 @@ export const enum EdtrType {
   mdext_rich,
 }
 
-export const enum Endpt {
-  focus = 1,
-  anchr,
-}
-
 export type FSRec = {
   fat: DOMRect;
   sin: DOMRect;
   uts: ts_t;
 };
 /*80--------------------------------------------------------------------------*/
+/* zIndex */
 
 /* Stacking context: EdtrBaseScrolr */
 export const Imevu_z = 20; //jjjj TOCHECK

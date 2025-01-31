@@ -140,8 +140,8 @@ export class ATXHeading extends Heading {
     this.st = ATXHeadingSt.head;
   }
 
-  override resetBlock(): this {
-    super.resetBlock();
+  override reset_Block(): this {
+    super.reset_Block();
     this.#tailTk = undefined;
     return this;
   }
@@ -240,7 +240,7 @@ export class SetextHeading extends Heading {
 
   constructor(para_x: Paragraph, tailTk_x: MdextTk) {
     super();
-    this.snt_a_$.becomeArray(para_x.snt_a_$);
+    this.snt_a_$.become_Array(para_x.snt_a_$);
     this.#tailTk = tailTk_x;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/

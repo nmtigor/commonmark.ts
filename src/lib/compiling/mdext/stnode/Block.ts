@@ -61,7 +61,7 @@ export abstract class Block extends MdextSN {
   }
 
   /** @final */
-  reuseBlock(): this {
+  reuse_Block(): this {
     this.#open = true;
     this.#complete = false;
     this.#_inlineSkipd = false;
@@ -69,11 +69,11 @@ export abstract class Block extends MdextSN {
     return this;
   }
   /** Will be invoked FIRSTLY by subclasses */
-  resetBlock(): this {
+  reset_Block(): this {
     this.#oldLastLidx = this.parent?.isCompiling(this)
       ? this.sntLastLidx_1
       : -1;
-    return this.reuseBlock();
+    return this.reuse_Block();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -83,7 +83,7 @@ export abstract class Block extends MdextSN {
    * @const @param curLidx_x
    * @const @param _x
    */
-  @out((_, self: Block, args) => {
+  @out((self: Block, _, args) => {
     if (!args[1]) assert(!self.isErr);
   })
   closeBlock(curLidx_x: lnum_t, _x?: "may_err"): CtnrBlock {
@@ -141,8 +141,8 @@ export abstract class Block extends MdextSN {
   reuseLine(_lidx_x: lnum_t, _snt_a_x: (MdextTk | Inline)[]): void {}
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override get _info(): string {
-    return `${super._info}${this.#_inlineSkipd ? ",iS" : ""}`;
+  override get _info_(): string {
+    return `${super._info_}${this.#_inlineSkipd ? ",iS" : ""}`;
   }
 }
 /*80--------------------------------------------------------------------------*/

@@ -83,12 +83,21 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     this.#slidr_p.removeCsscHandler(this.#onSlidrCssc);
   }
   /* ~ */
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   #scrolr!: Scrolr<C>;
   readonly #scrodB: ScrodB_<C>;
   readonly #scrodI: ScrodI_<C>; //kkkk make it in use
+
   readonly #scrobarB: ScrobarB_<C>;
+  get slidrB() {
+    return this.#scrobarB.slidr;
+  }
+
   readonly #scrobarI: ScrobarI_<C>; //kkkk make it in use
+  get slidrI() {
+    return this.#scrobarI.slidr;
+  }
 
   /** @final */
   get bufrDir(): BufrDir {
@@ -116,7 +125,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     super(coo_x, div());
 
     /*#static*/ if (DEV) {
-      this.el$.id = this._type_id;
+      this.el$.id = this._type_id_;
     }
     this.assignStylo({
       display: "grid",
@@ -129,6 +138,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 
     this.#scrodB = new ScrodB_(this);
     this.#scrodI = new ScrodI_(this);
+
     this.#scrobarB = new ScrobarB_(this);
     this.#scrobarI = new ScrobarI_(this);
 
@@ -289,7 +299,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   private _onResiz() {
     /*#static*/ if (_TRACE && RESIZ) {
       console.log(
-        `%c${global.indent}>>>>>>> ${this._type_id}._onResiz() >>>>>>>`,
+        `%c${global.indent}>>>>>>> ${this._type_id_}._onResiz() >>>>>>>`,
         `color:${LOG_cssc.resiz}`,
       );
     }
@@ -326,7 +336,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   private _onWheel(evt_x: WheelEvent) {
     // /*#static*/ if (_TRACE) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id}._onWheel(`,
+    //     `${global.indent}>>>>>>> ${this._type_id_}._onWheel(`,
     //     evt_x._repr,
     //     `) >>>>>>>`,
     //   );

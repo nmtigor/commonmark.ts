@@ -22,7 +22,7 @@ import { Ranval } from "./Ranval.ts";
 import type { Bufr } from "./Bufr.ts";
 import { Factory } from "../util/Factory.ts";
 import { LOG_cssc } from "../../alias.ts";
-import { Endpt } from "../editor/alias.ts";
+import { Endpt } from "../alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 export const enum LocCompared {
@@ -119,7 +119,7 @@ export class Loc {
    * @const @param loff_x
    */
   constructor(line_x: Line, loff_x?: loff_t) {
-    this.setLoc(line_x, loff_x);
+    this.set_Loc(line_x, loff_x);
   }
   /**
    * @headconst @param bufr_x
@@ -136,7 +136,7 @@ export class Loc {
    * @headconst @param line_x
    * @const @param loff_x
    */
-  setLoc(line_x: Line, loff_x?: loff_t): this {
+  set_Loc(line_x: Line, loff_x?: loff_t): this {
     this.line_$ = line_x;
     this.loff_$ = loff_x === undefined ? line_x.uchrLen : loff_x;
     this.#lcol = -1;
@@ -144,16 +144,16 @@ export class Loc {
     return this;
   }
   /** @final */
-  setLoc_O(lidx_x: lnum_t, loff_x?: loff_t, bufr_x = this.bufr) {
+  set_Loc_O(lidx_x: lnum_t, loff_x?: loff_t, bufr_x = this.bufr) {
     /*#static*/ if (INOUT) {
       assert(bufr_x);
     }
     const line = bufr_x!.line(lidx_x);
-    return this.setLoc(line, loff_x);
+    return this.set_Loc(line, loff_x);
   }
 
   /** @const */
-  dup() {
+  dup_Loc() {
     const ret = new Loc(this.line_$, this.loff_$);
     ret.tabsize$ = this.tabsize$;
     ret.#lcol = this.#lcol;
@@ -165,7 +165,7 @@ export class Loc {
    * @final
    * @const @param loc_x
    */
-  becomeLoc(loc_x: Loc): this {
+  become_Loc(loc_x: Loc): this {
     this.line_$ = loc_x.line_$;
     this.loff_$ = loc_x.loff_$;
     this.tabsize$ = loc_x.tabsize$;
@@ -180,7 +180,7 @@ export class Loc {
 
   /** @const */
   usingDup() {
-    return g_loc_fac.setLine(this.line_$).oneMore().becomeLoc(this);
+    return g_loc_fac.setLine(this.line_$).oneMore().become_Loc(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -485,7 +485,7 @@ export class Loc {
     if (hintLoff_x === this.loff_$) return this.#lcol = hintLcol_x;
 
     let ret = hintLcol_x;
-    using loc_ = this.usingDup().setLoc(this.line_$, hintLoff_x);
+    using loc_ = this.usingDup().set_Loc(this.line_$, hintLoff_x);
     for (; loc_.loff_$ < this.loff_$; ++loc_.loff_$) {
       if (loc_.ucod === /* "\t" */ 9) {
         ret += this.tabsize$ - ret % this.tabsize$;
@@ -688,7 +688,7 @@ class LocFac_ extends Factory<Loc> {
   }
 
   protected override reuseVal$(i_x: uint) {
-    return this.get(i_x).setLoc(this.#line, 0);
+    return this.get(i_x).set_Loc(this.#line, 0);
   }
 }
 export const g_loc_fac = new LocFac_();

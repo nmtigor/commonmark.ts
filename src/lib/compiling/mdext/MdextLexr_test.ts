@@ -3,12 +3,13 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import { g_count } from "@fe-lib/util/performance.ts";
 import {
   assertEquals,
   assertNotStrictEquals,
   assertStrictEquals,
 } from "@std/assert";
-import { afterEach, describe, it } from "@std/testing/bdd";
+import { after, afterEach, describe, it } from "@std/testing/bdd";
 import type { id_t, uint } from "../../alias.ts";
 import type { TestO } from "../_test.ts";
 import { ran, repl, rv, test_o, undo } from "../_test.ts";
@@ -22,8 +23,8 @@ const lexr = MdextLexr.create(bufr);
 const pazr = lexr.pazr_$;
 Object.assign(test_o, { bufr, lexr, pazr } as Partial<TestO>);
 
-function init(text_x?: string[] | string) {
-  lexr.resetMdextLexr();
+function init(text_x?: string | string[]) {
+  lexr.reset_MdextLexr();
   bufr.repl_actr.init(lexr);
   bufr.repl_mo.registHandler((n_y) => bufr.repl_actr.to(n_y));
 
@@ -31,7 +32,12 @@ function init(text_x?: string[] | string) {
 }
 
 afterEach(() => {
-  bufr.resetBufr();
+  bufr.reset_Bufr();
+});
+
+after(() => {
+  console.log(`g_count.newRan: ${g_count.newRan}`);
+  console.log(`g_count.newToken: ${g_count.newToken}`);
 });
 
 type Example_ = {
@@ -146,16 +152,16 @@ describe("Compiling Paragraph", () => {
     init(["p", "", "abc", "123", "xyz", "", "n"]);
     let tkId_a: id_t[], tkId_a_1: id_t[];
 
-    // tkId_a = lexr._tkId_a;
+    // tkId_a = lexr._tkId_a_;
     // console.log("🚀 ~ it ~ tkId_a:", tkId_a)
     repl(ran(3)._rv, "4");
     /*
     p
-    ⏎
+    ⛶
     abc
     1234
     xyz
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -169,7 +175,7 @@ describe("Compiling Paragraph", () => {
       ["stopBdry[6-1)"],
     ]);
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-    // tkId_a_1 = lexr._tkId_a;
+    // tkId_a_1 = lexr._tkId_a_;
     // console.log("🚀 ~ it ~ tkId_a_1:", tkId_a_1)
     assertEquals(
       pazr._root?._toHTML(lexr),
@@ -191,11 +197,11 @@ describe("Compiling Paragraph", () => {
     repl(rv(2, 1, 2, 2), "");
     /*
     p
-    ⏎
+    ⛶
     ac
     1234
     xyz
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -237,16 +243,16 @@ describe("Compiling Paragraph", () => {
     init(["p", "", "abc", "123", "xyz", "", "n"]);
     let tkId_a: id_t[], tkId_a_1: id_t[];
 
-    // tkId_a = lexr._tkId_a;
+    // tkId_a = lexr._tkId_a_;
     // console.log("🚀 ~ it ~ tkId_a:", tkId_a)
     repl(ran(4)._rv, "4");
     /*
     p
-    ⏎
+    ⛶
     abc
     123
     xyz4
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -261,7 +267,7 @@ describe("Compiling Paragraph", () => {
       [],
     ]);
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-    // tkId_a_1 = lexr._tkId_a;
+    // tkId_a_1 = lexr._tkId_a_;
     // console.log("🚀 ~ it ~ tkId_a_1:", tkId_a_1)
     assertEquals(
       pazr._root?._toHTML(lexr),
@@ -289,11 +295,11 @@ describe("Compiling Paragraph", () => {
     undo();
     /*
     p
-    ⏎
+    ⛶
     abc
     123
     xyz
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -332,11 +338,11 @@ describe("Compiling Paragraph", () => {
     repl(rv(2, 0), "4"); // 3144
     /*
     p
-    ⏎
+    ⛶
     4abc
     123
     xyz
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -376,11 +382,11 @@ describe("Compiling Paragraph", () => {
     undo();
     /*
     p
-    ⏎
+    ⛶
     abc
     123
     xyz
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -423,7 +429,7 @@ describe("Compiling Paragraph", () => {
 
     repl(rv(0, 0), "\n");
     /*
-    ⏎
+    ⛶
     p
     n
      */
@@ -475,7 +481,7 @@ describe("Compiling Paragraph", () => {
     repl(rv(1, 0), "\n");
     /*
     p
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -533,7 +539,7 @@ describe("Compiling Paragraph", () => {
     /*
     p
     n
-    ⏎
+    ⛶
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
       ["strtBdry[0-0)", "text[0-0,0-1)", "text[1-0,1-1)"],
@@ -598,7 +604,7 @@ describe("Compiling BlockQuote", () => {
       init(["> p", ">", "> abc", "> 123", "> xyz", ">", "> n"]);
       let tkId_a: id_t[], tkId_a_1: id_t[];
 
-      tkId_a = lexr._tkId_a;
+      tkId_a = lexr._tkId_a_;
       repl(ran(3)._rv, "4");
       /*
       > p
@@ -621,7 +627,7 @@ describe("Compiling BlockQuote", () => {
         ["block_quote_marker[6-0,6-1)", "text[6-2,6-3)", "stopBdry[6-3)"],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      tkId_a_1 = lexr._tkId_a;
+      tkId_a_1 = lexr._tkId_a_;
       assertEquals(tkId_a_1[1], tkId_a[1]);
       assertEquals(tkId_a_1[3], tkId_a[3]);
       assertEquals(tkId_a_1[4], tkId_a[4]);
@@ -673,7 +679,7 @@ describe("Compiling BlockQuote", () => {
         [],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      tkId_a_1 = lexr._tkId_a;
+      tkId_a_1 = lexr._tkId_a_;
       assertEquals(tkId_a_1[1], tkId_a[1]);
       assertEquals(tkId_a_1[3], tkId_a[3]);
       assertEquals(tkId_a_1[4], tkId_a[4]);
@@ -719,7 +725,7 @@ describe("Compiling BlockQuote", () => {
       init(["> p", ">", "> abc", "> 123", "> xyz", ">", "> n"]);
       let tkId_a: id_t[], tkId_a_1: id_t[];
 
-      tkId_a = lexr._tkId_a;
+      tkId_a = lexr._tkId_a_;
       repl(ran(4)._rv, "4");
       /*
       > p
@@ -744,7 +750,7 @@ describe("Compiling BlockQuote", () => {
         [],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      tkId_a_1 = lexr._tkId_a;
+      tkId_a_1 = lexr._tkId_a_;
       assertEquals(tkId_a_1[1], tkId_a[1]);
       assertEquals(tkId_a_1[3], tkId_a[3]);
       assertEquals(tkId_a_1[4], tkId_a[4]);
@@ -787,7 +793,7 @@ describe("Compiling BlockQuote", () => {
       ]);
       assertEquals(lexr._abadnSnt_2_sa_._repr_(), []);
 
-      tkId_a = lexr._tkId_a;
+      tkId_a = lexr._tkId_a_;
       undo();
       /*
       > p
@@ -812,7 +818,7 @@ describe("Compiling BlockQuote", () => {
         [],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      tkId_a_1 = lexr._tkId_a;
+      tkId_a_1 = lexr._tkId_a_;
       assertEquals(tkId_a_1[1], tkId_a[1]);
       assertEquals(tkId_a_1[3], tkId_a[3]);
       assertEquals(tkId_a_1[4], tkId_a[4]);
@@ -853,7 +859,7 @@ describe("Compiling BlockQuote", () => {
       ]);
       assertEquals(lexr._abadnSnt_2_sa_._repr_(), []);
 
-      // tkId_a = lexr._tkId_a;
+      // tkId_a = lexr._tkId_a_;
       repl(rv(2, 2), "4");
       /*
       > p
@@ -878,7 +884,7 @@ describe("Compiling BlockQuote", () => {
         [],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      // tkId_a_1 = lexr._tkId_a;
+      // tkId_a_1 = lexr._tkId_a_;
       assertEquals(
         pazr._root?._toHTML(lexr),
         /* deno-fmt-ignore */ [
@@ -912,7 +918,7 @@ describe("Compiling BlockQuote", () => {
       ]);
       assertEquals(lexr._abadnSnt_2_sa_._repr_(), []);
 
-      // tkId_a = lexr._tkId_a;
+      // tkId_a = lexr._tkId_a_;
       undo();
       /*
       > p
@@ -937,7 +943,7 @@ describe("Compiling BlockQuote", () => {
         [],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      // tkId_a_1 = lexr._tkId_a;
+      // tkId_a_1 = lexr._tkId_a_;
       assertEquals(
         pazr._root?._toHTML(lexr),
         /* deno-fmt-ignore */ [
@@ -1052,7 +1058,7 @@ describe("Compiling BlockQuote", () => {
       ]);
       assertEquals(lexr._abadnSnt_2_sa_._repr_(), []);
 
-      tkId_a = lexr._tkId_a;
+      tkId_a = lexr._tkId_a_;
       repl(rv(1, 2), "\n> "); // 👍
       /*
       > p
@@ -1069,7 +1075,7 @@ describe("Compiling BlockQuote", () => {
         [],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      tkId_a_1 = lexr._tkId_a;
+      tkId_a_1 = lexr._tkId_a_;
       assertEquals(tkId_a_1[1], tkId_a[1]);
       assertEquals(tkId_a_1[3], tkId_a[3]);
       assertEquals(
@@ -1092,7 +1098,7 @@ describe("Compiling BlockQuote", () => {
       ]);
       assertEquals(lexr._abadnSnt_2_sa_._repr_(), []);
 
-      tkId_a = lexr._tkId_a;
+      tkId_a = lexr._tkId_a_;
       undo();
       /*
       > p
@@ -1107,7 +1113,7 @@ describe("Compiling BlockQuote", () => {
         [],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      tkId_a_1 = lexr._tkId_a;
+      tkId_a_1 = lexr._tkId_a_;
       assertEquals(tkId_a_1[1], tkId_a[1]);
       assertEquals(tkId_a_1[3], tkId_a[3]);
       assertEquals(
@@ -1218,7 +1224,7 @@ describe("Compiling IndentedCodeBlock", () => {
     repl(ran(3)._rv, "4");
     /*
     p
-    ⏎
+    ⛶
     ····abc
     ····1234
     ····xyz
@@ -1257,7 +1263,7 @@ describe("Compiling IndentedCodeBlock", () => {
     repl(rv(2, 5, 2, 6), "");
     /*
     p
-    ⏎
+    ⛶
     ····ac
     ····1234
     ····xyz
@@ -1306,7 +1312,7 @@ describe("Compiling IndentedCodeBlock", () => {
     repl(ran(4)._rv, "4");
     /*
     p
-    ⏎
+    ⛶
     ····abc
     ····123
     ····xyz4
@@ -1351,7 +1357,7 @@ describe("Compiling IndentedCodeBlock", () => {
     undo();
     /*
     p
-    ⏎
+    ⛶
     ····abc
     ····123
     ····xyz
@@ -1394,7 +1400,7 @@ describe("Compiling IndentedCodeBlock", () => {
     repl(rv(2, 4), "4");
     /*
     p
-    ⏎
+    ⛶
     ····4abc
     ····123
     ····xyz
@@ -1439,7 +1445,7 @@ describe("Compiling IndentedCodeBlock", () => {
     undo();
     /*
     p
-    ⏎
+    ⛶
     ····abc
     ····123
     ····xyz
@@ -1491,7 +1497,7 @@ describe("Compiling FencedCodeBlock", () => {
     /*
     p
     ```
-    ⏎
+    ⛶
     ```
     n
      */
@@ -1527,7 +1533,7 @@ describe("Compiling FencedCodeBlock", () => {
     /*
     p
     ```
-    ⏎
+    ⛶
     abc
     ```
     n
@@ -1568,7 +1574,7 @@ describe("Compiling FencedCodeBlock", () => {
     /*
     p
     ```xyz
-    ⏎
+    ⛶
     abc
     ```
     n
@@ -1653,7 +1659,7 @@ describe("Compiling FencedCodeBlock", () => {
     repl(rv(1, 0), "\n");
     /*
     p
-    ⏎
+    ⛶
     ````
     ```
     n
@@ -1691,7 +1697,7 @@ describe("Compiling FencedCodeBlock", () => {
     repl(ran(3)._rv, "`");
     /*
     p
-    ⏎
+    ⛶
     ````
     ````
     n
@@ -1727,7 +1733,7 @@ describe("Compiling FencedCodeBlock", () => {
     repl(ran(3)._rv, "`");
     /*
     p
-    ⏎
+    ⛶
     ````
     `````
     n
@@ -1765,10 +1771,10 @@ describe("Compiling FencedCodeBlock", () => {
     repl(ran(3)._rv, "\n");
     /*
     p
-    ⏎
+    ⛶
     ````
     `````
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -1814,15 +1820,15 @@ describe("Compiling ListItem", () => {
       let tkId_a: id_t[], tkId_a_1: id_t[];
       let list_: List;
 
-      tkId_a = lexr._tkId_a;
+      tkId_a = lexr._tkId_a_;
       repl(ran(3)._rv, "4");
       /*
       ··* p
-      ⏎
+      ⛶
       ····abc
       ·1234
       ····xyz
-      ⏎
+      ⛶
       ····n
        */
       assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -1837,7 +1843,7 @@ describe("Compiling ListItem", () => {
         [],
       ]);
       assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-      tkId_a_1 = lexr._tkId_a;
+      tkId_a_1 = lexr._tkId_a_;
       assertEquals(tkId_a_1[1], tkId_a[1]);
       assertEquals(
         pazr._root?._toHTML(lexr),
@@ -1874,7 +1880,7 @@ describe("Compiling ListItem", () => {
     let tkId_a: id_t[], tkId_a_1: id_t[];
     let list_: List;
 
-    tkId_a = lexr._tkId_a;
+    tkId_a = lexr._tkId_a_;
     repl(ran(2)._rv, "4");
     /*
     ·* p
@@ -1894,7 +1900,7 @@ describe("Compiling ListItem", () => {
       ["text[4-2,4-3)", "stopBdry[4-3)"],
     ]);
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-    tkId_a_1 = lexr._tkId_a;
+    tkId_a_1 = lexr._tkId_a_;
     assertEquals(tkId_a_1[3], tkId_a[3]);
     assertEquals(
       pazr._root?._toHTML(lexr),
@@ -1923,7 +1929,7 @@ describe("Compiling ListItem", () => {
     let tkId_a: id_t[], tkId_a_1: id_t[];
     let list_: List;
 
-    tkId_a = lexr._tkId_a;
+    tkId_a = lexr._tkId_a_;
     repl(ran(3)._rv, "4"); // 👍
     /*
     ·* p
@@ -1944,7 +1950,7 @@ describe("Compiling ListItem", () => {
       [],
     ]);
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-    tkId_a_1 = lexr._tkId_a;
+    tkId_a_1 = lexr._tkId_a_;
     assertEquals(tkId_a_1[1], tkId_a[1]);
     assertEquals(tkId_a_1[3], tkId_a[3]);
     assertEquals(tkId_a_1[7], tkId_a[7]);
@@ -1982,7 +1988,7 @@ describe("Compiling ListItem", () => {
     ]);
     assertEquals(lexr._abadnSnt_2_sa_._repr_(), []);
 
-    tkId_a = lexr._tkId_a;
+    tkId_a = lexr._tkId_a_;
     undo();
     /*
     ·* p
@@ -2003,7 +2009,7 @@ describe("Compiling ListItem", () => {
       [],
     ]);
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-    tkId_a_1 = lexr._tkId_a;
+    tkId_a_1 = lexr._tkId_a_;
     assertEquals(tkId_a_1[1], tkId_a[1]);
     assertEquals(tkId_a_1[3], tkId_a[3]);
     assertEquals(tkId_a_1[7], tkId_a[7]);
@@ -2037,7 +2043,7 @@ describe("Compiling ListItem", () => {
     ]);
     assertEquals(lexr._abadnSnt_2_sa_._repr_(), []);
 
-    tkId_a = lexr._tkId_a;
+    tkId_a = lexr._tkId_a_;
     repl(rv(1, 1, 1, 2), "");
     /*
     ·* p
@@ -2058,7 +2064,7 @@ describe("Compiling ListItem", () => {
       [],
     ]);
     assertStrictEquals(lexr.stopLexTk_$, lexr.strtLexTk_$);
-    tkId_a_1 = lexr._tkId_a;
+    tkId_a_1 = lexr._tkId_a_;
     assertEquals(tkId_a_1[1], tkId_a[1]);
     assertEquals(tkId_a_1[3], tkId_a[3]);
     assertEquals(tkId_a_1[7], tkId_a[7]);
@@ -2255,7 +2261,7 @@ describe("Compiling ThematicBreak", () => {
     /*
     p
     ··***
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -2299,7 +2305,7 @@ describe("Compiling SetextHeading", () => {
     repl(ran(3)._rv, "4");
     /*
     p
-    ⏎
+    ⛶
     abc
     1234
     xyz
@@ -2338,7 +2344,7 @@ describe("Compiling SetextHeading", () => {
     repl(rv(5, 0), "-");
     /*
     p
-    ⏎
+    ⛶
     abc
     1234
     xyz
@@ -2379,7 +2385,7 @@ describe("Compiling SetextHeading", () => {
     repl(ran(3, undefined, 4)._rv, "");
     /*
     p
-    ⏎
+    ⛶
     abc
     1234
     ----
@@ -2420,7 +2426,7 @@ describe("Compiling SetextHeading", () => {
     repl(ran(3)._rv, "-");
     /*
     p
-    ⏎
+    ⛶
     abc
     ----
     n
@@ -2461,7 +2467,7 @@ describe("Compiling SetextHeading", () => {
     repl(rv(2, 0), "4");
     /*
     p
-    ⏎
+    ⛶
     4abc
     ----
     n
@@ -2503,8 +2509,8 @@ describe("Compiling SetextHeading", () => {
     repl(rv(1, 0), "\n");
     /*
     p
-    ⏎
-    ⏎
+    ⛶
+    ⛶
     abc
     ---
     n
@@ -2546,10 +2552,10 @@ describe("Compiling SetextHeading", () => {
     repl(rv(4, 0), "\n");
     /*
     p
-    ⏎
-    ⏎
+    ⛶
+    ⛶
     abc
-    ⏎
+    ⛶
     ---
     n
      */
@@ -2586,8 +2592,8 @@ describe("Compiling SetextHeading", () => {
     undo();
     /*
     p
-    ⏎
-    ⏎
+    ⛶
+    ⛶
     abc
     ---
     n
@@ -2630,11 +2636,11 @@ describe("Compiling SetextHeading", () => {
     repl(ran(4)._rv, "\n");
     /*
     p
-    ⏎
-    ⏎
+    ⛶
+    ⛶
     abc
     ---
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -2903,7 +2909,7 @@ describe("Compiling ATXHeading", () => {
     repl(rv(1, 0), "\n");
     /*
     p
-    ⏎
+    ⛶
     # abc #
     n
      */
@@ -2946,7 +2952,7 @@ describe("Compiling ATXHeading", () => {
     // repl(rv(2, 5), "\n");
     // /*
     // p
-    // ⏎
+    // ⛶
     // # abc
     // ·#
     // n
@@ -2955,7 +2961,7 @@ describe("Compiling ATXHeading", () => {
     // repl(rv(2, 2), "\n");
     // /*
     // p
-    // ⏎
+    // ⛶
     // #·
     // abc
     // ·#
@@ -2965,7 +2971,7 @@ describe("Compiling ATXHeading", () => {
     // undo();
     // /*
     // p
-    // ⏎
+    // ⛶
     // # abc
     // ·#
     // n
@@ -2974,7 +2980,7 @@ describe("Compiling ATXHeading", () => {
     // undo();
     // /*
     // p
-    // ⏎
+    // ⛶
     // # abc #
     // n
     //  */
@@ -2982,9 +2988,9 @@ describe("Compiling ATXHeading", () => {
     repl(ran(2)._rv, "\n");
     /*
     p
-    ⏎
+    ⛶
     # abc #
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -3026,7 +3032,7 @@ describe("Compiling HTMLBlock", () => {
     /*
     p
     <pre>
-    ⏎
+    ⛶
     </pre>
     n
      */
@@ -3062,7 +3068,7 @@ describe("Compiling HTMLBlock", () => {
     /*
     p
     <pre>xyz
-    ⏎
+    ⛶
     </pre>
     n
      */
@@ -3179,7 +3185,7 @@ describe("Compiling HTMLBlock", () => {
     repl(rv(1, 0), "\n");
     /*
     p
-    ⏎
+    ⛶
     <pre>
     </pre>
     n
@@ -3220,10 +3226,10 @@ describe("Compiling HTMLBlock", () => {
     repl(ran(3)._rv, "\n");
     /*
     p
-    ⏎
+    ⛶
     <pre>
     </pre>
-    ⏎
+    ⛶
     n
      */
     assertEquals(lexr.strtLexTk_$._Repr_(), [
@@ -3263,6 +3269,11 @@ describe("Compiling Linkdef", () => {
   it("edits destination, title in one Linkdef", () => {
     init(["[bar]:abc", "[foo]: /uri (xyz)", "[foo] [bar]"]);
 
+    /*
+  2 [bar]:abc
+  3 [foo]: /uri (xyz)
+  1 [foo] [bar]
+     */
     repl(rv(1, 11, 1, 12), "");
     /*
     [bar]:abc

@@ -6,41 +6,49 @@
 import { LOG_cssc } from "../../alias.ts";
 import { INOUT, PRF, space } from "../../global.ts";
 import type { id_t, lnum_t, loff_t, uint } from "../alias.ts";
-import { Endpt } from "../editor/alias.ts";
+import { Endpt } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
+import { g_count } from "../util/performance.ts";
 import { assert, out } from "../util/trace.ts";
 import type { Bufr } from "./Bufr.ts";
 import type { Line } from "./Line.ts";
 import { Loc } from "./Loc.ts";
-import { Ranval } from "./Ranval.ts";
+import { g_ranval_fac, Ranval } from "./Ranval.ts";
 /*80--------------------------------------------------------------------------*/
 
-/** @see {@linkcode Ran.calcRanP()} */
-export const enum RanP {
-  unknown = 0b0_00_0001,
+/** @see {@linkcode Ran.calcRanp()} */
+export const enum Ranp {
+  unknown = 0b0_000_0001,
+
   /** ( ... ) */
-  inOldRan = 0b0_00_0010,
+  inOldRan = 0b0_000_0010,
   /** [ ... ] */
-  frstLineBefor = 0b0_00_0100,
+  frstLineBefor = 0b0_000_0100,
   /** [ ... */
-  lastLineAfter = 0b0_00_1000,
-  ranLinesBefor = 0b0_01_0000,
-  ranLinesAfter = 0b0_10_0000,
+  lastLineAfter = 0b0_000_1000,
+  ranLinesBefor = 0b0_001_0000,
+  ranLinesAfter = 0b0_010_0000,
+
+  known = 0b0_100_0000,
 }
 //jjjj TOCLEANUP
-// export const RanP_unstable = RanP.inOldRan | RanP.lastLineAfter |
-//   RanP.ranLinesAfter;
+// export const RanP_unstable = Ranp.inOldRan | Ranp.lastLineAfter |
+//   Ranp.ranLinesAfter;
 
-type RanPData_ =
-  | [RanP.unknown, 0]
-  | [RanP.inOldRan, -1]
-  | [RanP.frstLineBefor | RanP.lastLineAfter, loff_t]
-  | [RanP.ranLinesBefor | RanP.ranLinesAfter, lnum_t];
+type RanpData_ =
+  | [Ranp.unknown | Ranp.known, 0]
+  | [Ranp.inOldRan, -1]
+  | [Ranp.frstLineBefor | Ranp.lastLineAfter, loff_t]
+  | [Ranp.ranLinesBefor | Ranp.ranLinesAfter, lnum_t];
+
+export type Ranpo = { anchr: RanpData_; focus: RanpData_ };
+/*64----------------------------------------------------------*/
 
 /** */
 export class Ran {
   static #ID = 0 as id_t;
   readonly id = ++Ran.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /* #ranval */
   #ranval = new Ranval(0 as lnum_t, 0);
@@ -91,36 +99,93 @@ export class Ran {
     return this.strtLoc$.bufr;
   }
 
+  //jjjj TOCLEANUP
+  // /* #ranpo */
+  // /** ranp and offs */
+  // #ranpo?: { anchr: RanpData_; focus: RanpData_ };
+  // private get _ranpo() {
+  //   return this.#ranpo ??= {
+  //     anchr: [Ranp.unknown, 0],
+  //     focus: [Ranp.unknown, 0],
+  //   };
+  // }
+
+  // get ranpoAnchr(): RanpData_ {
+  //   return this._ranpo.anchr;
+  // }
+  // // setRanpoAnchr(ranpA_x: Ranp, offsA_x: loff_t | lnum_t): void {
+  // //   this._ranpo.anchr[0] = ranpA_x;
+  // //   this._ranpo.anchr[1] = offsA_x;
+  // // }
+
+  // get ranpoFocus(): RanpData_ {
+  //   return this._ranpo.focus;
+  // }
+  // // setRanpoFocus(ranpF_x: Ranp, offsF_x: loff_t | lnum_t): void {
+  // //   this._ranpo.focus[0] = ranpF_x;
+  // //   this._ranpo.focus[1] = offsF_x;
+  // // }
+
+  // setRanpo(
+  //   ranpA_x: Ranp,
+  //   offsA_x: loff_t | lnum_t,
+  //   ranpF_x?: Ranp,
+  //   offsF_x?: loff_t | lnum_t,
+  // ): void {
+  //   this._ranpo.anchr[0] = ranpA_x;
+  //   this._ranpo.anchr[1] = offsA_x;
+  //   if (ranpF_x === undefined || offsF_x === undefined) {
+  //     this._ranpo.focus[0] = ranpA_x;
+  //     this._ranpo.focus[1] = offsA_x;
+  //   } else {
+  //     this._ranpo.focus[0] = ranpF_x;
+  //     this._ranpo.focus[1] = offsF_x;
+  //   }
+  // }
+  // /* ~ */
+
   /**
    * @headconst @param loc_x [COPIED]
    * @param loc_1_x [COPIED]
    */
   constructor(loc_x: Loc, loc_1_x?: Loc) {
-    this.setRan(loc_x, loc_1_x);
+    this.set_Ran(loc_x, loc_1_x);
+
+    /*#static*/ if (PRF) {
+      g_count.newRan += 1;
+    }
   }
   /**
    * @headconst @param bufr_x
    * @const @param rv_x
    */
-  static create(bufr_x: Bufr, rv_x: Ranval) {
-    return new Ran(
-      Loc.create(bufr_x, rv_x.anchrLidx, rv_x.anchrLoff),
-      Loc.create(bufr_x, rv_x.focusLidx, rv_x.focusLoff),
-    );
+  static create(bufr_x: Bufr, rv_x?: Ranval) {
+    if (rv_x) {
+      return new Ran(
+        Loc.create(bufr_x, rv_x.anchrLidx, rv_x.anchrLoff),
+        Loc.create(bufr_x, rv_x.focusLidx, rv_x.focusLoff),
+      );
+    } else {
+      using rv_u = g_ranval_fac.oneMore().setRanval(0 as lnum_t, 0);
+      return new Ran(
+        Loc.create(bufr_x, rv_u.anchrLidx, rv_u.anchrLoff),
+        Loc.create(bufr_x, rv_u.focusLidx, rv_u.focusLoff),
+      );
+    }
   }
 
   /** @const */
   dup() {
-    return new Ran(this.strtLoc.dup(), this.stopLoc.dup());
+    return new Ran(this.strtLoc.dup_Loc(), this.stopLoc.dup_Loc());
   }
 
-  resetRan(bufr_x?: Bufr): this {
+  reset_Ran(bufr_x?: Bufr): this {
     bufr_x ??= this.bufr;
     /*#static*/ if (INOUT) {
       assert(bufr_x);
     }
-    this.strtLoc$.setLoc(bufr_x!.frstLine_$, 0);
-    this.stopLoc$.setLoc(bufr_x!.frstLine_$, 0);
+    this.strtLoc$.set_Loc(bufr_x!.frstLine_$, 0);
+    this.stopLoc$.set_Loc(bufr_x!.frstLine_$, 0);
     return this;
   }
 
@@ -128,15 +193,15 @@ export class Ran {
    * @primaryconst @param loc_x [COPIED]
    * @param loc_1_x [COPIED]
    */
-  @out((_, self: Ran) => {
+  @out((self: Ran) => {
     assert(
       self.strtLoc$ && self.stopLoc$ &&
         self.strtLoc$ !== self.stopLoc$ &&
         self.strtLoc$.posSE(self.stopLoc$),
     );
   })
-  setRan(loc_x: Loc, loc_1_x?: Loc): this {
-    loc_1_x ??= loc_x.dup();
+  set_Ran(loc_x: Loc, loc_1_x?: Loc): this {
+    loc_1_x ??= loc_x.dup_Loc();
     if (loc_x.posSE(loc_1_x)) {
       this.strtLoc$ = loc_x;
       this.stopLoc$ = loc_1_x;
@@ -153,9 +218,9 @@ export class Ran {
    * @const @param rv_x
    */
   setByRanval(rv_x: Ranval): this {
-    this.strtLoc$.setLoc_O(rv_x.anchrLidx, rv_x.anchrLoff);
-    this.stopLoc$.setLoc_O(rv_x.focusLidx, rv_x.focusLoff);
-    return this.setRan(this.strtLoc$, this.stopLoc$);
+    this.strtLoc$.set_Loc_O(rv_x.anchrLidx, rv_x.anchrLoff);
+    this.stopLoc$.set_Loc_O(rv_x.focusLidx, rv_x.focusLoff);
+    return this.set_Ran(this.strtLoc$, this.stopLoc$);
   }
 
   /**
@@ -163,8 +228,8 @@ export class Ran {
    * @const @param ran_x
    */
   becomeRan(ran_x: Ran): this {
-    this.strtLoc$.becomeLoc(ran_x.strtLoc$);
-    this.stopLoc$.becomeLoc(ran_x.stopLoc$);
+    this.strtLoc$.become_Loc(ran_x.strtLoc$);
+    this.stopLoc$.become_Loc(ran_x.stopLoc$);
 
     // this.syncRanval_$();
 
@@ -194,7 +259,7 @@ export class Ran {
    * Change `strtLoc$`, keep `stopLoc$`
    */
   collapse() {
-    this.strtLoc$.becomeLoc(this.stopLoc$);
+    this.strtLoc$.become_Loc(this.stopLoc$);
 
     // this.syncRanval_$();
 
@@ -303,29 +368,32 @@ export class Ran {
 
   /**
    * @final
+   * @primaryconst
    * @const @param lidx_x
    * @const @param loff_x
+   * @out @param out_x
    */
-  calcRanP(lidx_x: lnum_t, loff_x: loff_t): RanPData_ {
-    let ranp = RanP.unknown;
+  calcRanp(lidx_x: lnum_t, loff_x: loff_t, out_x: RanpData_): void {
+    let ranp = Ranp.unknown;
     let offs: loff_t | lnum_t = 0;
     if (this.lastLine.lidx_1 === lidx_x && this.stopLoff <= loff_x) {
-      ranp = RanP.lastLineAfter;
+      ranp = Ranp.lastLineAfter;
       offs = loff_x - this.stopLoff;
     } else if (this.frstLine.lidx_1 === lidx_x && loff_x <= this.strtLoff) {
-      ranp = RanP.frstLineBefor;
+      ranp = Ranp.frstLineBefor;
       offs = loff_x;
     } else if (lidx_x < this.frstLine.lidx_1) {
-      ranp = RanP.ranLinesBefor;
+      ranp = Ranp.ranLinesBefor;
       offs = lidx_x;
     } else if (this.lastLine.lidx_1 < lidx_x) {
-      ranp = RanP.ranLinesAfter;
+      ranp = Ranp.ranLinesAfter;
       offs = lidx_x - this.lastLine.lidx_1;
     } else {
-      ranp = RanP.inOldRan;
+      ranp = Ranp.inOldRan;
       offs = -1;
     }
-    return [ranp, offs] as RanPData_;
+    out_x[0] = ranp;
+    out_x[1] = offs;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -377,7 +445,7 @@ class RanFac_ extends Factory<Ran> {
   }
 
   protected override reuseVal$(i_x: uint) {
-    return this.get(i_x).resetRan(this.#bufr);
+    return this.get(i_x).reset_Ran(this.#bufr);
   }
 }
 export const g_ran_fac = new RanFac_();

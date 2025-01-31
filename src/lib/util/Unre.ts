@@ -17,9 +17,10 @@ export class Unre<T extends {} | null> {
   static #ID = 0 as id_t;
   readonly id = ++Unre.#ID as id_t;
   /** @final */
-  get _type_id() {
+  get _type_id_() {
     return `${this.constructor.name}_${this.id}`;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   readonly #Len: uint;
   get LenMax() {
@@ -48,7 +49,7 @@ export class Unre<T extends {} | null> {
   }
 
   /** @const */
-  _repr(): Record<string, unknown> {
+  _repr_(): Record<string, unknown> {
     return {
       ary: this.ary$,
       ran: `[${this.i_0$}, ${this.i_1$})`,

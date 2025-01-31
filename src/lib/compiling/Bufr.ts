@@ -15,7 +15,7 @@ import { assert, out } from "../util/trace.ts";
 import { Line } from "./Line.ts";
 import type { Ran } from "./Ran.ts";
 import { g_ranval_fac, type Ranval } from "./Ranval.ts";
-import { Repl } from "./Repl.ts";
+import { Repl, type Replin } from "./Repl.ts";
 import { ReplActr } from "./ReplActr.ts";
 import type { sig_t } from "./alias.ts";
 import { BufrDoState, BufrReplState } from "./alias.ts";
@@ -32,7 +32,7 @@ export class Bufr {
   static #ID = 0 as id_t;
   readonly id = ++Bufr.#ID as id_t;
   /** @final */
-  get _type_id() {
+  get _type_id_() {
     return `${this.constructor.name}_${this.id}`;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -103,14 +103,21 @@ export class Bufr {
   #repl_saved: Repl | undefined;
   /* ~ */
 
+  //jjjj TOCLEANUP
   // oldRan_$ = new RanMoo(); /** @member */
   // newRan_$ = new RanMoo(); /** @member */
-  /** @using */
+  /**
+   * Disjoint and in order
+   * @using
+   */
   readonly oldRan_a_$: Ran[] = [];
   get oldRan_a() {
     return this.oldRan_a_$;
   }
-  /** @using */
+  /**
+   * Disjoint and in order
+   * @using
+   */
   readonly newRan_a_$: Ran[] = [];
   get newRan_a() {
     return this.newRan_a_$;
@@ -241,13 +248,13 @@ export class Bufr {
     }
   }
 
-  @out((_, self: Bufr) => {
+  @out((self: Bufr) => {
     assert(self.lineN_$ >= 1);
     assert(self.frstLine_$.bufr === self);
     assert(self.lastLine_$.bufr === self);
   })
-  resetBufr(): this {
-    this.dir_mo.resetMoo()
+  reset_Bufr(): this {
+    this.dir_mo.reset_Moo()
       .registHandler(this.#onDir, { i: LastCb_i });
 
     let line: Line | undefined = this.lastLine;
@@ -261,7 +268,7 @@ export class Bufr {
     assert(valve, `Loop ${VALVE}±1 times`);
     line!.removeSelf_$();
 
-    this.modified_mo.resetMoo();
+    this.modified_mo.reset_Moo();
     this.#lastRepl = this.#repl_saved = undefined;
 
     for (const ran of this.oldRan_a_$) ran[Symbol.dispose]();
@@ -270,10 +277,10 @@ export class Bufr {
     this.#doState = BufrDoState.idle;
 
     this.#doq.resetUnre();
-    this.canUndo_mo.resetMoo();
-    this.canRedo_mo.resetMoo();
+    this.canUndo_mo.reset_Moo();
+    this.canRedo_mo.reset_Moo();
 
-    this.repl_mo.resetMoo();
+    this.repl_mo.reset_Moo();
     this.#onReplStateChange = undefined;
 
     this.repl_actr.fina();
@@ -292,7 +299,7 @@ export class Bufr {
   }
 
   [Symbol.dispose]() {
-    this.resetBufr();
+    this.reset_Bufr();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -410,16 +417,16 @@ export class Bufr {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
-   * @const @param rv_x [COPIED]
-   * @const @param txt_x
+   * @const @param replin_x [COPIED]
+   *    If `Replin[]`, `.rv`s MUST be disjoint!.
    * @const @param edtrId_x
    */
-  Do(rv_x: Ranval, txt_x: string[] | string, edtrId_x = 0 as id_t): void {
+  Do(replin_x: Replin | Replin[], edtrId_x = 0 as id_t): void {
     const doState_save = this.#doState;
     this.#doState = BufrDoState.doing;
     this.#curEdtrId = edtrId_x;
 
-    this.#lastRepl = new Repl(this, rv_x, txt_x);
+    this.#lastRepl = new Repl(this, replin_x);
     this.#lastRepl.replFRun();
     this.modified = true;
 
@@ -445,7 +452,7 @@ export class Bufr {
     rv_u.focusLidx = this.lastLine_$.lidx_1;
     rv_u.focusLoff = this.lastLine_$.uchrLen;
 
-    new Repl(this, rv_u, text_x ?? this.getTexta()).replFRun();
+    new Repl(this, { rv: rv_u, txt: text_x ?? this.getTexta() }).replFRun();
 
     this.#doState = doState_save;
   }

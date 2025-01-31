@@ -18,6 +18,7 @@ import type { ELineBase } from "./ELineBase.ts";
 import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
 /*80--------------------------------------------------------------------------*/
 
+/** "Code" mode */
 export abstract class StnodeV<
   T extends Tok = BaseTok,
   CI extends EdtrBaseCI = EdtrBaseCI,
@@ -26,6 +27,9 @@ export abstract class StnodeV<
   static #ID = 0 as id_t;
   /** @final */
   override readonly id = ++StnodeV.#ID as id_t;
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  static readonly ctorRest = new CtorRest();
 
   abstract get eline_$(): ELineBase<CI>;
   /** @final */
@@ -45,14 +49,14 @@ export abstract class StnodeV<
   get stopLoff_$(): loff_t {
     return this.stopLoff$;
   }
-  translate_$(dt_x: ldt_t) {
-    this.strtLoff$ += dt_x;
-    this.stopLoff$ += dt_x;
+  translate_$(ldt_x: ldt_t) {
+    this.strtLoff$ += ldt_x;
+    this.stopLoff$ += ldt_x;
     for (const subNd of this.el$.childNodes) {
       if (subNd.isText) {
-        (subNd as Text)[$loff] += dt_x;
+        (subNd as Text)[$loff] += ldt_x;
       } else {
-        (subNd[$vuu] as StnodeV | undefined)?.translate_$(dt_x);
+        (subNd[$vuu] as StnodeV | undefined)?.translate_$(ldt_x);
       }
     }
   }
@@ -68,15 +72,18 @@ export abstract class StnodeV<
   //   );
   // }
 
+  //llll review: should be frstToken?
   /**
-   * Notice, `strtToken$.frstLine` could be after `bline_$`, in which case
-   * there is no token on `bline_$` and `this.strtToken$ === this.stopToken$`.
+   * kkkk (really? example?)
+   * Notice, `strtToken$.sntFrstLine` could be after `bline_$`, in which case
+   * there is no token on `bline_$`. //jjjj and `this.strtToken$ === this.stopToken$`.
    */
   protected strtToken$!: Token<T>;
   /** @final */
   get strtToken_$(): Token<T> {
     return this.strtToken$;
   }
+  //llll review: should be lastToken?
   protected stopToken$!: Token<T>;
   /** @final */
   get stopToken_$(): Token<T> {
@@ -123,7 +130,8 @@ export abstract class StnodeV<
   }
   /* ~ */
 
-  static readonly ctorRest = new CtorRest();
+  //kkkk
+  protected rich$?: unknown;
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
@@ -161,9 +169,9 @@ export abstract class StnodeV<
   /**
    * @final
    * @const @param i_x exclusive
-   * @const @param dt_x
+   * @const @param ldt_x
    */
-  protected setReplRest$(i_x: uint, dt_x: ldt_t) {
+  protected setReplRest$(i_x: uint, ldt_x: ldt_t) {
     const subV = this.el$.childNodes[i_x][$vuu] as StnodeV<T, CI, E>;
     /*#static*/ if (INOUT) {
       assert(subV instanceof StnodeV);
@@ -171,7 +179,7 @@ export abstract class StnodeV<
     if (StnodeV.ctorRest.inuse) {
       /*#static*/ if (INOUT) {
         assert(i_x === this.el$.childNodes.length - 1);
-        assert(dt_x === 0);
+        assert(ldt_x === 0);
       }
       const rest = StnodeV.ctorRest.replRest_$!;
       let nd_i: Node | undefined;
@@ -200,9 +208,9 @@ export abstract class StnodeV<
           this.replRest$.unshift(nd_j);
         }
         if (nd_j.isText) {
-          (nd_j as Text)[$loff] += dt_x; //!
+          (nd_j as Text)[$loff] += ldt_x; //!
         } else {
-          (nd_j[$vuu] as StnodeV | undefined)?.translate_$(dt_x);
+          (nd_j[$vuu] as StnodeV | undefined)?.translate_$(ldt_x);
         }
       }
 
@@ -213,7 +221,7 @@ export abstract class StnodeV<
         this.broken$ = true;
         this.stopToken$ = subV.stopToken$;
       } else {
-        this.stopLoff$ += dt_x;
+        this.stopLoff$ += ldt_x;
       }
     }
   }
@@ -263,7 +271,7 @@ export abstract class StnodeV<
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @final */
-  get _info(): string {
+  get _info_(): string {
     return `[${this.strtLoff$})${this.stopLoff$} ` +
       `[${this.strtToken$})` +
       `${this.stopToken$ === this.strtToken$ ? "" : this.stopToken$}` +

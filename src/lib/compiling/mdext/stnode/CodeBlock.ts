@@ -41,8 +41,8 @@ export abstract class CodeBlock extends Block {
     return undefined;
   }
 
-  override resetBlock(): this {
-    super.resetBlock();
+  override reset_Block(): this {
+    super.reset_Block();
     this.chunkTk_a$.length = 0;
     return this;
   }
@@ -209,8 +209,8 @@ export class FencedCodeBlock extends CodeBlock {
     // this.#st = FencedCodeBlockSt.head;
   }
 
-  override resetBlock(): this {
-    super.resetBlock();
+  override reset_Block(): this {
+    super.reset_Block();
     this.#headChunkTk = undefined;
     this.#tailTk = undefined;
     return this;

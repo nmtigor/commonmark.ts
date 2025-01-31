@@ -37,17 +37,17 @@ export class MdextPazr extends Pazr<MdextTok> {
     super(bufr_x, Lexr_x);
   }
 
-  override resetPazr(): this {
-    this.resetPazr$(this.bufr$, this.lexr$);
+  override reset_Pazr(): this {
+    this.reset_Pazr$(this.bufr$, this.lexr$);
     this.root$ = undefined;
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  @out((_, self: MdextPazr) => {
+  @out((self: MdextPazr) => {
     assert(!self.drtSn_$ || self.drtSn_$ instanceof Block);
   })
-  protected override sufmark$(): void {
+  protected override sufpazmrk$(): void {
     const drtSn = this.drtSn_$;
     if (drtSn) {
       if (!(drtSn instanceof Block)) {
