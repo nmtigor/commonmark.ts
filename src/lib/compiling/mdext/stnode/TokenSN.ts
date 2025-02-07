@@ -3,7 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { domParser } from "@fe-lib/util/general.ts";
+import { domParser } from "@fe-lib/util/string.ts";
 import type { MdextTk } from "../../Token.ts";
 import { _escapeXml } from "../util.ts";
 import { Inline } from "./Inline.ts";

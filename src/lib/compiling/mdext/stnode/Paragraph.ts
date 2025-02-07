@@ -3,7 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { isLFOr0 } from "@fe-lib/util/general.ts";
+import { isLFOr0 } from "@fe-lib/util/string.ts";
 import { assert } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
 import { MdextTk } from "../../Token.ts";

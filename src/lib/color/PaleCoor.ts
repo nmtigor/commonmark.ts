@@ -140,7 +140,7 @@ export class PaleCoor extends Moo<PaleCoor> {
       }
     }
 
-    this.sample().update().setMoo(this);
+    this.sample().update().set_Moo(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -422,7 +422,7 @@ export class PaleCoor extends Moo<PaleCoor> {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   toJSON(): PaleCoorRaw {
-    this.modified_mo.setMoo(false); //!
+    this.modified_mo.set_Moo(false); //!
     return {
       axes: this.axes.length ? this.axes : undefined,
       qm_a: this.qm_sa as any,

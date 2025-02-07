@@ -232,7 +232,6 @@ export class TSeg {
    * @const @param lidx_1_x
    * @const @param loff_1_x
    * @const @param length_x
-   * @returns
    */
   @out((self: TSeg, _, args) => {
     assert(self._ran.frstLine === self._ran.lastLine);
@@ -244,7 +243,7 @@ export class TSeg {
     lidx_1_x: lnum_t,
     loff_1_x: loff_t,
     length_x: loff_t,
-  ) {
+  ): this {
     /*#static*/ if (INOUT) {
       assert(length_x > 0);
     }

@@ -55,7 +55,7 @@ export class ColranQ extends Moo<ColranQ> {
       return ret;
     });
 
-    this.setMoo(this);
+    this.set_Moo(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -98,7 +98,7 @@ export class ColranQ extends Moo<ColranQ> {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   toJSON(): ColranQRaw {
-    this.modified_mo.setMoo(false); //!
+    this.modified_mo.set_Moo(false); //!
     return this.#colran_a.map((_y) => _y.toJSON());
   }
 }

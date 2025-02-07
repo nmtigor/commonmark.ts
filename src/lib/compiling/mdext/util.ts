@@ -10,7 +10,7 @@ import {
   isASCIILetter,
   isDecimalDigit,
   isHexDigit,
-} from "../../util/general.ts";
+} from "../../util/string.ts";
 import { assert } from "../../util/trace.ts";
 import { BaseTok } from "../BaseTok.ts";
 import type { Line } from "../Line.ts";

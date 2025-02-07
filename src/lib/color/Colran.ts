@@ -353,7 +353,7 @@ export class Colran {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   toJSON(): ColranRaw {
-    this.modified_mo.setMoo(false); //!
+    this.modified_mo.set_Moo(false); //!
     return ({
       rgb: [this.#typ, [this.#redran, this.#greenran, this.#blueran]],
       rgba: [this.#typ, [

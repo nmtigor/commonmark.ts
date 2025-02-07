@@ -276,14 +276,14 @@ export class Moo<T extends {} | null, D = any, I = any> {
    * Not invoking any callbacks
    * @final
    */
-  setMoo(val: T): this {
+  set_Moo(val: T): this {
     this.#val = this.#newval = val;
     return this;
   }
 
   /** @final */
   reset_Moo(): this {
-    this.setMoo(this.#initval);
+    this.set_Moo(this.#initval);
     if (this.nCb) {
       this.#handler_db_ = undefined;
       //! Do not `#handler_db_.clear()` because `#handler_db_` could be shared.

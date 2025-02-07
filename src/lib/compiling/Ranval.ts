@@ -6,7 +6,7 @@
 import { LOG_cssc } from "../../alias.ts";
 import { PRF } from "../../global.ts";
 import { Moo, type MooEq } from "../Moo.ts";
-import { type lnum_t, type loff_t } from "../alias.ts";
+import type { lnum_t, loff_t } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
 import type { Bufr } from "./Bufr.ts";
 import type { Loc } from "./Loc.ts";

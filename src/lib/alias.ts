@@ -37,7 +37,7 @@ export type uint8 = uint;
 // export type uint8 = Brand<uint, "uint8">; //jjjj try to use this
 export const zUint8 = zUint.max(2 ** 8 - 1);
 
-export type unum = Brand<number, "unum">;
+export type unum = number;
 export const zUnum = z.number().min(0);
 /*49-------------------------------------------*/
 

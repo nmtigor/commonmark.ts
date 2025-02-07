@@ -17,7 +17,6 @@ import type { Tok } from "./alias.ts";
 /** @final */
 export class TokBufr<T extends Tok = BaseTok> extends Bufr {
   readonly tabsize: 2 | 4 | 8;
-  readonly #srcname: string;
 
   override get frstLine() {
     return this.frstLine_$ as TokLine<T>;
@@ -35,18 +34,18 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
 
   /**
    * @const @param text_x
-   * @const @param srcname_x
+   * @const @param dir_x
+   * @headconst @param fh_x
    * @const @param tabsize_x
    */
   constructor(
     text_x?: string,
     dir_x = BufrDir.ltr,
+    fh_x?: FileSystemFileHandle,
     tabsize_x: 2 | 4 | 8 = 4,
-    srcname_x = "",
   ) {
-    super(text_x, dir_x);
+    super(text_x, dir_x, fh_x);
     this.tabsize = tabsize_x;
-    this.#srcname = srcname_x;
 
     //jjjj TOCLEANUP
     // this.dir_mo.registHandler((n_y) => {

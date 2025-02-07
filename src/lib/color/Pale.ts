@@ -216,7 +216,7 @@ export class Pale {
     // this.#c_mo = new Moo<number>(0, undefined, "force");
 
     // this.#cidx = Pale.loadCidxOf(this);
-    this.cidx_mo.setMoo(raw_x.cidx);
+    this.cidx_mo.set_Moo(raw_x.cidx);
     for (const coor of raw_x.coors) {
       const coor_ = new PaleCoor(coor);
       this.coor_a.push(coor_);
@@ -272,7 +272,7 @@ export class Pale {
     this.coor_a.splice(_x, 1);
 
     if (_x < this.cidx) {
-      this.cidx_mo.setMoo(this.cidx - 1 as PaleCidx);
+      this.cidx_mo.set_Moo(this.cidx - 1 as PaleCidx);
     } else if (_x === this.cidx) {
       if (_x >= this.coor_a.length) _x = this.coor_a.length - 1 as PaleCidx;
       this.cidx_mo.force().val = _x;
@@ -832,7 +832,7 @@ export class Pale {
   // /*49-----------------------------------------*/
 
   toJSON(): PaleRaw {
-    this.modified_mo.setMoo(false); //!
+    this.modified_mo.set_Moo(false); //!
     return {
       coors: this.coor_a.map((coor) => coor.toJSON()),
       cidx: this.cidx,

@@ -5,7 +5,7 @@
 
 import { _TRACE, global, INOUT } from "../../global.ts";
 import type { id_t, lnum_t } from "../alias.ts";
-import { linesOf } from "../util/general.ts";
+import { linesOf } from "../util/string.ts";
 import { type Less, SortedArray } from "../util/SortedArray.ts";
 import { assert, fail, traceOut } from "../util/trace.ts";
 import { BufrReplState } from "./alias.ts";

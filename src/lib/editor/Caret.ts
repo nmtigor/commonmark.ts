@@ -217,13 +217,13 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   }
   /* ~ */
 
+  @out((self: Caret) => {
+    assert(!self.#shown);
+  })
   hideAll() {
     if (this.#shown) {
       this.hide();
       this.#hideSelec();
-    }
-    /*#static*/ if (INOUT) {
-      assert(!this.#shown);
     }
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
@@ -266,9 +266,9 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
 
   /**
    * @headconst @param coo_x
-   * @headconst @param cr_x
+   * @headconst @param crm_x
    */
-  private constructor(coo_x: EdtrBase, cr_x?: CaretRvM) {
+  private constructor(coo_x: EdtrBase, crm_x?: CaretRvM) {
     super(coo_x, html("input"));
     this.#selec_fac = new SelecFac(coo_x);
 
@@ -315,7 +315,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
       display: "none",
       position: "absolute",
     });
-    this.reset_$(cr_x);
+    this.reset_$(crm_x);
 
     //jjjj TOCLEANUP
     // this.on("focus", this.#onFocus);
@@ -325,15 +325,15 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     // // this.on("input", this.#onInput);
     this.on("compositionend", () => this.el$.value = "");
   }
-  static create(coo_x: EdtrBase, cr_x?: CaretRvM) {
-    const ret = new Caret(coo_x, cr_x);
+  static create(coo_x: EdtrBase, crm_x?: CaretRvM) {
+    const ret = new Caret(coo_x, crm_x);
     /*#static*/ if (DEV) ret.observeTheme();
     return ret;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** @headconst @param cr_x */
-  reset_$(cr_x?: CaretRvM) {
+  /** @headconst @param crm_x */
+  reset_$(crm_x?: CaretRvM) {
     if (this.#proactive) {
       this.#caretrvm![1].reset_Moo();
       /* Then other shadow carets are in-`active` automatically because
@@ -341,10 +341,10 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     } else if (this.active) {
       this.disable_$();
     }
-    this.#caretrvm = cr_x;
-    if (cr_x) {
-      cr_x[1].registHandler(this._onRanvalChange);
-      cr_x[1].forceOnce = true; //!
+    this.#caretrvm = crm_x;
+    if (crm_x) {
+      crm_x[1].registHandler(this._onRanvalChange);
+      crm_x[1].forceOnce = true; //!
     }
 
     //jjjj TOCLEANUP
@@ -390,12 +390,13 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   @out((self: Caret) => {
     assert((!self.active || self.#proactive) && !self.#shown);
   })
-  disable_$(): void {
+  disable_$(): this {
     this.hideAll();
     if (!this.#proactive) {
       this.#caretrvm?.[1].removeHandler(this._onRanvalChange);
       this.#caretrvm = undefined;
     }
+    return this;
   }
 
   /** @const @param rv_x */

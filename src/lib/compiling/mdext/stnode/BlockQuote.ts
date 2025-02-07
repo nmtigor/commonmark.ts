@@ -4,7 +4,7 @@
  ******************************************************************************/
 
 import type { uint } from "@fe-lib/alias.ts";
-import { isSpaceOrTab } from "@fe-lib/util/general.ts";
+import { isSpaceOrTab } from "@fe-lib/util/string.ts";
 import type { lnum_t } from "@fe-lib/alias.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";

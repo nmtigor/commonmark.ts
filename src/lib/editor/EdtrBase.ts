@@ -16,7 +16,7 @@ import { type CooInterface, HTMLVCo } from "../cv.ts";
 import { div } from "../dom.ts";
 import { $cssstylesheet, $loff, $tail_ignored } from "../symbols.ts";
 import { Factory } from "../util/Factory.ts";
-import { SortedArray } from "../util/SortedArray.ts";
+import type { SortedIdo } from "../util/SortedArray.ts";
 import { assert, traceOut } from "../util/trace.ts";
 import { Caret, type CaretRvM } from "./Caret.ts";
 import { ELineBase } from "./ELineBase.ts";
@@ -75,7 +75,6 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
   }
 
   protected scrolr$!: EdtrBaseScrolr<CI>;
-  /** @final */
   get _scrolr() {
     return this.scrolr$;
   }
@@ -92,6 +91,13 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
     return this.#scronr?.writingMode ?? this.#writingMode;
   }
 
+  /** @final */
+  readonly wrap_mo = new Moo({ val: true, active: true });
+  /** @final */
+  get wrap(): boolean {
+    return this.wrap_mo.val;
+  }
+
   #lastView_ts = 0 as ts_t;
   get lastView_ts() {
     return this.#lastView_ts;
@@ -103,15 +109,15 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
   /** */
   constructor() {
     super(div());
-    /* `#scronr.coo` should exist before `init()`. See e.g. uses of `init()` in
-    "PRItemVCo.ts" */
+    /* `#scronr.coo` should exist before `init_EdtrBase()`. See e.g. uses of
+    `init_EdtrBase()` in "PRItemVCo.ts" */
     this.#scronr = new EdtrScronr(this);
 
     /*#static*/ if (DEV) {
       this.el$.id = this._type_id_;
     }
 
-    /* Some common settings here. May be overridden by `style$()`. */
+    /* Some common settings here. May be overridden by `styl$()`. */
     this.assignStylo({
       lineBreak: "loose",
     });
@@ -131,23 +137,21 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
     });
   }
 
-  #inited = false;
+  #edtrbaseInited = false;
   /**
    * @final
    * @headconst @param scrolr_x
    */
-  init(scrolr_x: EdtrBaseScrolr<CI>): void {
+  init_EdtrBase(scrolr_x: EdtrBaseScrolr<CI>): void {
     /*#static*/ if (INOUT) {
-      assert(!this.#inited);
+      assert(!this.#edtrbaseInited);
     }
     this.scrolr$ = scrolr_x;
-    this.#scronr.init(scrolr_x);
+    this.#scronr.initScrolr(scrolr_x);
 
-    this.el$.append(
-      this.#scronr.el,
-    );
+    this.el$.append(this.#scronr.el);
 
-    this._writingMode_mo.setMoo(this.#writingMode)
+    this._writingMode_mo.set_Moo(this.#writingMode)
       .registHandler(() => {
         this.scrolr$
           .invalidate_bcr()
@@ -155,13 +159,13 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
       }, { i: LastCb_i });
     this.#scronr.syncLayout();
 
-    new ResizeObserver(this.#scronr.refreshScronr).observe(
+    new ResizeObserver(this.#scronr.refresh_Scronr).observe(
       this.scrolr$.main_el,
     );
 
     /*#static*/ if (DEV) this.#scronr.observeTheme(); //!
 
-    this.#inited = true;
+    this.#edtrbaseInited = true;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -172,38 +176,40 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
    * invoked.
    * @final
    */
-  protected style$(styl_x?: CSSStyle) {
+  protected styl$(styl_x?: CSSStyle) {
     const wm_css = styl_x?.writingMode;
     this.#writingMode = wm_css === "vertical-rl"
       ? WritingMode.vrl
       : wm_css === "vertical-lr"
       ? WritingMode.vlr
       : WritingMode.htb;
-    if (this.#inited) {
-      this.#scronr.writingMode_mo.setMoo(this.#writingMode);
+    if (this.#edtrbaseInited) {
+      this.#scronr.writingMode_mo.set_Moo(this.#writingMode);
       this.#scronr.syncLayout();
     }
 
     if (styl_x) {
-      styl_x.writingMode = "unset";
+      delete styl_x.writingMode;
       this.assignStylo(styl_x);
     }
   }
 
-  /**
-   * `in( this.el$.isConnected )`
-   * @final
-   */
-  _refreshEdtrScronr() {
-    this.#scronr.refreshScronr();
-  }
+  //jjjj TOCLEANUP
+  // /**
+  //  * `in( this.el$.isConnected )`
+  //  * @final
+  //  */
+  // _refreshEdtrScronr() {
+  //   this.#scronr.refresh_Scronr();
+  // }
 
-  /** @final */
-  _refreshEdtr(): this {
-    this.scrolr$.refreshEdtrScrolr()
-      .coo._refreshEdtrScronr();
-    return this;
-  }
+  //jjjj TOCLEANUP
+  // /** @final */
+  // _refresh_EdtrBase(): this {
+  //   this.scrolr$.refresh_EdtrBaseScrolr()
+  //     .coo._refreshEdtrScronr();
+  //   return this;
+  // }
 }
 /*64----------------------------------------------------------*/
 
@@ -219,23 +225,20 @@ export class EdtrScronr<CI extends EdtrBaseCI> extends Scronr<EdtrBase<CI>> {
     });
   }
 
-  #inited = false;
-  /**
-   * @final
-   * @headconst @param scrolr_x
-   */
-  init(scrolr_x: EdtrBaseScrolr<CI>): void {
-    /*#static*/ if (INOUT) {
-      assert(!this.#inited);
-    }
-    this.initScrolr(scrolr_x);
+  //jjjj TOCLEANUP
+  // #inited = false;
+  // /**
+  //  * @final
+  //  * @headconst @param scrolr_x
+  //  */
+  // init_EdtrScronr(scrolr_x: EdtrBaseScrolr<CI>): void {
+  //   /*#static*/ if (INOUT) {
+  //     assert(!this.#inited);
+  //   }
+  //   this.initScrolr(scrolr_x);
 
-    this.el$.append(
-      scrolr_x.el,
-    );
-
-    this.#inited = true;
-  }
+  //   this.#inited = true;
+  // }
 }
 /*49-------------------------------------------*/
 
@@ -387,10 +390,12 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
       // writingMode: "vertical-rl",
 
       // border: "2px solid",
+      // inlineSize: "max-content",
       // backgroundColor: "#fff",
       outlineStyle: "none",
 
       whiteSpace: "break-spaces", // Ref. https://stackoverflow.com/questions/64699828/css-property-white-space-example-for-break-spaces
+      // whiteSpace: "preserve nowrap",
       // wordBreak: "break-all",
       // overflowWrap: "anywhere",
       // lineBreak: "loose",
@@ -415,9 +420,11 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
       position: "relative",
       zIndex: EdtrMain_z,
       //
+      // inlineSize: "max-content",
       // backgroundColor: "transparent",
       //
       // textAlign: "end",
+      // whiteSpace: "preserve nowrap",
     });
 
     this.el$.append(
@@ -622,46 +629,56 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** @headconst @param rvm_x */
-  #setShadowCaret(rvm_x: CaretRvM) {
+  /** @headconst @param crm_x */
+  #setShadowCaret(crm_x?: CaretRvM) {
     /*#static*/ if (INOUT) {
-      assert(this !== rvm_x[0].edtr);
+      assert(!crm_x || this !== crm_x[0].edtr);
     }
-    // if( !(this.#sig & rvm_x.sigmask) ) return; //jjjj
+    // if( !(this.#sig & crm_x.sigmask) ) return; //jjjj
 
-    // const colr = rvm_x.host.colr.dup().setAlpha( .35 );
+    // const colr = crm_x.host.colr.dup().setAlpha( .35 );
 
     let c_;
     for (let i = 1; i < this.caret_a$.length; ++i) {
       if (!this.caret_a$[i].active) {
-        c_ = this.caret_a$[i];
-        break;
+        const c_1 = this.caret_a$[i].disable_$();
+        c_ ??= c_1;
       }
     }
-    if (c_) {
-      c_.reset_$(rvm_x);
-    } else {
-      c_ = Caret.create(this.coo, rvm_x).attachTo(this);
-      this.caret_a$.push(c_);
-    }
-  }
-
-  /** @final */
-  protected resetCarets$(edtr_sa_x: SortedArray<{ id: id_t }>) {
-    this.caret_a$.forEach((caret_y) => caret_y.disable_$());
-    const rvm: CaretRvM = [this.proactiveCaret, new RanvalMo()];
-    this.proactiveCaret.reset_$(rvm);
-    for (let i = 0; i < edtr_sa_x.length; ++i) {
-      const edtr = edtr_sa_x[i] as EdtrBaseScrolr<CI>;
-      if (edtr === this) continue;
-
-      edtr.#setShadowCaret(rvm);
-      this.#setShadowCaret(edtr.proactiveCaret.caretrvm!);
+    if (crm_x) {
+      if (c_) {
+        c_.reset_$(crm_x);
+      } else {
+        c_ = Caret.create(this.coo, crm_x).attachTo(this);
+        this.caret_a$.push(c_);
+      }
     }
   }
 
   /**
-   * `refreshCarets()` vs `refresh()` is in essence
+   * @final
+   * @headconst @param edtr_sa_x
+   * @const @param hard_x
+   */
+  protected resetCarets$(edtr_sa_x: SortedIdo, hard_x?: "hard") {
+    this.caret_a$.forEach((caret_y) => caret_y.disable_$());
+    const crm = hard_x
+      ? undefined
+      : [this.proactiveCaret, new RanvalMo()] as CaretRvM;
+    this.proactiveCaret.reset_$(crm);
+    for (let i = 0; i < edtr_sa_x.length; ++i) {
+      const edtr = edtr_sa_x[i] as EdtrBaseScrolr<CI>;
+      if (edtr === this) continue;
+
+      edtr.#setShadowCaret(crm);
+      if (!hard_x) {
+        this.#setShadowCaret(edtr.proactiveCaret.caretrvm!);
+      }
+    }
+  }
+
+  /**
+   * `refreshCarets()` vs `refresh_EdtrBaseScrolr()` is in essence
    * `Caret.draw_$()` vs `Caret.shadowShow()`, where `draw_$()` does not care
    * about show-hide-things, nor does it update `Caret.#eran` or
    * `Caret.#fat_eran`.
@@ -702,9 +719,12 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
    * `in( this.el$.isConnected )`
    * @final
    */
-  refreshEdtrScrolr(): this {
+  // @traceOut(_TRACE)
+  refresh_EdtrBaseScrolr(): this {
     // /*#static*/ if (_TRACE) {
-    //   console.log(`${global.indent}>>>>>>> ${this._type_id_}.refresh() >>>>>>>`);
+    //   console.log(
+    //     `${global.indent}>>>>>>> ${this._type_id_}.refresh_EdtrBaseScrolr() >>>>>>>`,
+    //   );
     // }
     // this.reset$();
 
@@ -721,7 +741,6 @@ export abstract class EdtrBaseScrolr<CI extends EdtrBaseCI = EdtrBaseCI>
         caret.hideAll();
       }
     }
-    // /*#static*/ if (_TRACE && RESIZ) global.outdent;
     return this;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/

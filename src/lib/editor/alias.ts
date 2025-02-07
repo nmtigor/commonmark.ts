@@ -67,6 +67,8 @@ export type EdtrFuncName =
   | "undo" | "redo"
 
   | "cut" | "copy" | "paste"
+
+  | "open" | "save"
 ;
 
 export const enum EdtrState {}
@@ -113,6 +115,9 @@ export const EdtrShortcut_a = [
   [`${Key.Control}+x`, "cut"],
   [`${Key.Control}+c`, "copy"],
   [`${Key.Control}+v`, "paste"],
+
+  [`${Key.Control}+o`, "open"],
+  [`${Key.Control}+s`, "save"],
 ] as const;
 export const EdtrShortcut_m: EdtrShortcut<EdtrFuncName> = new Map(
   EdtrShortcut_a,

@@ -1,17 +1,11 @@
 /** 80**************************************************************************
- * @module lib/util/general
+ * @module lib/util/string
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { uint, uint16 } from "../alias.ts";
-import { scrollO } from "../alias.ts";
+import type { uint16 } from "../alias.ts";
 import "../dom.ts";
 /*80--------------------------------------------------------------------------*/
-
-/**
- * Ref. [Get Byte size of the string in Javascript](https://dev.to/rajnishkatharotiya/get-byte-size-of-the-string-in-javascript-20jm)
- */
-export const byteSize = (_x: BlobPart) => new Blob([_x]).size;
 
 /* Not sure if js impls use regexp interning like string. So. */
 // const lt_re_ = /[\n\r\u001C-\u001E\u0085\u2029]/g;
@@ -89,37 +83,6 @@ export const isWhitespaceUCod = (_x: uint16) => ws_a_.indexOf(_x) >= 0;
 // export const isWhitespace = (_x: string) => ws_re_.test(_x);
 /*80--------------------------------------------------------------------------*/
 
-// /**
-//  * Ref. [[pdf.js]/src/shared/util.js](https://github.com/mozilla/pdf.js/blob/master/src/shared/util.js)
-//  */
-// export const hexNumbers = Array.from(
-//   Array(256).keys(),
-//   (n) => n.toString(16).padStart(2, "0"),
-// );
-/*80--------------------------------------------------------------------------*/
-
-export const stopPropagation = (evt_x: Event) => {
-  evt_x.stopPropagation();
-};
-
-/**
- * Event handler to suppress context menu.
- *
- * Ref. [[pdf.js]/src/display/display_utils.js](https://github.com/mozilla/pdf.js/blob/master/src/display/display_utils.js)
- */
-export const noContextMenu = (evt_x: MouseEvent) => {
-  evt_x.preventDefault();
-};
-
-export const onWheel = (el_x: Element) => {
-  return (evt_x: WheelEvent) => {
-    scrollO.top = evt_x.deltaY >= 0 ? 50 : -50;
-    scrollO.left = 0;
-    el_x.scrollBy(scrollO);
-  };
-};
-/*80--------------------------------------------------------------------------*/
-
 export const domParser = new DOMParser();
 //jjjj TOCLEANUP
 // const backslashOrAmp_re_ = /[\\&]/;
@@ -133,14 +96,4 @@ export const encodeStr = textEncoder_.encode.bind(textEncoder_);
 
 const textDecoder_ = new TextDecoder();
 export const decodeABV = textDecoder_.decode.bind(textDecoder_);
-/*80--------------------------------------------------------------------------*/
-
-/**
- * Ref. [What is the JavaScript version of sleep()?](https://stackoverflow.com/a/39914235)
- *
- * @param ms time in milliseconds
- */
-export const wait = (ms = 0) => new Promise<void>((r) => setTimeout(r, ms));
-
-export const g_abortr = new AbortController();
 /*80--------------------------------------------------------------------------*/

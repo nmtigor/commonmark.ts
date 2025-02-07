@@ -13,7 +13,7 @@ deno test --allow-read --allow-net
 
 ### Known issue
 
-Using Deno 2.1.8 causes "segmentation fault" in one-line error message! ([#25192](https://github.com/denoland/deno/issues/25192))
+Using Deno 2.1.9 causes "segmentation fault" in one-line error message! ([#25192](https://github.com/denoland/deno/issues/25192))
 
 Downgrading to 1.45.5 (`deno upgrade --version 1.45.5`) works fine.
 

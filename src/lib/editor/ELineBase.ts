@@ -158,6 +158,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     using rv_u = g_ranval_fac.oneMore().setRanval(bln.lidx_1, 0);
     let fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
     const LEN = bln.uchrLen;
+    const wrap_a_0 = this.#wrap_a.slice();
     this.#wrap_a.length = 0;
     const impl_ = (blockOf_y: BlockOf, samerow_y: SameRow) => {
       let block_0 = blockOf_y(fsrec.fat);
@@ -193,7 +194,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
       this.#wrap_a,
       bln.bidi.embedLevels, //!
     );
-    if (this.#wrap_a.length > 1) this.bidi$.validate();
+    if (!this.#wrap_a.eq(wrap_a_0)) this.bidi$.validate();
   }
 
   #onResiz = () => {
@@ -206,7 +207,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
       );
     }
     this.coo$.updateLastViewTs(); //!
-    this.setBidi$();
+    this.setBidi$(); //kkkk not need to call this in wrap mode
     /*#static*/ if (_TRACE && RESIZ) global.outdent;
     return;
   };

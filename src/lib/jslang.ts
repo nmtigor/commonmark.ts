@@ -48,7 +48,7 @@ export function isObjectLike(value: unknown): boolean {
 
 let valve_ = 0;
 /**
- * ! Compare deeply Object, Array only.
+ * ! Compare deeply Object, Array only.\
  * ! Compare enumerable own string-properties only.
  *
  * @headconst @param lhs_x
@@ -683,14 +683,14 @@ declare global {
   interface ReadableStream<R = any> {
     [Symbol.asyncIterator](): AsyncIterableIterator<R>;
   }
+
+  interface WritableStream<W = any> {
+    [Symbol.asyncDispose](): Promise<void>;
+  }
 }
 
-/**
- * Ref. https://stackoverflow.com/a/77377871
- */
-ReadableStream.prototype[Symbol.asyncIterator] ??= async function* <R = any>(
-  this: ReadableStream<R>,
-) {
+/** Ref. https://stackoverflow.com/a/77377871 */
+ReadableStream.prototype[Symbol.asyncIterator] ??= async function* (this) {
   const reader = this.getReader();
   try {
     while (true) {
@@ -701,6 +701,10 @@ ReadableStream.prototype[Symbol.asyncIterator] ??= async function* <R = any>(
   } finally {
     reader.releaseLock();
   }
+};
+
+WritableStream.prototype[Symbol.asyncDispose] = async function (this) {
+  await this.close();
 };
 /*80--------------------------------------------------------------------------*/
 

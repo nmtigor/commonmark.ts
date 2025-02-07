@@ -12,7 +12,7 @@ import {
   isSpaceOrTab,
   isWhitespaceUCod,
   isWordLetter,
-} from "../../util/general.ts";
+} from "../../util/string.ts";
 import { assert, fail, out } from "../../util/trace.ts";
 import { LexdInfo, Lexr } from "../Lexr.ts";
 import type { Line } from "../Line.ts";
