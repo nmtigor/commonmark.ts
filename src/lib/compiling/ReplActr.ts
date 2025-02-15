@@ -90,7 +90,7 @@ export class ReplActr {
     }),
   );
 
-  #inited = false;
+  #inited_ReplActr = false;
 
   constructor(bufr_x: Bufr) {
     this.#bufr = bufr_x;
@@ -98,7 +98,7 @@ export class ReplActr {
 
   init(lexr_x: Lexr<any>, pazr_x?: Pazr<any>, tfmr_x?: Tfmr) {
     /*#static*/ if (INOUT) {
-      assert(!this.#inited);
+      assert(!this.#inited_ReplActr);
       assert(lexr_x.bufr === this.#bufr);
       assert(!pazr_x || pazr_x.lexr === lexr_x);
       assert(!tfmr_x || tfmr_x.bufr === this.#bufr);
@@ -109,7 +109,7 @@ export class ReplActr {
 
     this.#actr.start();
 
-    this.#inited = true;
+    this.#inited_ReplActr = true;
   }
 
   fina() {
@@ -119,7 +119,7 @@ export class ReplActr {
 
     this.#actr.stop();
 
-    this.#inited = false;
+    this.#inited_ReplActr = false;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

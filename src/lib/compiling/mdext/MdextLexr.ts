@@ -298,9 +298,10 @@ export class MdextLexr extends Lexr<MdextTok> {
     this._reusdSnt_2_sa_.reset_SortedArray();
     this._abadnSnt_2_sa_.reset_SortedArray();
 
+    //llll use aoa
     const drtStrtLoc = this.bufr$.oldRan_a_$[0].strtLoc;
     const drtStopLoc = this.bufr$.oldRan_a_$[0].stopLoc;
-    for (const [nl, ld] of this.linkdef_m_$) {
+    for (const [/* normdLabel */ nl, /* Linkdef */ ld] of this.linkdef_m_$) {
       if (ld.sntStopLoc.posG(drtStrtLoc) && ld.sntStrtLoc.posS(drtStopLoc)) {
         this.linkdef_m_$.delete(nl);
       }
@@ -2545,8 +2546,8 @@ export class MdextLexr extends Lexr<MdextTok> {
 
     const curSnt = iloc_x.curSnt_$;
     if (
-      this.reusdSnt_sa_$.n_Linkdef && curSnt instanceof Linkdef &&
-      this.reusdSnt_sa_$.includes(curSnt)
+      this.reusdSnt_sa_$.n_Linkdef &&
+      curSnt instanceof Linkdef && this.reusdSnt_sa_$.includes(curSnt)
     ) {
       this.reusdSnt_sa_$.delete(curSnt);
       iloc_x.toSnt("stop");

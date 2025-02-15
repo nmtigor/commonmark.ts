@@ -13,7 +13,7 @@ import type { LexdInfo } from "./Lexr.ts";
 import { Lexr } from "./Lexr.ts";
 import type { Loc } from "./Loc.ts";
 import { Ranval } from "./Ranval.ts";
-import { Snt } from "./Snt.ts";
+import { type _OldInfo_, Snt } from "./Snt.ts";
 import { Stnode } from "./Stnode.ts";
 import type { TokLine } from "./TokLine.ts";
 import type { TokRan } from "./TokRan.ts";
@@ -762,8 +762,12 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return `${this._name}${this.ran_$}${this.lexdInfo ? this.lexdInfo : ""}`;
   }
 
-  override get _oldInfo_(): string {
-    return `${this._name}${this.#oldRanval ?? `*${this.ran_$}`}`;
+  override get _oldInfo_(): _OldInfo_ {
+    const rv_ = this.#oldRanval ?? this.ran_$.toRanval();
+    return {
+      sort: [rv_.anchrLidx, rv_.anchrLoff],
+      info: `${this._name}${this.#oldRanval ? "" : "*"}${rv_}`,
+    };
   }
 
   /**

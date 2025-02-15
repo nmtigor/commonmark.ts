@@ -48,7 +48,7 @@ export class MdextPazr extends Pazr<MdextTok> {
     assert(!self.drtSn_$ || self.drtSn_$ instanceof Block);
   })
   protected override sufpazmrk$(): void {
-    const drtSn = this.drtSn_$;
+    let drtSn = this.drtSn_$;
     if (drtSn) {
       if (!(drtSn instanceof Block)) {
         let sn_ = drtSn.parent_$;
@@ -63,6 +63,7 @@ export class MdextPazr extends Pazr<MdextTok> {
           assert(sn_);
         }
         this.enlargeBdriesTo_$(sn_!);
+        drtSn = this.drtSn_$!;
       }
       if (drtSn.parent_$ instanceof ListItem) {
         this.enlargeBdriesTo_$(drtSn.parent_$);

@@ -9,7 +9,7 @@ import { type Less, SortedArray, SortedIdo } from "../util/SortedArray.ts";
 import { assert, fail, out } from "../util/trace.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import type { Loc } from "./Loc.ts";
-import { Snt } from "./Snt.ts";
+import { type _OldInfo_, Snt, SortedSnt_id } from "./Snt.ts";
 import type { Token } from "./Token.ts";
 import type { Tok } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
@@ -28,13 +28,7 @@ export class SortedStnod_depth extends SortedArray<Stnode<any>> {
 }
 
 /** @final */
-export class SortedStnod_id extends SortedIdo<Stnode<any>> {
-  _repr_(): string[] {
-    const ret: string[] = [];
-    for (const v of this) ret.push(v._oldInfo_);
-    return ret;
-  }
-}
+export class SortedStnod_id extends SortedSnt_id<Stnode<any>> {}
 
 export type CalcCommonO_ = {
   unrelSn_sa?: SortedStnod_id;
@@ -672,10 +666,14 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   //     `${this.lastToken$?._name}${this.lastToken$?.oldRanval} ]`;
   // }
   /** @final */
-  override get _oldInfo_(): string {
-    return this.frstToken === this.lastToken
-      ? `${this._info_} [ ${this.frstToken._oldInfo_} ]`
-      : `${this._info_} [ ${this.frstToken._oldInfo_}, ${this.lastToken._oldInfo_} ]`;
+  override get _oldInfo_(): _OldInfo_ {
+    const frstOldInfo = this.frstToken._oldInfo_;
+    return {
+      sort: frstOldInfo.sort,
+      info: this.frstToken === this.lastToken
+        ? `${this._info_} [ ${frstOldInfo.info} ]`
+        : `${this._info_} [ ${frstOldInfo.info}, ${this.lastToken._oldInfo_.info} ]`,
+    };
   }
   /** @final */
   get _newInfo_(): string {

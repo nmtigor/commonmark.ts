@@ -137,14 +137,14 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
     });
   }
 
-  #edtrbaseInited = false;
+  #inited_EdtrBase = false;
   /**
    * @final
    * @headconst @param scrolr_x
    */
   init_EdtrBase(scrolr_x: EdtrBaseScrolr<CI>): void {
     /*#static*/ if (INOUT) {
-      assert(!this.#edtrbaseInited);
+      assert(!this.#inited_EdtrBase);
     }
     this.scrolr$ = scrolr_x;
     this.#scronr.initScrolr(scrolr_x);
@@ -165,7 +165,7 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
 
     /*#static*/ if (DEV) this.#scronr.observeTheme(); //!
 
-    this.#edtrbaseInited = true;
+    this.#inited_EdtrBase = true;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -183,7 +183,7 @@ export abstract class EdtrBase<CI extends EdtrBaseCI = EdtrBaseCI>
       : wm_css === "vertical-lr"
       ? WritingMode.vlr
       : WritingMode.htb;
-    if (this.#edtrbaseInited) {
+    if (this.#inited_EdtrBase) {
       this.#scronr.writingMode_mo.set_Moo(this.#writingMode);
       this.#scronr.syncLayout();
     }

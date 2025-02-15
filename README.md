@@ -8,12 +8,12 @@ within the dirty node. So it is very efficient for editing.
 
 ```bash
 cd /path_to/commonmark.ts/src/test
-deno test --allow-read --allow-net
+deno test --allow-read --allow-net # 779 steps
 ```
 
 ### Known issue
 
-Using Deno 2.1.9 causes "segmentation fault" in one-line error message! ([#25192](https://github.com/denoland/deno/issues/25192))
+Using Deno 2.1.10 causes "segmentation fault" in one-line error message! ([#25192](https://github.com/denoland/deno/issues/25192))
 
 Downgrading to 1.45.5 (`deno upgrade --version 1.45.5`) works fine.
 

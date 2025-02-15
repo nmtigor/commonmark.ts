@@ -700,6 +700,10 @@ abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 
   /** @final */
   show() {
+    clearTimeout(this.hide_to$);
+    // console.log(`%crun here: show()`, `color:${LOG_cssc.runhere}`);
+    this.hide_to$ = setTimeout(this.hide, Hide_to_ * 2);
+
     if (this.shown$) return;
 
     this.el$.style.display = "unset";
@@ -708,10 +712,6 @@ abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     // console.log({ strt: this.strt, strtMax: this.strtMax });
     if (this.strt$ > this.strtMax) this.strt = this.strtMax;
     this.shown$ = true;
-
-    clearTimeout(this.hide_to$);
-    // console.log(`%crun here: show()`, `color:${LOG_cssc.runhere}`);
-    this.hide_to$ = setTimeout(this.hide, Hide_to_ * 2);
   }
 
   protected hide_to$: number | undefined;
