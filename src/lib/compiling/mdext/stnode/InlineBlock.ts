@@ -3,9 +3,9 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import type { int } from "@fe-lib/alias.ts";
 import type {
   Constructor,
-  int,
   lnum_t,
   loff_t,
   uint,
@@ -18,10 +18,11 @@ import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import { TokLoc } from "../../TokLoc.ts";
 import { TokRan } from "../../TokRan.ts";
-import { MdextTk } from "../../Token.ts";
+import { Token } from "../../Token.ts";
+import type { MdextTk } from "../../Token.ts";
 import type { BrktOpen_LI, EmphDelim_LI, MdextLexr } from "../MdextLexr.ts";
 import { MdextTok } from "../MdextTok.ts";
-import { gathrUnrelTk } from "../util.ts";
+import { gathrUnrelTk_$ } from "../util.ts";
 import { Autolink } from "./Autolink.ts";
 import { Block } from "./Block.ts";
 import { IndentedCodeBlock } from "./CodeBlock.ts";
@@ -32,11 +33,10 @@ import { Inline } from "./Inline.ts";
 import { Link, type LinkMode } from "./Link.ts";
 import { Linkdef } from "./Linkdef.ts";
 import type { TokenSN } from "./TokenSN.ts";
+import { g_ran_fac } from "../../RanFac.ts";
 /*80--------------------------------------------------------------------------*/
 
-/**
- * primaryconst: const exclude +`#poc`,`iCurSnt_$`
- */
+/** primaryconst: const exclude +`#poc`,`iCurSnt_$` */
 export class ILoc extends TokLoc<MdextTok> {
   protected readonly host$;
   get host() {
@@ -207,7 +207,7 @@ export class ILoc extends TokLoc<MdextTok> {
 
   /** @final */
   reset_O(snt_x: MdextTk | Inline): this {
-    this.toTk("strt", snt_x instanceof MdextTk ? snt_x : snt_x.frstToken);
+    this.toTk("strt", snt_x instanceof Token ? snt_x : snt_x.frstToken);
     this.tailEmphDelim$ = undefined;
     this.tailBrktOpen$ = undefined;
     return this;
@@ -248,9 +248,11 @@ export class ILoc extends TokLoc<MdextTok> {
    * @final
    */
   override forw(): this {
+    if (this.reachEoh) return this;
+
     const oldTk = this.curTk_$;
     super.forw();
-    if (this.reachEol || this.reachEoh) return this;
+    if (this.reachEol) return this;
 
     if (this.posGE(oldTk.sntStopLoc)) {
       if (
@@ -264,9 +266,11 @@ export class ILoc extends TokLoc<MdextTok> {
   }
   /** @see {@linkcode forw())} */
   override back(): this {
+    if (this.aheadSoh) return this;
+
     const oldTk = this.curTk_$;
     super.back();
-    if (this.atEol || this.aheadSoh) return this;
+    if (this.atEol) return this;
 
     if (this.posS(oldTk.sntStrtLoc)) {
       this.toLoc(this.#getTokenBefo(oldTk, this.iCurSnt_$)!.sntStopLoc);
@@ -390,7 +394,7 @@ export class ILoc extends TokLoc<MdextTok> {
    * @headconst @param lexr_x
    * @const @param size_t
    * @const @param value_x
-   * @const @param lexdInfo_x
+   * @borrow @const @param lexdInfo_x
    * @primaryconst @param strtLoc_x
    * @primaryconst @param stopLoc_x
    */
@@ -416,9 +420,13 @@ export class ILoc extends TokLoc<MdextTok> {
     let curTk = this.curTk_$;
     let nextTk = curTk.nextToken_$;
     if (nextTk?.sntStrtLoc.posS(tkStopLoc)) {
+      /*#static*/ if (INOUT) {
+        assert(tkStopLoc.posSE(nextTk.sntStopLoc));
+      }
       /* Notice the difference here to `forwSetTks_inline()`, which will not
       remove token. */
       nextTk = curTk.removeSelf("next")!;
+      curTk.destructor();
       nextTk.sntStrtLoc.become_Loc(curTk.sntStrtLoc);
       if (curTk === this.curSnt_$) {
         this.host$.snt_a_$.splice(this.iCurSnt_$, 1);
@@ -449,7 +457,7 @@ export class ILoc extends TokLoc<MdextTok> {
       ret = curTk;
       this.become_Loc(stopLoc);
     } else {
-      ret = new MdextTk(lexr_x, new TokRan(this.dup_Loc()), value_x)
+      ret = new Token(lexr_x, g_ran_fac.byTokLoc(this), value_x)
         .syncRanvalAnchr() //!
         .setStop(tkStopLoc);
       this.become_Loc(stopLoc);
@@ -464,21 +472,23 @@ export class ILoc extends TokLoc<MdextTok> {
   /**
    * Prerequisites: All Snt from `this` to `stopLoc_x` are end-to-end `MdextTk`s.
    * @headconst @param lexr_x
-   * @const @param value_x
    * @out @param outTk_a_x
    * @primaryconst @param stopLoc_x
+   * @const @param value_x
+   * @borrow @const @param lexdInfo_x
    */
   @out((self: ILoc, _, args) => {
-    assert(args[2].length);
-    const stopLoc = args[2].at(-1)!.sntStopLoc;
-    assert(stopLoc.posE(args[3]));
+    assert(args[1].length);
+    const stopLoc = args[1].at(-1)!.sntStopLoc;
+    assert(stopLoc.posE(args[2]));
     assert(stopLoc.posE(self));
   })
   forwSetTks_inline(
     lexr_x: MdextLexr,
-    value_x: MdextTok,
     outTk_a_x: MdextTk[],
     stopLoc_x: Loc,
+    value_x: MdextTok,
+    lexdInfo_x?: LexdInfo | null,
   ): void {
     /*#static*/ if (INOUT) {
       assert(this.posS_inline(stopLoc_x));
@@ -491,16 +501,26 @@ export class ILoc extends TokLoc<MdextTok> {
     ) {
       const tk_i = this.curSnt_$;
       /*#static*/ if (INOUT) {
-        assert(tk_i instanceof MdextTk && this.posE(tk_i.sntStrtLoc));
+        assert(tk_i instanceof Token && this.posE(tk_i.sntStrtLoc));
       }
       if (tk_i.touch(stopLoc_x)) {
         outTk_a_x.push(
-          this.setCurTk(lexr_x, stopLoc_x.loff_$ - this.loff_$, value_x),
+          this.setCurTk(
+            lexr_x,
+            stopLoc_x.loff_$ - this.loff_$,
+            value_x,
+            lexdInfo_x,
+          ),
         );
         break;
       } else {
         outTk_a_x.push(
-          this.setCurTk(lexr_x, (tk_i as MdextTk).length_1, value_x),
+          this.setCurTk(
+            lexr_x,
+            (tk_i as MdextTk).length_1,
+            value_x,
+            lexdInfo_x,
+          ),
         );
         //jjjj TOCLEANUP
         // if (this.atEol) break;
@@ -520,19 +540,20 @@ export abstract class InlineBlock extends Block {
 
   readonly snt_a_$: (MdextTk | Inline)[] = [];
 
+  #children: Inline[] | undefined;
   override get children(): Inline[] {
-    if (this.children$) return this.children$ as Inline[];
+    if (this.#children) return this.#children;
 
     const ret: Inline[] = [];
     for (const snt of this.snt_a_$) {
       if (snt instanceof Inline) ret.push(snt);
     }
-    return this.children$ = ret;
+    return this.#children = ret;
   }
 
   override reset_Block(): this {
     super.reset_Block();
-    this.children$ = undefined; //!
+    this.#children = undefined; //!
     this.snt_a_$.length = 0;
     return this;
   }
@@ -593,23 +614,24 @@ export abstract class InlineBlock extends Block {
     for (let i = iFrstTk; i <= iLastTk; ++i) {
       const snt_i = snt_a[i];
       if (
-        snt_i instanceof MdextTk &&
+        snt_i instanceof Token &&
         snt_i.value === MdextTok.chunk && !snt_i.lexdInfo
       ) {
         snt_i.removeSelf();
+        snt_i.destructor();
       }
     }
 
     const sn_ = new Linkdef(lablTk_a_x, destPart_x, titlTk_a_x);
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
-    this.children$ = undefined;
+    this.#children = undefined;
     this.#correct_iCurSnt(iFrstTk, iLastTk);
     return sn_;
   }
 
   /**
-   * @fianl
+   * @final
    * @headconst @param tk_x
    * @headconst @param SN_x
    */
@@ -624,7 +646,7 @@ export abstract class InlineBlock extends Block {
     const sn_ = new SN_x(tk_x);
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, 1, sn_);
-    this.children$ = undefined;
+    this.#children = undefined;
   }
 
   /** @see {@linkcode addEmphasis()} */
@@ -646,7 +668,7 @@ export abstract class InlineBlock extends Block {
     );
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
-    this.children$ = undefined;
+    this.#children = undefined;
     this.#correct_iCurSnt(iFrstTk, iLastTk);
   }
 
@@ -674,7 +696,7 @@ export abstract class InlineBlock extends Block {
     );
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
-    this.children$ = undefined;
+    this.#children = undefined;
     this.#correct_iCurSnt(iFrstTk, iLastTk);
   }
 
@@ -718,10 +740,11 @@ export abstract class InlineBlock extends Block {
     for (let i = iFrstTk; i <= iLastTk; ++i) {
       const snt_i = snt_a[i];
       if (
-        snt_i instanceof MdextTk &&
+        snt_i instanceof Token &&
         snt_i.value === MdextTok.chunk && !snt_i.lexdInfo
       ) {
         snt_i.removeSelf();
+        snt_i.destructor();
       }
     }
 
@@ -736,7 +759,7 @@ export abstract class InlineBlock extends Block {
     );
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
-    this.children$ = undefined;
+    this.#children = undefined;
     this.#correct_iCurSnt(iFrstTk, iLastTk);
   }
 
@@ -745,13 +768,11 @@ export abstract class InlineBlock extends Block {
    * @headconst @param frstTk_x
    * @headconst @param destTk_a_x
    * @headconst @param lastTk_x
-   * @const @param isEmail_x
    */
   addAutolink(
     frstTk_x: MdextTk,
     destTk_a_x: MdextTk[],
     lastTk_x: MdextTk,
-    isEmail_x: boolean,
   ): void {
     const snt_a = this.snt_a_$;
     const iFrstTk = snt_a.indexOf(frstTk_x);
@@ -765,10 +786,10 @@ export abstract class InlineBlock extends Block {
     }
     if (iFrstTk === 0 || iLastTk === snt_a.length - 1) this.invalidateBdry();
 
-    const sn_ = new Autolink(frstTk_x, destTk_a_x, lastTk_x, isEmail_x);
+    const sn_ = new Autolink(frstTk_x, destTk_a_x, lastTk_x);
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
-    this.children$ = undefined;
+    this.#children = undefined;
     this.#correct_iCurSnt(iFrstTk, iLastTk);
   }
 
@@ -798,7 +819,7 @@ export abstract class InlineBlock extends Block {
     const sn_ = new HTMLInline(frstTk_x, chunkTk_a_x, lastTk_x);
     sn_.parent_$ = this;
     snt_a.splice(iFrstTk, iLastTk - iFrstTk + 1, sn_);
-    this.children$ = undefined;
+    this.#children = undefined;
     this.#correct_iCurSnt(iFrstTk, iLastTk);
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
@@ -854,7 +875,7 @@ export abstract class InlineBlock extends Block {
   }
 
   /**
-   * jjjj If needed, could cache to optimize
+   * jjjj optimize
    * @const
    * @const @param i_x
    */
@@ -885,8 +906,8 @@ export abstract class InlineBlock extends Block {
   ): uint {
     let ret = 0;
     for (const snt of this.snt_a_$) {
-      if (snt instanceof MdextTk) {
-        ret += gathrUnrelTk(snt, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      if (snt instanceof Token) {
+        ret += gathrUnrelTk_$(snt, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
       } else {
         ret += snt.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
       }

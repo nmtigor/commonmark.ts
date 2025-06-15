@@ -10,7 +10,7 @@ import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
-import { _escapeXml, gathrUnrelTk } from "../util.ts";
+import { _escapeXml, gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -19,10 +19,6 @@ export class CodeInline extends Inline {
   #frstTk;
   #lastTk;
   #chunkTk_a;
-
-  override get children() {
-    return undefined;
-  }
 
   override get frstToken() {
     return this.frstToken$ ??= this.#frstTk;
@@ -69,7 +65,7 @@ export class CodeInline extends Inline {
     let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     if (ret) return ret;
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#frstTk,
       drtStrtLoc_x,
       drtStopLoc_x,
@@ -77,10 +73,10 @@ export class CodeInline extends Inline {
     );
 
     for (const tk of this.#chunkTk_a) {
-      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#lastTk,
       drtStrtLoc_x,
       drtStopLoc_x,

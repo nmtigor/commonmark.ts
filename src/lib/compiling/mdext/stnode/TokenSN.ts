@@ -3,7 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { domParser } from "@fe-lib/util/string.ts";
+import { domParser } from "@fe-lib/util/dom.ts";
 import type { MdextTk } from "../../Token.ts";
 import { _escapeXml } from "../util.ts";
 import { Inline } from "./Inline.ts";
@@ -11,10 +11,6 @@ import { Inline } from "./Inline.ts";
 
 export abstract class TokenSN extends Inline {
   protected tk$;
-
-  override get children() {
-    return undefined;
-  }
 
   override get frstToken() {
     return this.frstToken$ ??= this.tk$;

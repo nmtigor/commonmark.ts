@@ -4,7 +4,8 @@
  ******************************************************************************/
 
 import { INOUT } from "../../global.ts";
-import type { id_t, int, uint } from "../alias.ts";
+import type { id_t, uint } from "../alias.ts";
+import type { int } from "../alias.ts";
 import "../jslang.ts";
 import { assert, fail } from "./trace.ts";
 /*80--------------------------------------------------------------------------*/
@@ -40,7 +41,7 @@ export class SortedArray<T> extends Array<T> {
     this.#tmp_a ??= [];
     return this.#tmp_a;
   }
-  get _tmp_a() {
+  get _tmp_a_() {
     return this.#tmp_a;
   }
 
@@ -49,9 +50,9 @@ export class SortedArray<T> extends Array<T> {
    * Helper. Set by `includes()`
    */
   #index: uint = 0;
-  get _index() {
-    return this.#index;
-  }
+  // get _index_() {
+  //   return this.#index;
+  // }
 
   #sorted: boolean;
   get sorted() {
@@ -253,9 +254,7 @@ export class SortedArray<T> extends Array<T> {
     }
     return had ? -1 : this.#index;
   }
-  /**
-   * @headconst @param val_a_x
-   */
+  /** @headconst @param val_a_x */
   add_O(val_a_x?: T[]): void {
     if (val_a_x) {
       for (const v of val_a_x) this.add(v);

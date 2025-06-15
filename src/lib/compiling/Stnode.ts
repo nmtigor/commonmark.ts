@@ -4,7 +4,8 @@
  ******************************************************************************/
 
 import { INOUT } from "../../global.ts";
-import type { int, loff_t, TupleOf, uint } from "../alias.ts";
+import type { int } from "../alias.ts";
+import type { loff_t, TupleOf, uint } from "../alias.ts";
 import { type Less, SortedArray, SortedIdo } from "../util/SortedArray.ts";
 import { assert, fail, out } from "../util/trace.ts";
 import type { BaseTok } from "./BaseTok.ts";
@@ -39,9 +40,7 @@ export type CalcCommonO_ = {
 /** >=1 */
 const FilterDepth_ = 2;
 
-/**
- * primaryconst: const exclude `#depth`, `frstToken$`, `lastToken$`
- */
+/** primaryconst: const exclude `#depth`, `frstToken$`, `lastToken$` */
 export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   /* parent_$ */
   parent_$: Stnode<T> | undefined;
@@ -78,12 +77,13 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   }
   /* ~ */
 
-  /* children$ */
-  protected children$: Stnode<T>[] | undefined;
+  /* children */
+  // protected children$: Stnode<T>[] | undefined;
   get children(): Stnode<T>[] | undefined {
-    return fail("Not implemented");
+    // return fail("Not implemented");
+    return undefined;
   }
-  _c(i_x: int) {
+  _c_(i_x: int) {
     return this.children?.at(i_x);
   }
 
@@ -118,9 +118,7 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   //   return ret ?? c_;
   // }
 
-  /**
-   * @return [COPIED]
-   */
+  /** @headmove @return */
   get siblings(): Stnode<T>[] | undefined {
     const s_a = this.parent_$?.children;
     if (!s_a?.length) return undefined;
@@ -209,14 +207,12 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   get _err_(): string[] {
     return this.#errMsg_a.filter(Boolean);
   }
-  /** @fianl */
+  /** @final */
   get isErr(): boolean {
     return !!this.#errMsg_a[0];
   }
 
-  /**
-   * @const @param errMsg_x
-   */
+  /** @const @param errMsg_x */
   setErr(errMsg_x: string): this {
     for (let i = 0; i < NErr_; ++i) {
       if (!this.#errMsg_a[i]) {
@@ -311,7 +307,7 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
 
   /**
    * ! Do not use `frstToken` and `lastToken`, because this will be called in
-   * ! `Pazr.pazmrk_$()()`.
+   *  `Pazr.pazmrk_$()()`.
    * @final
    */
   invalidateBdry(): this {
@@ -401,7 +397,7 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
 
   /**
    * Count Stnode error only. Do not count Token error.
-   * @fianl
+   * @final
    */
   get hasErr_1(): boolean {
     if (this.isErr) return true;
@@ -418,40 +414,40 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
 
   /**
    * @final
-   * @out @param sn_a
+   * @out @param outSn_a
    * @headconst @param except_x
    * @const @param fd_x
    * @return same as `hasErr_1`
    */
   filterTo(
-    sn_a: Stnode<T>[],
+    outSn_a: Stnode<T>[],
     except_x?: Stnode<T>,
     fd_x = FilterDepth_,
   ): boolean {
     if (this === except_x) return false;
 
-    let ret = false;
+    let hasErr = false;
     const c_a = this.children;
     if (c_a?.length) {
       for (const sn of c_a) {
-        ret ||= fd_x === 1
+        hasErr ||= fd_x === 1
           ? sn.hasErr_1
-          : sn.filterTo(sn_a, except_x, fd_x - 1);
+          : sn.filterTo(outSn_a, except_x, fd_x - 1);
       }
     }
-    if (ret) return true;
+    if (hasErr) return true;
 
-    if (this.isErr) ret = true;
-    else sn_a.push(this);
-    return ret;
+    if (this.isErr) hasErr = true;
+    else outSn_a.push(this);
+    return hasErr;
   }
   /** @see {@linkcode filterTo()} */
-  filterChildrenTo(sn_a: Stnode<T>[], except_x?: Stnode<T>): boolean {
+  filterChildrenTo(outSn_a: Stnode<T>[], except_x?: Stnode<T>): boolean {
     let ret = false;
     const c_a = this.children;
     if (c_a?.length) {
       for (const sn of c_a) {
-        ret ||= sn.filterTo(sn_a, except_x);
+        ret ||= sn.filterTo(outSn_a, except_x);
       }
     }
     ret ||= this.isErr;
@@ -494,23 +490,25 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   // }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
+  /** Helper */
+  static readonly sn_sa = new SortedStnod_depth();
   /**
-   * @headconst @param sn_sa_x
    * @out @param unrelSn_sa
    * @headconst @param unrelSn_a
    * @out @param debug
+   * @headconst @param sn_sa_x
    * @return `sn_sa_x[0]`
    */
-  @out((_, _1, args) => {
-    const sn_sa = args[0];
+  @out((self: typeof Stnode<any>, _1, args) => {
+    const sn_sa = args[1] ?? self.sn_sa;
     assert(
       sn_sa.length === 1 && sn_sa[0] &&
         (!sn_sa[0].isErr || sn_sa[0].isRoot),
     );
   })
   static calcCommon(
-    sn_sa_x: SortedStnod_depth,
     { unrelSn_sa, unrelSn_a, debug }: CalcCommonO_ = {},
+    sn_sa_x = this.sn_sa,
   ): Stnode<any> {
     /*#static*/ if (INOUT) {
       assert(sn_sa_x.length);
@@ -662,8 +660,8 @@ export abstract class Stnode<T extends Tok = BaseTok> extends Snt {
   // /** @final */
   // get _oldInfo_(): string {
   //   return `${this._info}[ ` +
-  //     `${this.frstToken$?._name}${this.frstToken$?.oldRanval}, ` +
-  //     `${this.lastToken$?._name}${this.lastToken$?.oldRanval} ]`;
+  //     `${this.frstToken$?._name_}${this.frstToken$?.oldRanval}, ` +
+  //     `${this.lastToken$?._name_}${this.lastToken$?.oldRanval} ]`;
   // }
   /** @final */
   override get _oldInfo_(): _OldInfo_ {

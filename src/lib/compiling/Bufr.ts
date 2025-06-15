@@ -3,10 +3,11 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { DEV, INOUT } from "../../global.ts";
-import { LastCb_i, Moo, type MooHandler } from "../Moo.ts";
-import type { id_t, lnum_t, ts_t, uint } from "../alias.ts";
-import { BufrDir, MAX_lnum } from "../alias.ts";
+import { DEBUG, INOUT } from "../../global.ts";
+import { Boor, LastCb_i, Moo, type MooHandler } from "../Moo.ts";
+import type { id_t, lnum_t, uint } from "../alias.ts";
+import type { BufrDir, ts_t } from "../alias.ts";
+import { MAX_lnum } from "../alias.ts";
 import type { EdtrBaseScrolr } from "../editor/EdtrBase.ts";
 import { SortedIdo } from "../util/SortedArray.ts";
 import { Unre } from "../util/Unre.ts";
@@ -38,7 +39,7 @@ export class Bufr {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /* dir_mo */
-  readonly dir_mo = new Moo({ val: BufrDir.ltr, active: true });
+  readonly dir_mo = new Moo({ val: "ltr" as BufrDir, active: true });
   get dir() {
     return this.dir_mo.val;
   }
@@ -55,7 +56,7 @@ export class Bufr {
     this.edtr_sa.forEach((eds) => (eds as EdtrBaseScrolr).invalidate_bcr());
     for (let i = this.edtr_sa.length; i--;) {
       const eds = this.edtr_sa.at(i) as EdtrBaseScrolr;
-      eds.coo.el.dir = BufrDir[n_x];
+      eds.coo.el.dir = n_x;
 
       const mc_ = eds.proactiveCaret;
       if (mc_.shown) {
@@ -68,7 +69,7 @@ export class Bufr {
 
   lineN_$ = 0 as lnum_t;
   /** @final */
-  get lineN() {
+  get lineN(): lnum_t {
     return this.lineN_$;
   }
   maxValidLidx_$: lnum_t | -1 = -1;
@@ -84,16 +85,16 @@ export class Bufr {
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /* modified */
-  readonly modified_mo = new Moo({ val: false });
+  readonly modified_br_Bufr = new Boor();
   get modified() {
-    return this.modified_mo.val;
+    return this.modified_br_Bufr.val;
   }
   /**
    * Also update `lastRead_ts` if `modified_x`
    * @const @param modified_x
    */
   set modified(modified_x: boolean) {
-    this.modified_mo.val = modified_x;
+    this.modified_br_Bufr.val = modified_x;
     if (modified_x) {
       this.updateLastReadTs();
     } else {
@@ -135,7 +136,7 @@ export class Bufr {
   }
 
   /* #doq */
-  #doq = new Unre<Repl>(/*#static*/ DEV ? 10 : 200);
+  #doq = new Unre<Repl>(/*#static*/ DEBUG ? 10 : 200);
 
   readonly canUndo_mo = new Moo({ val: false });
   readonly canRedo_mo = new Moo({ val: false });
@@ -149,22 +150,23 @@ export class Bufr {
   /* repl_mo */
   readonly repl_mo = new Moo({ val: BufrReplState.idle });
 
-  #onReplStateChange:
-    | ((newval: BufrReplState, oldval: BufrReplState) => void)
-    | undefined;
-  set onReplStateChange(
-    _x: ((newval: BufrReplState, oldval: BufrReplState) => void) | undefined,
-  ) {
-    if (_x === this.#onReplStateChange) return;
+  //jjjj TOCLEANUP
+  // #onReplStateChange:
+  //   | ((newval: BufrReplState, oldval: BufrReplState) => void)
+  //   | undefined;
+  // set onReplStateChange(
+  //   _x: ((newval: BufrReplState, oldval: BufrReplState) => void) | undefined,
+  // ) {
+  //   if (_x === this.#onReplStateChange) return;
 
-    if (this.#onReplStateChange) {
-      this.repl_mo.removeHandler(this.#onReplStateChange);
-    }
-    if (_x) {
-      this.repl_mo.registHandler(_x);
-    }
-    this.#onReplStateChange = _x;
-  }
+  //   if (this.#onReplStateChange) {
+  //     this.repl_mo.removeHandler(this.#onReplStateChange);
+  //   }
+  //   if (_x) {
+  //     this.repl_mo.registHandler(_x);
+  //   }
+  //   this.#onReplStateChange = _x;
+  // }
   /* ~ */
 
   readonly repl_actr = new ReplActr(this);
@@ -217,11 +219,11 @@ export class Bufr {
   };
   addEdtr(_x: EdtrBaseScrolr) {
     this.edtr_sa.add(_x);
-    _x.active_mo.registHandler(this.#onEdtrActive);
+    _x.activ_mo.registHandler(this.#onEdtrActive);
   }
   remEdtr(_x: EdtrBaseScrolr) {
     this.edtr_sa.delete(_x);
-    _x.active_mo.removeHandler(this.#onEdtrActive);
+    _x.activ_mo.removeHandler(this.#onEdtrActive);
 
     _x.reset_EdtrBaseScrolr(); //!
   }
@@ -244,7 +246,7 @@ export class Bufr {
    */
   constructor(
     text_x?: string | undefined,
-    dir_x = BufrDir.ltr,
+    dir_x = "ltr" as BufrDir,
     fh_x?: FileSystemFileHandle,
   ) {
     this.dir_mo.set_Moo(dir_x)
@@ -253,12 +255,13 @@ export class Bufr {
     this.frstLine_$ = this.createLine();
     this.frstLine_$.linked_$ = true;
     this.lastLine_$ = this.frstLine_$;
-
     if (text_x) this.setLines(text_x);
+
+    this.repl_mo.registHandler((n_y) => this.repl_actr.to(n_y));
 
     this.#filehandle = fh_x;
 
-    // // #if DEV && !TESTING
+    // // #if DEBUG && !TESTING
     //   reportBuf( text_a );
     // // #endif
     /*#static*/ if (INOUT) {
@@ -288,33 +291,28 @@ export class Bufr {
     assert(valve, `Loop ${VALVE}±1 times`);
     line!.removeSelf_$();
 
-    this.modified_mo.reset_Moo();
+    this.modified_br_Bufr.reset_Boor();
     this.#lastRepl = this.#repl_saved = undefined;
 
     for (const ran of this.oldRan_a_$) ran[Symbol.dispose]();
     for (const ran of this.newRan_a_$) ran[Symbol.dispose]();
 
     this.#doState = BufrDoState.idle;
-
-    this.#doq.resetUnre();
+    this.#doq.reset_Unre();
     this.canUndo_mo.reset_Moo();
     this.canRedo_mo.reset_Moo();
 
     this.repl_mo.reset_Moo();
-    this.#onReplStateChange = undefined;
-
+    //jjjj TOCLEANUP
+    // this.#onReplStateChange = undefined;
     this.repl_actr.fina();
 
     this.updateLastReadTs();
 
-    /*#static*/ if (DEV) {
+    /*#static*/ if (DEBUG) {
       assert(this.#sigPool === 0xffff_ffff); //kkkk
-    }
-
-    /*#static*/ if (DEV) {
       assert(this.edtr_sa.length === 0); //kkkk
     }
-
     return this;
   }
 
@@ -347,6 +345,9 @@ export class Bufr {
   }
 
   /** @const @param lidx_x */
+  @out((_, ret) => {
+    assert(ret);
+  })
   line(lidx_x: lnum_t): Line {
     if (lidx_x >= this.lineN) return this.lastLine;
 
@@ -363,9 +364,6 @@ export class Bufr {
         if (ret.lidx_1 === lidx_x) break;
         ret = ret.prevLine;
       }
-    }
-    /*#static*/ if (INOUT) {
-      assert(ret);
     }
     return ret!;
   }
@@ -437,7 +435,7 @@ export class Bufr {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
-   * @const @param replin_x [COPIED]
+   * @move @const @param replin_x
    *    If `Replin[]`, `.rv`s MUST be disjoint!.
    */
   Do(replin_x: Replin | Replin[]): void {
@@ -450,7 +448,7 @@ export class Bufr {
     this.modified = true;
 
     this.#doq.add(this.#lastRepl);
-    // console.log(this.#doq._repr);
+    // console.log(this.#doq._repr_);
     this.#updateDoCap();
 
     // this.#curEdtrId = 0 as id_t;

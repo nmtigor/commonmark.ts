@@ -10,7 +10,7 @@ import type { Loc } from "../../Loc.ts";
 import type { MdextTk } from "../../Token.ts";
 import { Err } from "../../alias.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
-import { MdextSN } from "../MdextSN.ts";
+import { MdextSN } from "./MdextSN.ts";
 import { BlockCont } from "../alias.ts";
 import type { CtnrBlock } from "./CtnrBlock.ts";
 import type { Inline } from "./Inline.ts";
@@ -52,7 +52,7 @@ export abstract class Block extends MdextSN {
     return this.#complete;
   }
   /** "iS" */
-  #_inlineSkipd = false;
+  private _inlineSkipd_ = false;
 
   /** For compiling only */
   #oldLastLidx: lnum_t | -1 = -1;
@@ -64,7 +64,7 @@ export abstract class Block extends MdextSN {
   reuse_Block(): this {
     this.#open = true;
     this.#complete = false;
-    this.#_inlineSkipd = false;
+    this._inlineSkipd_ = false;
     this.invalidateBdry();
     return this;
   }
@@ -94,7 +94,7 @@ export abstract class Block extends MdextSN {
       assert(this.parent_$);
     }
     if (curLidx_x < this.oldLastLidx) {
-      this.setErr(Err.unexpected_close);
+      this.setErr(Err.mdext_unexpected_close);
     } else {
       this.closeBlock_impl$();
     }
@@ -115,7 +115,7 @@ export abstract class Block extends MdextSN {
    */
   inline(lexr_x: MdextLexr): void {
     if (this.#complete) {
-      this.#_inlineSkipd = true;
+      this._inlineSkipd_ = true;
       return;
     }
 
@@ -142,7 +142,7 @@ export abstract class Block extends MdextSN {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   override get _info_(): string {
-    return `${super._info_}${this.#_inlineSkipd ? ",iS" : ""}`;
+    return `${super._info_}${this._inlineSkipd_ ? ",iS" : ""}`;
   }
 }
 /*80--------------------------------------------------------------------------*/

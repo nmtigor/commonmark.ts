@@ -7,6 +7,7 @@ import { DENO } from "../global.ts";
 import type { CSSStyle, loff_t, uint } from "./alias.ts";
 import type { Vuu } from "./cv.ts";
 import { $cssstylesheet, $loff, $ovlap, $tail_ignored } from "./symbols.ts";
+import * as Is from "./util/is.ts";
 /*80--------------------------------------------------------------------------*/
 
 declare global {
@@ -53,7 +54,7 @@ declare global {
   }
 
   interface WheelEvent {
-    _repr: {
+    _repr_: {
       deltaMode: string;
       deltaX: number;
       deltaY: number;
@@ -74,7 +75,7 @@ if (globalThis.Event) {
 }
 
 if (globalThis.WheelEvent) {
-  Reflect.defineProperty(WheelEvent.prototype, "_repr", {
+  Reflect.defineProperty(WheelEvent.prototype, "_repr_", {
     get(this: WheelEvent) {
       const m_ = /* final switch */ {
         [WheelEvent.DOM_DELTA_PIXEL]: "DOM_DELTA_PIXEL",
@@ -194,8 +195,8 @@ if (globalThis.Node) {
 
       const rhsval = (rhs as any)[key];
       const zisval = (this as any)[key];
-      if (Array.isArray(rhsval)) {
-        console.assert(rhsval.eq(zisval));
+      if (Is.array(rhsval)) {
+        console.assert(rhsval.eql(zisval));
       } else {
         console.assert(rhsval === zisval);
       }
@@ -551,7 +552,7 @@ export function html<NN extends string>(
   innerHTML_x?: string,
   doc_x = document,
 ) {
-  let ret = doc_x.createElement(nodeName_x);
+  const ret = doc_x.createElement(nodeName_x);
   if (innerHTML_x) ret.innerHTML = innerHTML_x;
   return ret as HTMLRet_<NN>;
 }

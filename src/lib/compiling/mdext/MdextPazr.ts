@@ -33,12 +33,12 @@ export class MdextPazr extends Pazr<MdextTok> {
    * Only invoked in `MdextLexr.create()`
    * @package
    */
-  constructor(bufr_x: MdextBufr, Lexr_x: MdextLexr) {
-    super(bufr_x, Lexr_x);
+  constructor(Lexr_x: MdextLexr) {
+    super(Lexr_x);
   }
 
   override reset_Pazr(): this {
-    this.reset_Pazr$(this.bufr$, this.lexr$);
+    this.reset_Pazr$(this.lexr$);
     this.root$ = undefined;
     return this;
   }
@@ -90,3 +90,4 @@ export class MdextPazr extends Pazr<MdextTok> {
     fail("Disabled");
   }
 }
+/*80--------------------------------------------------------------------------*/

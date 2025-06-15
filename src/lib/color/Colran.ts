@@ -3,15 +3,14 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import { bind, traceOut } from "@fe-lib/util/trace.ts";
 import { z } from "@zod";
 import { _TRACE, global, THEMESETTING } from "../../global.ts";
 import { id_t } from "../alias.ts";
-import { Moo } from "../Moo.ts";
-import type { alpha_t, red_t } from "./alias.ts";
-import { zAlpha, zRed } from "./alias.ts";
-import type { chroma_t, hue_t, tone_t } from "./alias.ts";
+import { Boor } from "../Moo.ts";
+import type { alpha_t, chroma_t, hue_t, red_t, tone_t } from "./alias.ts";
+import { zAlpha, zChroma, zHue, zRed, zTone } from "./alias.ts";
 import type { Colr, ColranTyp } from "./Colr.ts";
-import { zChroma, zHue, zTone } from "./alias.ts";
 import { hct, rgb } from "./Colr.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -57,6 +56,11 @@ export const zColranRaw = z.union([
 export function createColranRaw(): ColranRaw {
   return ["rgb", [[0, 255], [0, 255], [0, 255]]];
 }
+
+// const enum CRan_ {
+//   min = 0,
+//   max = 1,
+// }
 /*64----------------------------------------------------------*/
 
 /**
@@ -83,17 +87,15 @@ export class Colran {
 
   readonly #alpharan: AlphaRan_ = [0, 0];
 
-  readonly colr_0;
-  readonly colr_1;
+  readonly min_c;
+  readonly max_c;
 
-  readonly modified_mo = new Moo({
+  readonly modified_br_Colran = new Boor({
     val: false,
-    _name_: `Colran_${this.id}.modified_mo`,
+    _name_: `Colran_${this.id}.modified_br`,
   });
 
-  /**
-   * @const @param raw_x
-   */
+  /** @const @param raw_x */
   constructor(raw_x: ColranRaw) {
     this.#typ = raw_x[0];
     if (this.#typ === "rgb" || this.#typ === "rgba") {
@@ -115,77 +117,42 @@ export class Colran {
       this.#alpharan[0] = raw_x[1][3]![0];
       this.#alpharan[1] = raw_x[1][3]![1];
     }
-    this.#correctRan();
+    this._correctCRan();
 
     if (this.#typ === "rgb" || this.#typ === "rgba") {
-      this.colr_0 = rgb(
+      this.min_c = rgb(
         this.#redran[0],
         this.#greenran[0],
         this.#blueran[0],
       );
-      this.colr_1 = rgb(
+      this.max_c = rgb(
         this.#redran[1],
         this.#greenran[1],
         this.#blueran[1],
       );
     } else {
-      this.colr_0 = hct(
+      this.min_c = hct(
         this.#hueran[0],
         this.#chromaran[0],
         this.#toneran[0],
       );
-      this.colr_1 = hct(
+      this.max_c = hct(
         this.#hueran[1],
         this.#chromaran[1],
         this.#toneran[1],
       );
     }
     if (this.#typ === "rgba" || this.#typ === "hcta") {
-      this.colr_0.setAlpha(this.#alpharan[0]);
-      this.colr_1.setAlpha(this.#alpharan[1]);
+      this.min_c.setAlpha(this.#alpharan[0]);
+      this.max_c.setAlpha(this.#alpharan[1]);
     }
 
-    this.colr_0.registHandler(this.#onColr0);
-    this.colr_1.registHandler(this.#onColr1);
+    this.min_c.registHandler(this._onColrMin);
+    this.max_c.registHandler(this._onColrMax);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  #onColr0 = (n_y: Colr) => {
-    /*#static*/ if (_TRACE && THEMESETTING) {
-      console.log(
-        `${global.indent}>>>>>>> Colran_${this.id}.#onColr0() >>>>>>>`,
-      );
-    }
-    this.#set_Ran(0, n_y);
-    this.#set_Ran(1, this.colr_1); //! `#typ` could change
-    if (this.#correctRan(1)) {
-      this.#setColr(1);
-      this.colr_1.removeHandler(this.#onColr1);
-      this.colr_1.refreshColr();
-      this.colr_1.registHandler(this.#onColr1);
-    }
-    /*#static*/ if (_TRACE && THEMESETTING) global.outdent;
-    return;
-  };
-  #onColr1 = (n_y: Colr) => {
-    /*#static*/ if (_TRACE && THEMESETTING) {
-      console.log(
-        `${global.indent}>>>>>>> Colran_${this.id}.#onColr1() >>>>>>>`,
-      );
-    }
-    this.#set_Ran(1, n_y);
-    this.#set_Ran(0, this.colr_0); //! `#typ` could change
-    if (this.#correctRan(0)) {
-      this.#setColr(0);
-      this.colr_0.removeHandler(this.#onColr0);
-      this.colr_0.refreshColr();
-      this.colr_0.registHandler(this.#onColr0);
-    }
-    /*#static*/ if (_TRACE && THEMESETTING) global.outdent;
-    return;
-  };
-
-  #set_Ran(tgt_x: 0 | 1, colr_x: Colr) {
+  #setCRan(tgt_x: 0 | 1, colr_x: Colr) {
     if (this.#typ === "rgb" || this.#typ === "rgba") {
       this.#redran[tgt_x] = colr_x.red;
       this.#greenran[tgt_x] = colr_x.green;
@@ -199,10 +166,12 @@ export class Colran {
       this.#alpharan[tgt_x] = colr_x.alpha;
     }
   }
-  #correctRan(tgt_x: 0 | 1 = 1): boolean {
+
+  @traceOut(_TRACE && THEMESETTING)
+  private _correctCRan(tgt_x: 0 | 1 = 1): boolean {
     /*#static*/ if (_TRACE && THEMESETTING) {
       console.log(
-        `${global.indent}>>>>>>> Colran_${this.id}.#correctRan(${tgt_x}) >>>>>>>`,
+        `${global.indent}>>>>>>> Colran_${this.id}._correctCRan(${tgt_x}) >>>>>>>`,
       );
     }
     let ret = false;
@@ -210,44 +179,45 @@ export class Colran {
     if (this.#typ === "rgb" || this.#typ === "rgba") {
       if (this.#redran[1] < this.#redran[0]) {
         this.#redran[tgt_x] = this.#redran[src];
-        ret = this.modified_mo.val = true;
+        ret = this.modified_br_Colran.val = true;
       }
       if (this.#greenran[1] < this.#greenran[0]) {
         this.#greenran[tgt_x] = this.#greenran[src];
-        ret = this.modified_mo.val = true;
+        ret = this.modified_br_Colran.val = true;
       }
       if (this.#blueran[1] < this.#blueran[0]) {
         this.#blueran[tgt_x] = this.#blueran[src];
-        ret = this.modified_mo.val = true;
+        ret = this.modified_br_Colran.val = true;
       }
     } else {
       if (Number.apxS(this.#hueran[1], this.#hueran[0])) {
         this.#hueran[tgt_x] = this.#hueran[src];
-        ret = this.modified_mo.val = true;
+        ret = this.modified_br_Colran.val = true;
       }
       if (Number.apxS(this.#chromaran[1], this.#chromaran[0])) {
         this.#chromaran[tgt_x] = this.#chromaran[src];
-        ret = this.modified_mo.val = true;
+        ret = this.modified_br_Colran.val = true;
       }
       if (Number.apxS(this.#toneran[1], this.#toneran[0])) {
         this.#toneran[tgt_x] = this.#toneran[src];
-        ret = this.modified_mo.val = true;
+        ret = this.modified_br_Colran.val = true;
       }
     }
     if (this.#typ === "rgba" || this.#typ === "hcta") {
       if (Number.apxS(this.#alpharan[1], this.#alpharan[0])) {
         this.#alpharan[tgt_x] = this.#alpharan[src];
-        ret = this.modified_mo.val = true;
+        ret = this.modified_br_Colran.val = true;
       }
     }
     /*#static*/ if (_TRACE && THEMESETTING) {
       console.log(`${global.dent}ret = ${ret}`);
-      global.outdent;
     }
     return ret;
   }
+
+  /** No invokes of callbacks of `min_c` or `max_c` */
   #setColr(src_x: 0 | 1) {
-    const colr_ = src_x === 0 ? this.colr_0 : this.colr_1;
+    const colr_ = src_x === 0 ? this.min_c : this.max_c;
     if (this.#typ === "rgb" || this.#typ === "rgba") {
       colr_
         .setRed(this.#redran[src_x])
@@ -265,19 +235,56 @@ export class Colran {
     }
   }
 
+  @bind
+  @traceOut(_TRACE && THEMESETTING)
+  private _onColrMin(n_y: Colr) {
+    /*#static*/ if (_TRACE && THEMESETTING) {
+      console.log(
+        `${global.indent}>>>>>>> Colran_${this.id}._onColrMin() >>>>>>>`,
+      );
+    }
+    this.#setCRan(0, n_y);
+
+    this.#setCRan(1, this.max_c); //! `#typ` could change
+    if (this._correctCRan(1)) {
+      this.#setColr(1);
+      this.max_c.removeHandler(this._onColrMax); // prevent loop
+      this.max_c.refreshColr();
+      this.max_c.registHandler(this._onColrMax);
+    }
+  }
+  @bind
+  @traceOut(_TRACE && THEMESETTING)
+  private _onColrMax(n_y: Colr) {
+    /*#static*/ if (_TRACE && THEMESETTING) {
+      console.log(
+        `${global.indent}>>>>>>> Colran_${this.id}._onColrMax() >>>>>>>`,
+      );
+    }
+    this.#setCRan(1, n_y);
+
+    this.#setCRan(0, this.min_c); //! `#typ` could change
+    if (this._correctCRan(0)) {
+      this.#setColr(0);
+      this.min_c.removeHandler(this._onColrMin); // prevent loop
+      this.min_c.refreshColr();
+      this.min_c.registHandler(this._onColrMin);
+    }
+  }
+
   setColr(colr_x: Colr, src_x: 0 | 1) {
-    if (src_x === 0) this.colr_0.setByColrMo(colr_x);
-    else this.colr_1.setByColrMo(colr_x);
-    this.modified_mo.val = true;
+    if (src_x === 0) this.min_c.setByColrMo(colr_x);
+    else this.max_c.setByColrMo(colr_x);
+    this.modified_br_Colran.val = true;
   }
 
   setTyp(typ_x: "rgb" | "hct", src_x: 0 | 1) {
     if (this.#typ.startsWith(typ_x)) return;
 
     this.#typ = `${typ_x}${this.#typ[3] ?? ""}` as ColranTyp;
-    if (src_x === 0) this.colr_0.refreshColr();
-    else this.colr_1.refreshColr();
-    this.modified_mo.val = true;
+    if (src_x === 0) this.min_c.refreshColr();
+    else this.max_c.refreshColr();
+    this.modified_br_Colran.val = true;
   }
 
   /** @const */
@@ -300,20 +307,21 @@ export class Colran {
     return b_ + c_ + d_ + a_;
   }
 
-  sample(sample_c_x: Colr) {
+  /** @out @param c_x  */
+  sample(c_x: Colr) {
     if (this.#typ === "rgb" || this.#typ === "rgba") {
-      sample_c_x
+      c_x
         .setRed(Math.round((this.#redran[0] + this.#redran[1]) / 2))
         .setGreen(Math.round((this.#greenran[0] + this.#greenran[1]) / 2))
         .setBlue(Math.round((this.#blueran[0] + this.#blueran[1]) / 2));
     } else {
-      sample_c_x
+      c_x
         .setHue((this.#hueran[0] + this.#hueran[1]) / 2)
         .setChroma((this.#chromaran[0] + this.#chromaran[1]) / 2)
         .setTone((this.#toneran[0] + this.#toneran[1]) / 2);
     }
     if (this.#typ === "rgba" || this.#typ === "hcta") {
-      sample_c_x.setAlpha((this.#alpharan[0] + this.#alpharan[1]) / 2);
+      c_x.setAlpha((this.#alpharan[0] + this.#alpharan[1]) / 2);
     }
   }
 
@@ -353,7 +361,7 @@ export class Colran {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   toJSON(): ColranRaw {
-    this.modified_mo.set_Moo(false); //!
+    this.modified_br_Colran.set_Boor(false); //!
     return ({
       rgb: [this.#typ, [this.#redran, this.#greenran, this.#blueran]],
       rgba: [this.#typ, [

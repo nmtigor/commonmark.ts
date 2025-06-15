@@ -10,7 +10,8 @@ import type { lnum_t, loff_t } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
 import type { Bufr } from "./Bufr.ts";
 import type { Loc } from "./Loc.ts";
-import { g_ran_fac, type Ran } from "./Ran.ts";
+import type { Ran } from "./Ran.ts";
+import { g_ran_fac } from "./RanFac.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */

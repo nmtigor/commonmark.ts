@@ -3,7 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { DEV, INOUT, PRF } from "../../global.ts";
+import { DEBUG, INOUT, PRF } from "../../global.ts";
 import type { lnum_t, loff_t, TupleOf, uint } from "../alias.ts";
 import { zUint } from "../alias.ts";
 import { g_count } from "../util/performance.ts";
@@ -17,19 +17,27 @@ import { type _OldInfo_, Snt } from "./Snt.ts";
 import { Stnode } from "./Stnode.ts";
 import type { TokLine } from "./TokLine.ts";
 import type { TokRan } from "./TokRan.ts";
-import type { Tok } from "./alias.ts";
+import type { Err, Tok } from "./alias.ts";
 import { JSLangTok } from "./jslang/JSLangTok.ts";
-import { LaTeXTok } from "./latex/LaTeXTok.ts";
 import { MdextTok } from "./mdext/MdextTok.ts";
 import { PDFTok } from "./pdf/PDFTok.ts";
 import { PlainTok } from "./plain/PlainTok.ts";
 import { RMLTok } from "./rml/RMLTok.ts";
 import { SetTok } from "./set/SetTok.ts";
 import { URITok } from "./uri/URITok.ts";
+import { HTMLTok } from "./html/HTMLTok.ts";
+import { g_ran_fac } from "./RanFac.ts";
 /*80--------------------------------------------------------------------------*/
 
 type NErr_ = 2;
 const NErr_ = 2;
+console.assert(NErr_ >= 1);
+
+type ResetTokenP_<T extends Tok> = {
+  value?: T;
+  strtLoc?: Loc;
+  stopLoc?: Loc;
+};
 
 /** @final */
 export class Token<T extends Tok = BaseTok> extends Snt {
@@ -56,6 +64,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   /* ~ */
 
   /* ran_$ */
+  /** @using */
   readonly ran_$: TokRan<T>;
 
   syncRanvalAnchr(): this {
@@ -80,7 +89,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return this.ran_$.strtLoc;
   }
   /**
-   * @const @param loc_x
+   * @borrow @const @param loc_x
    * @const @param tok_x
    */
   setStrt(loc_x: Loc, tok_x?: T): this {
@@ -111,7 +120,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return this.ran_$.stopLoc;
   }
   /**
-   * @const @param loc_x
+   * @borrow @const @param loc_x
    * @const @param tok_x
    */
   setStop(loc_x: Loc, tok_x?: T): this {
@@ -174,43 +183,55 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   }
   set value(_x: T) {
     this.#value = _x;
-    /*#static*/ if (DEV) {
-      if (_x <= BaseTok._max) {
-        (this as any)._valvename = BaseTok[_x];
-      } else if (_x <= PlainTok._max) {
-        (this as any)._valvename = PlainTok[_x];
-      } else if (_x <= SetTok._max) {
-        (this as any)._valvename = SetTok[_x];
-      } else if (_x <= URITok._max) {
-        (this as any)._valvename = URITok[_x];
-      } else if (_x <= MdextTok._max) {
-        (this as any)._valvename = MdextTok[_x];
-      } else if (_x <= PDFTok._max) {
-        (this as any)._valvename = PDFTok[_x];
-      } else if (_x <= LaTeXTok._max) {
-        (this as any)._valvename = LaTeXTok[_x];
-      } else if (_x <= RMLTok._max) {
-        (this as any)._valvename = RMLTok[_x];
-      } else if (_x <= JSLangTok._max) {
-        (this as any)._valvename = JSLangTok[_x];
-      }
+    /*#static*/ if (DEBUG) {
+      (this as any)._valvename_ = _x <= BaseTok._max
+        ? BaseTok[_x]
+        : _x <= PlainTok._max
+        ? PlainTok[_x]
+        : _x <= SetTok._max
+        ? SetTok[_x]
+        : _x <= URITok._max
+        ? URITok[_x]
+        : _x <= MdextTok._max
+        ? MdextTok[_x]
+        : _x <= PDFTok._max
+        ? MdextTok[_x]
+        : _x <= PDFTok._max
+        ? PDFTok[_x]
+        : _x <= RMLTok._max
+        ? RMLTok[_x]
+        : _x <= JSLangTok._max
+        ? JSLangTok[_x]
+        : _x <= HTMLTok._max
+        ? HTMLTok[_x]
+        : "unknown";
     }
   }
-  lexdInfo: LexdInfo | null = null;
+
+  /* #lexdInfo */
+  #lexdInfo: LexdInfo | null = null;
+  get lexdInfo() {
+    return this.#lexdInfo;
+  }
+  set lexdInfo(_x: LexdInfo | null) {
+    if (_x === this.#lexdInfo) return;
+
+    this.#lexdInfo?.destructor();
+    this.#lexdInfo = _x;
+  }
+  /* ~ */
 
   /* #errMsg_a */
-  readonly #errMsg_a = new Array(NErr_).fill("") as TupleOf<string, NErr_>;
-  get _err_() {
-    return this.#errMsg_a.filter(Boolean);
-  }
+  readonly #errMsg_a = new Array(NErr_).fill("") as TupleOf<Err | "", NErr_>;
   get isErr() {
     return !!this.#errMsg_a[0];
   }
+  onlyErr(err_x: Err): boolean {
+    return this.#errMsg_a[0] === err_x && !this.#errMsg_a.at(1);
+  }
 
-  /**
-   * @const @param errMsg_x
-   */
-  setErr(errMsg_x: string): this {
+  /** @const @param errMsg_x */
+  setErr(errMsg_x: Err): this {
     for (let i = 0; i < NErr_; ++i) {
       if (!this.#errMsg_a[i]) {
         this.#errMsg_a[i] = errMsg_x;
@@ -219,10 +240,13 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     }
     return this;
   }
-
   clrErr(): this {
     this.#errMsg_a.fill("");
     return this;
+  }
+
+  get _err_(): Err[] {
+    return this.#errMsg_a.filter(Boolean) as Err[];
   }
   /* ~ */
 
@@ -241,27 +265,65 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  /**
-   * `this` is a DIRECT boundary token of `stnode`.
-   */
+  /** `this` is a DIRECT boundary token of `stnod_$`. */
   stnod_$: Stnode<T> | undefined;
 
+  //jjjj TOCLEANUP use LexdInfo
+  // /**
+  //  * Non-undefined if `this` is one of tokens as env for next-level-compiling\
+  //  * `strtBdry` aligns with the start of first such token.
+  //  */
+  // strtBdry: Token<BaseTok.strtBdry> | undefined;
+  // /**
+  //  * Non-undefined if `this` is one of tokens as env for next-level-compiling\
+  //  * `stopBdry` aligns with the stop of last such token.
+  //  */
+  // stopBdry: Token<BaseTok.stopBdry> | undefined;
+
   /**
-   * @headconst @param lexr_x
-   * @headconst @param ran_x [COPIED]
+   * `in( lexr_x.bufr === ran_x.bufr)`
+   * @borrow @const @param lexr_x
+   * @headmove @const @param ran_x
    * @const @param value_x
    */
-  constructor(lexr_x: Lexr<T>, ran_x: TokRan<T>, value_x?: T) {
+  constructor(
+    lexr_x: Lexr<T>,
+    ran_x: TokRan<T>,
+    value_x = BaseTok.unknown as T,
+  ) {
     super();
     this.lexr_$ = lexr_x;
     /* `syncRanval_$()` after `this` is scanned or adjusted */
     // ran_x.syncRanval_$();
     this.ran_$ = ran_x;
-    this.value = value_x ? value_x : BaseTok.unknown as T;
+    this.value = value_x;
 
     /*#static*/ if (PRF) {
       g_count.newToken += 1;
     }
+  }
+
+  #destroyed = false;
+  // get destroyed() {
+  //   return this.#destroyed;
+  // }
+  /**
+   * It does not really destroy `this`, but only invokes `destructor()` or
+   * `revoke()` of `ran_$` and `lexdInfo`, because `this` could still be used
+   * later through e.g. `_oldInfo_`.
+   */
+  destructor() {
+    /*#static*/ if (INOUT) {
+      assert(!this.#destroyed);
+    }
+    this.ran_$[Symbol.dispose]();
+    this.lexdInfo = null;
+
+    /*#static*/ if (PRF) {
+      g_count.oldToken += 1;
+    }
+
+    this.#destroyed = true;
   }
 
   /**
@@ -270,7 +332,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
    * @const
    */
   dup_Token() {
-    return new Token(this.lexr_$, this.ran_$.dup(), this.#value);
+    return new Token(this.lexr_$, g_ran_fac.byTokRan(this.ran_$), this.#value);
   }
 
   // /**
@@ -281,7 +343,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   //   /*#static*/ if (INOUT) {
   //     assert(this.lexr_$ === tk_x.lexr_$);
   //   }
-  //   this.ran_$.becomeRan(tk_x.ran_$);
+  //   this.ran_$.become_Ran(tk_x.ran_$);
 
   //   this.value = tk_x.value;
   //   this.lexdInfo = tk_x.lexdInfo;
@@ -293,14 +355,18 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   // }
 
   /**
-   * @param value_x
-   * @const @param strtLoc_x
-   * @const @param stopLoc_x
+   * @const @param value_x
+   * @borrow @const @param strtLoc_x
+   * @borrow @const @param stopLoc_x
+  //  * @headmove @const @param ran_x
+  //  * @const @param lexr_x
    */
   reset_Token(
-    value_x: T,
+    value_x = BaseTok.unknown as T,
     strtLoc_x?: Loc,
     stopLoc_x?: Loc,
+    // ran_x?:TokRan<T>,
+    // lexr_x?:Lexr<T>
   ): this {
     if (strtLoc_x) this.setStrt(strtLoc_x);
     if (stopLoc_x) this.setStop(stopLoc_x);
@@ -544,7 +610,11 @@ export class Token<T extends Tok = BaseTok> extends Snt {
       tk_ = tk_.prevToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
-    if (!tk_.isErr) retLn.setFrstToken_$(tk_);
+    if (
+      !tk_.isErr ||
+      this.#value === BaseTok.strtBdry ||
+      this.#value === BaseTok.stopBdry
+    ) retLn.setFrstToken_$(tk_);
     return retLn;
   }
   /** Correct `lastLine.#lastToken_m` */
@@ -559,7 +629,11 @@ export class Token<T extends Tok = BaseTok> extends Snt {
       tk_ = tk_.nextToken_$;
     }
     assert(valve, `Loop ${VALVE}±1 times`);
-    if (!tk_.isErr) retLn.setLastToken_$(tk_);
+    if (
+      !tk_.isErr ||
+      this.#value === BaseTok.strtBdry ||
+      this.#value === BaseTok.stopBdry
+    ) retLn.setLastToken_$(tk_);
     return retLn;
   }
 
@@ -608,8 +682,10 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     if (this.prevToken_$ !== retTk_x) {
       retTk_x.#unlinkNext();
       retTk_x.nextToken_$ = this;
+
       this.#unlinkPrev();
       this.prevToken_$ = retTk_x;
+
       // this.linked_ = true;
       // retTk_x.linked_ = true;
     }
@@ -642,8 +718,10 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     if (this.nextToken_$ !== retTk_x) {
       retTk_x.#unlinkPrev();
       retTk_x.prevToken_$ = this;
+
       this.#unlinkNext();
       this.nextToken_$ = retTk_x;
+
       // this.linked_ = true;
       // retTk_x.linked_ = true;
     }
@@ -659,7 +737,8 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return retTk_x;
   }
 
-  removeSelf(ret_x: "prev" | "next" = "next"): Token<T> | undefined {
+  /** @const @param ret_x  */
+  removeSelf(ret_x?: "prev" | "next"): Token<T> | undefined {
     const prev = this.prevToken_$;
     const next = this.nextToken_$;
     if (prev) {
@@ -677,10 +756,11 @@ export class Token<T extends Tok = BaseTok> extends Snt {
       lastLn = prev.#correct_line_lastToken();
     }
     if (next) {
-      if (next.sntFrstLine != frstLn) next.#correct_line_frstToken();
-      if (next.sntLastLine != lastLn) next.#correct_line_lastToken();
+      if (next.sntFrstLine !== frstLn) next.#correct_line_frstToken();
+      if (next.sntLastLine !== lastLn) next.#correct_line_lastToken();
     }
 
+    // if (destroy_x) this.destructor();
     return ret_x === "prev" ? prev : ret_x === "next" ? next : undefined;
   }
 
@@ -746,27 +826,27 @@ export class Token<T extends Tok = BaseTok> extends Snt {
   // }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  get _name(): string {
+  get _name_(): string {
     return BaseTok[this.value] ??
       PlainTok[this.value] ??
       SetTok[this.value] ??
       URITok[this.value] ??
       MdextTok[this.value] ??
       PDFTok[this.value] ??
-      LaTeXTok[this.value] ??
       RMLTok[this.value] ??
-      JSLangTok[this.value];
+      JSLangTok[this.value] ??
+      HTMLTok[this.value] ?? "unknown";
   }
 
   override toString() {
-    return `${this._name}${this.ran_$}${this.lexdInfo ? this.lexdInfo : ""}`;
+    return `${this._name_}${this.ran_$}${this.#lexdInfo ? this.#lexdInfo : ""}`;
   }
 
   override get _oldInfo_(): _OldInfo_ {
     const rv_ = this.#oldRanval ?? this.ran_$.toRanval();
     return {
       sort: [rv_.anchrLidx, rv_.anchrLoff],
-      info: `${this._name}${this.#oldRanval ? "" : "*"}${rv_}`,
+      info: `${this._name_}${this.#oldRanval ? "" : "*"}${rv_}`,
     };
   }
 
@@ -803,7 +883,7 @@ export class Token<T extends Tok = BaseTok> extends Snt {
     return [prev_a, this.toString(), next_a];
   }
 
-  // get _repr(): [string | undefined, string, string | undefined] {
+  // get _repr_(): [string | undefined, string, string | undefined] {
   //   return [
   //     this.prevToken_$?.toString(),
   //     this.toString(),
@@ -814,16 +894,11 @@ export class Token<T extends Tok = BaseTok> extends Snt {
 /*64----------------------------------------------------------*/
 
 export type PlainTk = Token<PlainTok>;
-
 export type SetTk = Token<SetTok>;
-export const SetTk = Token<SetTok>;
-
 export type URITk = Token<URITok>;
-export const URITk = Token<URITok>;
 
 /** `frstLine === lastLine` */
 export type MdextTk = Token<MdextTok>;
-export const MdextTk = Token<MdextTok>;
 //jjjj TOCLEANUP
 // /** @final */
 // export class MdextTk extends Token<MdextTok> {
@@ -843,16 +918,9 @@ export const MdextTk = Token<MdextTok>;
 // }
 
 export type PDFTk = Token<PDFTok>;
-export const PDFTk = Token<PDFTok>;
-
-export type LaTeXTk = Token<LaTeXTok>;
-export const LaTeXTk = Token<LaTeXTok>;
-
 export type RMLTk = Token<RMLTok>;
-export const RMLTk = Token<RMLTok>;
-
 export type JSLangTk = Token<JSLangTok>;
-export const JSLangTk = Token<JSLangTok>;
+export type HTMLTk = Token<HTMLTok>;
 /*80--------------------------------------------------------------------------*/
 
 //kkkk Use a `TokenFac` (ref. `TSegFac`).

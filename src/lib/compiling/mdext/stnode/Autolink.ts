@@ -9,8 +9,8 @@ import { INOUT } from "@fe-src/global.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
-import type { MdextLexr } from "../MdextLexr.ts";
-import { _escapeXml, _isSafeURL, _tag, gathrUnrelTk } from "../util.ts";
+import type { MdextLexr, URI_LI } from "../MdextLexr.ts";
+import { _escapeXml, _isSafeURL, _tag, gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -20,11 +20,8 @@ export class Autolink extends Inline {
   readonly #destTk_a;
   #lastTk;
 
-  #isEmail;
-
-  override get children() {
-    return undefined;
-  }
+  //jjjj TOCLEANUP
+  // #isEmail;
 
   override get frstToken() {
     return this.frstToken$ ??= this.#frstTk;
@@ -37,19 +34,14 @@ export class Autolink extends Inline {
    * @headconst @param frstTk_x
    * @headconst @param destTk_a_x
    * @headconst @param lastTk_x
-   * @const @param isEmail_x
    */
-  constructor(
-    frstTk_x: MdextTk,
-    destTk_a_x: MdextTk[],
-    lastTk_x: MdextTk,
-    isEmail_x: boolean,
-  ) {
+  constructor(frstTk_x: MdextTk, destTk_a_x: MdextTk[], lastTk_x: MdextTk) {
     super();
     this.#frstTk = frstTk_x;
     this.#destTk_a = destTk_a_x;
     this.#lastTk = lastTk_x;
-    this.#isEmail = isEmail_x;
+    //jjjj TOCLEANUP
+    // this.#isEmail = isEmail_x;
 
     this.ensureBdry();
     /*#static*/ if (INOUT) {
@@ -81,7 +73,7 @@ export class Autolink extends Inline {
     let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     if (ret) return ret;
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#frstTk,
       drtStrtLoc_x,
       drtStopLoc_x,
@@ -89,10 +81,10 @@ export class Autolink extends Inline {
     );
 
     for (const tk of this.#destTk_a) {
-      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#lastTk,
       drtStrtLoc_x,
       drtStopLoc_x,
@@ -110,7 +102,8 @@ export class Autolink extends Inline {
 
     const attrs: [k: string, v: string][] = [];
 
-    let dest_s = `${this.#isEmail ? "mailto:" : ""}${text_s}`;
+    const li_ = this.#destTk_a[0].lexdInfo as URI_LI;
+    let dest_s = `${li_?.isEmail_1 ? "mailto:" : ""}${text_s}`;
     dest_s = encodeURI(decodeURI(dest_s));
     attrs.push(["href", _isSafeURL(dest_s) ? _escapeXml(dest_s) : ""]);
 

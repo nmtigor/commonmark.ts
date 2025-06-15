@@ -316,13 +316,11 @@ export class Colr {
   }
   setByCsscMo(cssc_x: Cssc): this {
     this.setByCssc(cssc_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
 
-  /**
-   * @const @param colr_x
-   */
+  /** @const @param colr_x */
   setByColr(colr_x: Colr): this {
     this.#hex = colr_x.#hex;
     this.#red = colr_x.#red;
@@ -344,7 +342,7 @@ export class Colr {
   }
   setByColrMo(colr_x: Colr): this {
     this.setByColr(colr_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
@@ -429,6 +427,7 @@ export class Colr {
     if (this.#hex !== undefined) {
       this.#byHex();
     } else if (this.#red !== undefined) {
+      /* no-ops */
     } else if (this.#name !== undefined) {
       this.#getHex(valve_x);
       this.#byHex();
@@ -593,11 +592,13 @@ export class Colr {
     this.#cssc = undefined;
     return this;
   }
+  /** @see {@linkcode setRed()} */
   setRedMo(val_x: red_t): this {
     this.setRed(val_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
+  /** @see {@linkcode setRed()} */
   SetRed(val_x: red_t): Colr {
     return this.dup_Colr().setRed(val_x);
   }
@@ -617,11 +618,13 @@ export class Colr {
     this.#cssc = undefined;
     return this;
   }
+  /** @see {@linkcode setGreen()} */
   setGreenMo(val_x: red_t): this {
     this.setGreen(val_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
+  /** @see {@linkcode setGreen()} */
   SetGreen(val_x: red_t): Colr {
     return this.dup_Colr().setGreen(val_x);
   }
@@ -641,11 +644,13 @@ export class Colr {
     this.#cssc = undefined;
     return this;
   }
+  /** @see {@linkcode setBlue()} */
   setBlueMo(val_x: red_t): this {
     this.setBlue(val_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
+  /** @see {@linkcode setBlue()} */
   SetBlue(val_x: red_t): Colr {
     return this.dup_Colr().setBlue(val_x);
   }
@@ -668,11 +673,13 @@ export class Colr {
     this.#cssc = undefined;
     return this;
   }
+  /** @see {@linkcode setHue()} */
   setHueMo(val_x: hue_t): this {
     this.setHue(val_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
+  /** @see {@linkcode setHue()} */
   SetHue(val_x: hue_t): Colr {
     return this.dup_Colr().setHue(val_x);
   }
@@ -691,11 +698,13 @@ export class Colr {
     this.#cssc = undefined;
     return this;
   }
+  /** @see {@linkcode setChroma()} */
   setChromaMo(val_x: chroma_t): this {
     this.setChroma(val_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
+  /** @see {@linkcode setChroma()} */
   SetChroma(val_x: chroma_t): Colr {
     return this.dup_Colr().setChroma(val_x);
   }
@@ -715,11 +724,13 @@ export class Colr {
     this.#cssc = undefined;
     return this;
   }
+  /** @see {@linkcode setTone()} */
   setToneMo(val_x: tone_t): this {
     this.setTone(val_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
+  /** @see {@linkcode setTone()} */
   SetTone(val_x: tone_t): Colr {
     return this.dup_Colr().setTone(val_x);
   }
@@ -739,11 +750,13 @@ export class Colr {
     this.#cssc = undefined;
     return this;
   }
+  /** @see {@linkcode setHCT()} */
   setHCTMo(h_x: hue_t, c_x: chroma_t, t_x: tone_t): this {
     this.setHCT(h_x, c_x, t_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
+  /** @see {@linkcode setHCT()} */
   SetHCT(h_x: hue_t, c_x: chroma_t, t_x: tone_t): Colr {
     return this.dup_Colr().setHCT(h_x, c_x, t_x);
   }
@@ -803,11 +816,13 @@ export class Colr {
     this.#cssc = undefined;
     return this;
   }
+  /** @see {@linkcode setAlpha()} */
   setAlphaMo(val_x: alpha_t): this {
     this.setAlpha(val_x);
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
     return this;
   }
+  /** @see {@linkcode setAlpha()} */
   SetAlpha(val_x: alpha_t): Colr {
     return this.dup_Colr().setAlpha(val_x);
   }
@@ -827,6 +842,7 @@ export class Colr {
 
     return this;
   }
+  /** @see {@linkcode enchroma()} */
   Enchroma(ratio_x: Ratio): Colr {
     return this.dup_Colr().enchroma(ratio_x);
   }
@@ -845,6 +861,7 @@ export class Colr {
 
     return this;
   }
+  /** @see {@linkcode unchroma()} */
   Unchroma(ratio_x: Ratio): Colr {
     return this.dup_Colr().unchroma(ratio_x);
   }
@@ -862,6 +879,7 @@ export class Colr {
 
     return this;
   }
+  /** @see {@linkcode entone()} */
   Entone(ratio_x: Ratio): Colr {
     return this.dup_Colr().entone(ratio_x);
   }
@@ -878,6 +896,7 @@ export class Colr {
 
     return this;
   }
+  /** @see {@linkcode untone()} */
   Untone(ratio_x: Ratio): Colr {
     return this.dup_Colr().untone(ratio_x);
   }
@@ -901,6 +920,7 @@ export class Colr {
     return this.#cssc;
   }
 
+  /** @const @param typ_x */
   repr(typ_x: "hex" | "rgb" | "hct"): string {
     let ret: string;
     // Alpha channel of `#hex` and `#alpha` could be inconsistent
@@ -933,14 +953,14 @@ export class Colr {
     return ret!;
   }
 
-  registHandler(handler_x: MooHandler<Colr>) {
-    this.mo$.registHandler(handler_x);
+  registHandler(h_x: MooHandler<Colr>) {
+    this.mo$.registHandler(h_x);
   }
-  removeHandler(handler_x: MooHandler<Colr>) {
-    this.mo$.removeHandler(handler_x);
+  removeHandler(h_x: MooHandler<Colr>) {
+    this.mo$.removeHandler(h_x);
   }
   refreshColr() {
-    this.#mo?.refreshMoo();
+    this.#mo?.refresh_Moo();
   }
 } // class Colr
 
@@ -1108,9 +1128,7 @@ export class M3KeyColrs {
   /** Error */
   error: Colr;
 
-  /**
-   * @const @param src_x
-   */
+  /** @const @param src_x */
   constructor(src_x: Colr) {
     this.a1 = src_x.dup_Colr().setTone(40);
     this.a2 = src_x.dup_Colr().setChroma(src_x.chroma / 3).setTone(40);

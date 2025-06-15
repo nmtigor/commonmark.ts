@@ -26,8 +26,8 @@ export class TokRan<T extends Tok> extends Ran {
   }
 
   /**
-   * @headconst @param loc_x [COPIED]
-   * @param loc_1_x [COPIED]
+   * @headmove @primaryconst @param loc_x
+   * @headmove @param loc_1_x
    */
   constructor(loc_x: TokLoc<T>, loc_1_x?: TokLoc<T>) {
     super(loc_x, loc_1_x);
@@ -43,7 +43,7 @@ export class TokRan<T extends Tok> extends Ran {
     );
   }
 
-  override dup() {
+  override dup_Ran() {
     return new TokRan<T>(this.strtLoc.dup_Loc(), this.stopLoc.dup_Loc());
   }
 }

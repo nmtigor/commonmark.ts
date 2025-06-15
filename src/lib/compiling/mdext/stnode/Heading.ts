@@ -11,7 +11,7 @@ import type { SortedSnt_id } from "../../Snt.ts";
 import { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
-import { _toHTML, gathrUnrelTk } from "../util.ts";
+import { _toHTML, gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 import { ILoc, InlineBlock } from "./InlineBlock.ts";
 import { Paragraph } from "./Paragraph.ts";
@@ -30,7 +30,7 @@ class HLoc_ extends ILoc {
   //  */
   // constructor(host_x: Heading) {
   //   /*#static*/ if (INOUT) {
-  //     assert(host_x.snt_a_$.at(0) instanceof MdextTk);
+  //     assert(host_x.snt_a_$.at(0) instanceof Token);
   //   }
   //   super(host_x);
   // }
@@ -150,7 +150,7 @@ export class ATXHeading extends Heading {
   //jjjj TOCLEANUP
   // protected override closeBlock_impl$(): void {
   //   if (this.parent?.inCompiling) {
-  //     this.setErr(Err.unexpected_close);
+  //     this.setErr(Err.mdext_unexpected_close);
   //     /* then will be re`lex()` */
   //   }
   // }
@@ -161,7 +161,7 @@ export class ATXHeading extends Heading {
     drtStopLoc_x: Loc,
     unrelSnt_sa_x: SortedSnt_id,
   ): uint {
-    let ret = gathrUnrelTk(
+    let ret = gathrUnrelTk_$(
       this.#headTk,
       drtStrtLoc_x,
       drtStopLoc_x,
@@ -171,7 +171,7 @@ export class ATXHeading extends Heading {
     ret += super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
 
     if (this.#tailTk) {
-      ret += gathrUnrelTk(
+      ret += gathrUnrelTk_$(
         this.#tailTk,
         drtStrtLoc_x,
         drtStopLoc_x,
@@ -248,7 +248,7 @@ export class SetextHeading extends Heading {
   //jjjj TOCLEANUP
   // protected override closeBlock_impl$(): void {
   //   if (this.parent?.inCompiling) {
-  //     this.setErr(Err.unexpected_close);
+  //     this.setErr(Err.mdext_unexpected_close);
   //     /* then will be re`lex()` */
   //   }
   // }
@@ -299,7 +299,7 @@ export class SetextHeading extends Heading {
   ): uint {
     let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#tailTk,
       drtStrtLoc_x,
       drtStopLoc_x,

@@ -4,8 +4,16 @@
  ******************************************************************************/
 
 import { INOUT, TESTING } from "../../global.ts";
-import type { id_t, lnum_t, loff_t, uint16 } from "../alias.ts";
-import { BufrDir, llen_MAX, MAX_lnum } from "../alias.ts";
+import type {
+  BufrDir,
+  id_t,
+  lnum_t,
+  loff_t,
+  UChr,
+  uint,
+  uint16,
+} from "../alias.ts";
+import { llen_MAX, MAX_lnum } from "../alias.ts";
 import { Bidi, type Bidir } from "../Bidi.ts";
 import { assert, out } from "../util/trace.ts";
 import type { Tok } from "./alias.ts";
@@ -49,13 +57,21 @@ export class Line implements Bidir {
     return this.text.length;
   }
 
-  /** @final */
-  uchrAt(i_x: loff_t) {
-    return this.text.at(i_x);
+  /**
+   * `in( i_x < this.text.length)`
+   * @final
+   */
+  uchrAt(i_x: loff_t): UChr {
+    return this.text.at(i_x)!;
   }
-  /** @final */
+
+  /** @see {@linkcode uchrAt()} */
   ucodAt(i_x: loff_t): uint16 {
     return this.text.charCodeAt(i_x) as uint16;
+  }
+  /** @see {@linkcode uchrAt()} */
+  codpAt(i_x: loff_t): uint {
+    return this.text.codePointAt(i_x)!;
   }
 
   /** @final */
@@ -65,7 +81,7 @@ export class Line implements Bidir {
   /* ~ */
 
   get dir(): BufrDir {
-    return this.bufr$?.dir ?? BufrDir.ltr;
+    return this.bufr$?.dir ?? "ltr";
   }
 
   readonly bidi = new Bidi();
@@ -533,7 +549,7 @@ export class Line implements Bidir {
     );
   })
   removeSelf_$(): void {
-    /* `frstTSeg_$?`, `lastTSeg_$?` could be useful in `Tfmr.adjust_$()` even
+    /* `frstTSeg_$?`, `lastTSeg_$?` could be useful in `Tfmr.lexadj_$()` even
     after `this.removed`.*/
     // this.delTSegBdryOf();
 
@@ -570,7 +586,7 @@ export class Line implements Bidir {
     this.linked_$ = false;
     this.bufr$ = undefined;
 
-    /* `#frstToken_m`, `#lastToken_m` will be used in `Lexr.adjust_$()` */
+    /* `#frstToken_m`, `#lastToken_m` will be used in `Lexr.lexadj_$()` */
     // /* Because Lexr<T> could keep using to make `this` unreleasable. */
     // this.#frstToken_m.clear();
     // this.#lastToken_m.clear();

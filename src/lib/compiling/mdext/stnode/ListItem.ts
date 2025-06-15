@@ -10,7 +10,7 @@ import { SortedStnod_id } from "../../Stnode.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { ListMrkr_LI, MdextLexr } from "../MdextLexr.ts";
 import type { BlockCont } from "../alias.ts";
-import { _toHTML, gathrUnrelTk } from "../util.ts";
+import { _toHTML, gathrUnrelTk_$ } from "../util.ts";
 import { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import { Inline } from "./Inline.ts";
@@ -91,7 +91,7 @@ export abstract class ListItem extends CtnrBlock {
       unrelSn_sa_x,
     );
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#mrkrTk,
       drtStrtLoc_x,
       drtStopLoc_x,

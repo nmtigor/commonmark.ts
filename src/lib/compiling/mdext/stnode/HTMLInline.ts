@@ -9,7 +9,7 @@ import { INOUT } from "@fe-src/global.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
-import { gathrUnrelTk } from "../util.ts";
+import { gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -36,10 +36,6 @@ export class HTMLInline extends Inline {
   #frstTk;
   #chunkTk_a;
   #lastTk;
-
-  override get children() {
-    return undefined;
-  }
 
   override get frstToken() {
     return this.frstToken$ ??= this.#frstTk;
@@ -89,7 +85,7 @@ export class HTMLInline extends Inline {
     let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     if (ret) return ret;
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#frstTk,
       drtStrtLoc_x,
       drtStopLoc_x,
@@ -97,10 +93,10 @@ export class HTMLInline extends Inline {
     );
 
     for (const tk of this.#chunkTk_a) {
-      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#lastTk,
       drtStrtLoc_x,
       drtStopLoc_x,

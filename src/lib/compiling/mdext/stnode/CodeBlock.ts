@@ -15,7 +15,7 @@ import {
   _escapeXml,
   _tag,
   _unescapeString,
-  gathrUnrelTk,
+  gathrUnrelTk_$,
   lastNonblankIn,
 } from "../util.ts";
 import { Block } from "./Block.ts";
@@ -37,10 +37,6 @@ export abstract class CodeBlock extends Block {
   /** chunk tokens, one line one token, may contain `empty` tokens */
   protected readonly chunkTk_a$: MdextTk[] = [];
 
-  override get children() {
-    return undefined;
-  }
-
   override reset_Block(): this {
     super.reset_Block();
     this.chunkTk_a$.length = 0;
@@ -55,7 +51,7 @@ export abstract class CodeBlock extends Block {
   ): uint {
     let ret = 0;
     for (const tk of this.chunkTk_a$) {
-      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
     return ret;
   }
@@ -226,7 +222,7 @@ export class FencedCodeBlock extends CodeBlock {
     drtStopLoc_x: Loc,
     unrelSnt_sa_x: SortedSnt_id,
   ): uint {
-    let ret = gathrUnrelTk(
+    let ret = gathrUnrelTk_$(
       this.#headTk,
       drtStrtLoc_x,
       drtStopLoc_x,
@@ -234,7 +230,7 @@ export class FencedCodeBlock extends CodeBlock {
     );
 
     if (this.#headChunkTk) {
-      ret += gathrUnrelTk(
+      ret += gathrUnrelTk_$(
         this.#headChunkTk,
         drtStrtLoc_x,
         drtStopLoc_x,
@@ -245,7 +241,7 @@ export class FencedCodeBlock extends CodeBlock {
     ret += super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
 
     if (this.#tailTk) {
-      ret += gathrUnrelTk(
+      ret += gathrUnrelTk_$(
         this.#tailTk,
         drtStrtLoc_x,
         drtStopLoc_x,

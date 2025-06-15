@@ -386,18 +386,18 @@ export class TSegFac extends Factory<TSeg> {
 
   constructor(tfmr_x: Tfmr) {
     super();
-    this.setTSegFac(tfmr_x);
+    this.set_TSegFac(tfmr_x);
   }
 
-  setTSegFac(tfmr_x: Tfmr, hard_x?: "hard") {
+  set_TSegFac(tfmr_x: Tfmr, hard_x?: "hard") {
     this.#tfmr = tfmr_x;
 
-    this.init(hard_x);
+    this.reset_Factory(hard_x);
   }
 
-  override init(hard_x?: "hard") {
+  override reset_Factory(hard_x?: "hard") {
     this.val_a$.forEach((val) => val.resetTSeg_$());
-    super.init(hard_x);
+    super.reset_Factory(hard_x);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

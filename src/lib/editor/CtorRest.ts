@@ -8,7 +8,7 @@ import type { loff_t } from "../alias.ts";
 import { $vuu } from "../symbols.ts";
 import { assert } from "../util/trace.ts";
 import { StnodeV } from "./StnodeV.ts";
-import { eq } from "../jslang.ts";
+import { eql } from "../jslang.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type ReplRest = [...Node[], undefined | ReplRest];
@@ -66,7 +66,7 @@ export class CtorRest {
   }
   upenRest(rest_x: ReplRest): void {
     /*#static*/ if (INOUT) {
-      assert(!rest_x.at(-1) || eq(rest_x.at(-1), this.#rest));
+      assert(!rest_x.at(-1) || eql(rest_x.at(-1), this.#rest));
     }
     this.#rest = rest_x;
   }
@@ -84,7 +84,7 @@ export class CtorRest {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  #_reprReplRest(rest_x?: ReplRest): ReplRestRepr {
+  #_reprReplRest_(rest_x?: ReplRest): ReplRestRepr {
     const ret = [];
     if (rest_x) {
       for (let i = 0, iI = rest_x.length - 1; i < iI; ++i) {
@@ -100,13 +100,13 @@ export class CtorRest {
       }
     }
     const last = rest_x?.at(-1) as ReplRest | undefined;
-    if (last) ret.push(this.#_reprReplRest(last));
+    if (last) ret.push(this.#_reprReplRest_(last));
     else ret.push(undefined);
     return ret as ReplRestRepr;
   }
   /** @final */
-  _repr(): ReplRestRepr {
-    return this.#_reprReplRest(this.#rest);
+  _repr_(): ReplRestRepr {
+    return this.#_reprReplRest_(this.#rest);
   }
 }
 

@@ -11,8 +11,9 @@ import { z } from "@zod";
 // export type int = Brand<number, "int">;
 // declare const $brand_int: unique symbol;
 // export type Brand_int<TBrand> = int & { [$brand_int]: TBrand };
+/** `Number.isInteger()` */
 export type int = number;
-export const zInt = z.number().int();
+export const zInt = z.number().int(); //.min(-(2 ** 53 - 1)).max(2 ** 53 - 1);
 export type uint = number;
 // export type uint = Brand_int{"uint">;
 export const zUint = zInt.min(0);
@@ -112,15 +113,28 @@ export type dot2d_t = [x: number, y: number];
 export type dim2d_t = [widt: number, high: number];
 export type rect_t = TupleOf<number, 4>;
 
-export type IntArray = Int8Array | Int16Array | Int32Array;
-export type UintArray =
-  | Uint8Array
-  | Uint8ClampedArray
-  | Uint16Array
-  | Uint32Array;
-export type IntegerArray = IntArray | UintArray;
-export type FloatArray = Float32Array | Float64Array;
-export type TypedArray = IntegerArray | FloatArray;
+export type IntArray<T extends ArrayBufferLike = ArrayBufferLike> =
+  | Int8Array<T>
+  | Int16Array<T>
+  | Int32Array<T>; // | BigInt64Array<T>
+export type UintArray<T extends ArrayBufferLike = ArrayBufferLike> =
+  | Uint8Array<T>
+  | Uint8ClampedArray<T>
+  | Uint16Array<T>
+  | Uint32Array<T>; // | BigUint64Array<T>
+export type IntegerArray<T extends ArrayBufferLike = ArrayBufferLike> =
+  | IntArray<T>
+  | UintArray<T>;
+export type FloatArray<T extends ArrayBufferLike = ArrayBufferLike> =
+  // | Float16Array<T>
+  | Float32Array<T>
+  | Float64Array<T>;
+export type TypedArray<T extends ArrayBufferLike = ArrayBufferLike> =
+  | IntegerArray<T>
+  | FloatArray<T>;
+/*80--------------------------------------------------------------------------*/
+
+export type Thenable<T> = PromiseLike<T>;
 /*80--------------------------------------------------------------------------*/
 
 export type C2D = CanvasRenderingContext2D;
@@ -144,10 +158,11 @@ export type CSSStyle = Partial<Record<CSSStyleName, string | number>>;
 export type Style = Record<string, string>;
 /*64----------------------------------------------------------*/
 
-export enum BufrDir {
-  ltr = 1,
-  rtl,
-}
+// export enum BufrDir {
+//   ltr = 1,
+//   rtl,
+// }
+export type BufrDir = "ltr" | "rtl";
 
 export enum WritingMode {
   htb = 0b0_0001,
@@ -164,7 +179,21 @@ export type SetLayoutP = {
   bufrDir?: BufrDir;
   writingMode?: WritingMode;
 };
-/*80--------------------------------------------------------------------------*/
+/*64----------------------------------------------------------*/
+
+export const enum ToolbarSide {
+  top = 0b0_0001,
+  bot = 0b0_0010,
+  left = 0b0_0100,
+  rigt = 0b0_1000,
+}
+export const enum ToolbarInfo {
+  horz = ToolbarSide.top | ToolbarSide.bot,
+  vert = ToolbarSide.left | ToolbarSide.rigt,
+  frst = ToolbarSide.top | ToolbarSide.left,
+  last = ToolbarSide.bot | ToolbarSide.rigt,
+}
+/*64----------------------------------------------------------*/
 /* zIndex */
 
 /* Stacking context: Scronr */
@@ -210,9 +239,9 @@ export const enum Pointer {
 }
 /*80--------------------------------------------------------------------------*/
 
-// export type UpdateTheme_PUT = {
-//   theme_j: string;
-// };
+export type UpdateTheme_PUT = {
+  theme_j: string;
+};
 /*80--------------------------------------------------------------------------*/
 
 export type Constructor<T = object> = new (...args: any[]) => T;
@@ -285,5 +314,14 @@ export type RemoveIndex<T> = {
 
 declare const $brand: unique symbol;
 export type Brand<T, TBrand> = T & { [$brand]: TBrand };
+//#endregion
+
+//#region Writable<>
+/* Ref. [TypeScript - Removing readonly modifier](https://stackoverflow.com/a/43001581) */
+
+export type Writable<T> = { -readonly [P in keyof T]: T[P] };
+export type DeepWritable<T> = {
+  -readonly [P in keyof T]: DeepWritable<T[P]>;
+};
 //#endregion
 /*80--------------------------------------------------------------------------*/

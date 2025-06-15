@@ -9,7 +9,7 @@ import { INOUT } from "@fe-src/global.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
-import { gathrUnrelTk } from "../util.ts";
+import { gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -18,10 +18,6 @@ export class Linkdef extends Inline {
   readonly lablTk_a;
   readonly destPart;
   readonly titlTk_a;
-
-  override get children() {
-    return undefined;
-  }
 
   override get frstToken() {
     return this.frstToken$ ??= this.lablTk_a[0];
@@ -124,16 +120,16 @@ export class Linkdef extends Inline {
     if (ret) return ret;
 
     for (const tk of this.lablTk_a) {
-      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
 
     for (const tk of this.destPart) {
-      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
 
     if (this.titlTk_a) {
       for (const tk of this.titlTk_a) {
-        ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+        ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
       }
     }
     return ret;

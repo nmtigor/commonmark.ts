@@ -35,6 +35,7 @@ export class ReplActr {
       },
     }).createMachine({
       id: "ReplActr",
+      initial: "idle",
       states: {
         "idle": {
           on: {
@@ -86,7 +87,6 @@ export class ReplActr {
           },
         },
       },
-      initial: "idle",
     }),
   );
 

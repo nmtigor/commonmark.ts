@@ -4,9 +4,9 @@
  ******************************************************************************/
 
 import { INOUT, PRF } from "../../global.ts";
+import type { BufrDir, int } from "../alias.ts";
 import type {
   id_t,
-  int,
   lcol_t,
   lnum_t,
   loff_t,
@@ -15,7 +15,6 @@ import type {
   uint16,
 } from "../alias.ts";
 import { assert } from "../util/trace.ts";
-import { BufrDir } from "../alias.ts";
 import type { Bidir } from "../Bidi.ts";
 import type { Line } from "./Line.ts";
 import { Ranval } from "./Ranval.ts";
@@ -23,7 +22,17 @@ import type { Bufr } from "./Bufr.ts";
 import { Factory } from "../util/Factory.ts";
 import { LOG_cssc } from "../../alias.ts";
 import { Endpt } from "../alias.ts";
+import { g_count } from "../util/performance.ts";
 /*80--------------------------------------------------------------------------*/
+
+export type LocInfo = {
+  ucod: uint16;
+  codp: uint;
+  /** surrogate leading */
+  isSurLead: boolean;
+  /** surrogate trailing */
+  isSurTral: boolean;
+};
 
 export const enum LocCompared {
   yes = 0b0_0001,
@@ -40,7 +49,9 @@ export const enum LocCompared {
 type BidirMap_ = Map<Line, Bidir>;
 export type _BidirMap = BidirMap_;
 
-/** */
+/**
+ * primaryconst: const exclude `#info`
+ */
 export class Loc {
   static #ID = 0 as id_t;
   readonly id = ++Loc.#ID as id_t;
@@ -71,6 +82,8 @@ export class Loc {
     return this.line_$.lidx_1;
   }
 
+  #info?: LocInfo;
+
   protected tabsize$: 2 | 4 | 8 = 4;
   get tabsize() {
     return this.tabsize$;
@@ -85,29 +98,23 @@ export class Loc {
    */
   #lcol: lcol_t | -1 = -1;
 
-  /**
-   * If tab partially consumed or not
-   */
+  /** If tab partially consumed or not */
   #part = false;
   get part() {
     return this.#part;
   }
 
-  /**
-   * `in( this.#part )`
-   */
+  /** `in( this.#part )` */
   get tabtail(): lcol_t {
     return this.tabsize$ - this.#lcol % this.tabsize$;
   }
-  /**
-   * `in( this.#part )`
-   */
+  /** `in( this.#part )` */
   get tabhead(): lcol_t {
     return this.#lcol % this.tabsize$;
   }
 
   get dir(): BufrDir {
-    return this.bufr?.dir ?? BufrDir.ltr;
+    return this.bufr?.dir ?? "ltr";
   }
 
   //jjjj TOCLEANUP
@@ -120,6 +127,10 @@ export class Loc {
    */
   constructor(line_x: Line, loff_x?: loff_t) {
     this.set_Loc(line_x, loff_x);
+
+    /*#static*/ if (PRF) {
+      g_count.newLoc += 1;
+    }
   }
   /**
    * @headconst @param bufr_x
@@ -229,15 +240,51 @@ export class Loc {
       ? "\x00"
       : this.atEol
       ? "\n"
-      : this.line_$.uchrAt(this.loff_$)!;
+      : this.line_$.uchrAt(this.loff_$);
   }
+
   /** @see {@linkcode uchr} */
   get ucod(): uint16 {
     return (this.overEol || this.reachEob)
       ? 0 as uint16
       : this.atEol
       ? /* "\n" */ 0xA as uint16
-      : this.line_$.ucodAt(this.loff_$)!;
+      : this.line_$.ucodAt(this.loff_$);
+  }
+  /** @see {@linkcode uchr} */
+  get codp(): uint {
+    return (this.overEol || this.reachEob)
+      ? 0
+      : this.atEol
+      ? /* "\n" */ 0xA
+      : this.line_$.codpAt(this.loff_$);
+  }
+  /**
+   * `in( this.loff_$ >= 0 )`
+   * @primaryconst
+   * @return newly assigned `#info`
+   */
+  get info_1(): LocInfo {
+    this.#info ??= {} as LocInfo;
+    if (this.overEol || this.reachEob) {
+      this.#info.ucod = 0 as uint16;
+      this.#info.codp = 0;
+      this.#info.isSurLead = false;
+      this.#info.isSurTral = false;
+    } else if (this.atEol) {
+      this.#info.ucod = /* "\n" */ 0xA as uint16;
+      this.#info.codp = /* "\n" */ 0xA;
+      this.#info.isSurLead = false;
+      this.#info.isSurTral = false;
+    } else {
+      const t_ = this.line_$.text;
+      const i_ = this.loff_$;
+      this.#info.ucod = t_.charCodeAt(i_) as uint16;
+      this.#info.codp = t_.codePointAt(i_)!;
+      this.#info.isSurLead = t_.isSurLeadAt(i_);
+      this.#info.isSurTral = t_.isSurTralAt(i_);
+    }
+    return this.#info;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -325,6 +372,7 @@ export class Loc {
     return loc.ucod;
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
+  /* comparison */
 
   /**
    * @primaryconst
@@ -555,8 +603,8 @@ export class Loc {
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @const */
-  getText(strt_x = this.loff_$, stop_x?: loff_t): string {
-    return this.line_$.text.slice(strt_x, stop_x);
+  getText(stop_x?: loff_t): string {
+    return this.line_$.text.slice(this.loff_$, stop_x);
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -603,7 +651,7 @@ export class Loc {
     this.loff_$ = bidi.lastLogal;
     if (ret) return true;
 
-    ln_1 = DIR === BufrDir.ltr ? this.line.prevLine : this.line.nextLine;
+    ln_1 = DIR === "ltr" ? this.line.prevLine : this.line.nextLine;
     if (!ln_1) return false;
 
     this.line_$ = ln_1;
@@ -630,7 +678,7 @@ export class Loc {
     this.loff_$ = bidi.lastLogal;
     if (ret) return true;
 
-    ln_1 = DIR === BufrDir.ltr ? this.line.nextLine : this.line.prevLine;
+    ln_1 = DIR === "ltr" ? this.line.nextLine : this.line.prevLine;
     if (!ln_1) return false;
 
     this.line_$ = ln_1;
@@ -678,12 +726,12 @@ class LocFac_ extends Factory<Loc> {
 
   /** @implement */
   protected createVal$() {
-    /*#static*/ if (PRF) {
-      console.log(
-        `%c# of cached Loc instances: ${this.val_a$.length + 1}`,
-        `color:${LOG_cssc.performance}`,
-      );
-    }
+    // /*#static*/ if (PRF) {
+    //   console.log(
+    //     `%c# of cached Loc instances: ${this.val_a$.length + 1}`,
+    //     `color:${LOG_cssc.performance}`,
+    //   );
+    // }
     return new Loc(this.#line, 0);
   }
 

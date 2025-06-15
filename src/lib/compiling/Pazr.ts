@@ -9,6 +9,7 @@ import { assert, out } from "../util/trace.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import type { Lexr } from "./Lexr.ts";
 import { SortedStnod_depth, SortedStnod_id, Stnode } from "./Stnode.ts";
+import type { TokBart } from "./TokBart.ts";
 import type { TokBufr } from "./TokBufr.ts";
 import { type Token } from "./Token.ts";
 import type { Tok } from "./alias.ts";
@@ -24,13 +25,14 @@ export abstract class Pazr<T extends Tok = BaseTok> {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  protected bufr$!: TokBufr<T>;
-  get bufr() {
-    return this.bufr$;
+  /** @final */
+  get bufr(): TokBufr<T> | TokBart<T> {
+    return this.lexr$.bufr;
   }
 
   /* lexr$ */
   protected lexr$!: Lexr<T>;
+  /** @final */
   get lexr() {
     return this.lexr$;
   }
@@ -62,9 +64,7 @@ export abstract class Pazr<T extends Tok = BaseTok> {
   /* ~ */
 
   /* newSn_$ */
-  /**
-   * Last (finally) parsed Stnode
-   */
+  /** Last (finally) parsed Stnode */
   newSn_$: Stnode<T> | undefined;
   get newSn() {
     return this.newSn_$;
@@ -74,8 +74,9 @@ export abstract class Pazr<T extends Tok = BaseTok> {
   /* errSn_sa$ */
   protected readonly errSn_sa$ = new SortedStnod_id();
   get hasErr() {
-    return this.errSn_sa$.length;
+    return !!this.errSn_sa$.length;
   }
+
   get _err_() {
     const ret: [string, string[]][] = [];
     for (const sn of this.errSn_sa$) {
@@ -86,7 +87,7 @@ export abstract class Pazr<T extends Tok = BaseTok> {
   /* ~ */
 
   readonly unrelSn_sa_$ = new SortedStnod_id();
-  /** reused, partially reuesed, or abandoned */
+  /** reused, or partially reuesed, or abandoned */
   readonly takldSn_sa_$ = new SortedStnod_id();
 
   protected strtPazTk$!: Token<T>;
@@ -99,21 +100,16 @@ export abstract class Pazr<T extends Tok = BaseTok> {
     return this.stopPazTk$;
   }
 
-  /**
-   * @headconst @param bufr_x
-   * @headconst @param lexr_x
-   */
-  constructor(bufr_x: TokBufr<T>, lexr_x: Lexr<T>) {
-    this.reset_Pazr$(bufr_x, lexr_x);
+  /** @headconst @param lexr_x */
+  constructor(lexr_x: Lexr<T>) {
+    this.reset_Pazr$(lexr_x);
   }
 
   /**
    * @final
-   * @headconst @param bufr_x
    * @headconst @param lexr_x
    */
-  protected reset_Pazr$(bufr_x: TokBufr<T>, lexr_x: Lexr<T>): this {
-    this.bufr$ = bufr_x;
+  protected reset_Pazr$(lexr_x: Lexr<T>): this {
     this.lexr$ = lexr_x;
     this.headBdryClrTk_$ = undefined;
     this.tailBdryClrTk_$ = undefined;
@@ -131,12 +127,9 @@ export abstract class Pazr<T extends Tok = BaseTok> {
     return this;
   }
 
-  /**
-   * @headconst @param bufr_x
-   * @headconst @param lexr_x
-   */
-  reset_Pazr(bufr_x?: TokBufr<T>, lexr_x?: Lexr<T>): this {
-    return this.reset_Pazr$(bufr_x ?? this.bufr$, lexr_x ?? this.lexr$);
+  /** @headconst @param lexr_x */
+  reset_Pazr(lexr_x?: Lexr<T>): this {
+    return this.reset_Pazr$(lexr_x ?? this.lexr$);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -291,15 +284,17 @@ export abstract class Pazr<T extends Tok = BaseTok> {
       this.unrelSn_sa_$.add_O(unrelSn_a);
       this.drtSn_$ = this.setPazRegion$();
     } else { // 1916
-      const sn_sa = new SortedStnod_depth([clrTk_0.stnod_$!, clrTk_1.stnod_$!]);
+      Stnode.sn_sa
+        .reset_SortedArray().messUp()
+        .push(clrTk_0.stnod_$!, clrTk_1.stnod_$!);
       let tk_: Token<T> | undefined = clrTk_0;
       while ((tk_ = tk_.nextToken_$) && tk_ !== clrTk_1 && --valve) {
-        if (tk_.stnod_$) sn_sa.push(tk_.stnod_$);
+        if (tk_.stnod_$) Stnode.sn_sa.push(tk_.stnod_$);
       }
       assert(valve, `Loop ${VALVE}±1 times`);
-      for (const sn of this.errSn_sa$) sn_sa.push(sn);
+      Stnode.sn_sa.push(...this.errSn_sa$);
       this.drtSn_$ = this.setPazRegion$(
-        Stnode.calcCommon(sn_sa, { unrelSn_sa: this.unrelSn_sa_$, unrelSn_a }),
+        Stnode.calcCommon({ unrelSn_sa: this.unrelSn_sa_$, unrelSn_a }),
       );
     }
     this.errSn_sa$.reset_SortedArray();
@@ -350,17 +345,11 @@ export abstract class Pazr<T extends Tok = BaseTok> {
   //   this.#enlargeBdries(origStrtTk, origStopTk);
   // }
 
-  /**
-   * `in( this.strtPazTk$ && this.stopPazTk$ )`
-   * @final
-   */
+  /** @final */
   protected reachPazBdry$(): boolean {
-    return this.strtPazTk$.posGE(this.stopPazTk$!);
+    return this.strtPazTk$.posGE(this.stopPazTk$);
   }
-  /**
-   * `in( this.strtPazTk$ && this.stopPazTk$ )`
-   * @final
-   */
+  /** @final */
   overRigtBdry(): boolean {
     return this.strtPazTk$.posG(this.stopPazTk$!);
   }
@@ -380,13 +369,12 @@ export abstract class Pazr<T extends Tok = BaseTok> {
     }
   }
 
-  /** `in( this.strtPazTk$ && this.stopPazTk$ && !this.reachPazBdry$() )` */
+  /** `in( !this.reachPazBdry$() )` */
   protected abstract paz_impl$(): void;
 
   //jjjj TOCLEANUP
   // /**
   //  * Adjust `strtPazTk$`, `stopPazTk$` by `sn_x`\
-  //  * `in( this.strtPazTk$ && this.stopPazTk$ )`
   //  * @final
   //  * @headconst @param sn_x
   //  */

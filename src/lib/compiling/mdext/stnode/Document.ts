@@ -38,9 +38,7 @@ export class Document extends CtnrBlock {
   //   return this.block_a$.at(-1)!;
   // }
 
-  /**
-   * `in( this.children$.length )`
-   */
+  /** `in( this.children$.length )` */
   override get frstToken() {
     return this.frstToken$ ??= this.children[0].frstToken;
   }

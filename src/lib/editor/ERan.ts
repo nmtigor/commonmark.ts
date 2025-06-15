@@ -81,8 +81,8 @@ export class ERan {
   // dp_$ = Edran_DP.none; /** used by Caret.#drawFocus() */
 
   /**
-   * @headconst @param focusELoc_x [COPIED]
-   * @headconst @param anchrELoc_x [COPIED]
+   * @headmovd @const @param focusELoc_x
+   * @headmovd @const @param anchrELoc_x
    */
   constructor(focusELoc_x: ELoc, anchrELoc_x?: ELoc) {
     this.#focusELoc = focusELoc_x;

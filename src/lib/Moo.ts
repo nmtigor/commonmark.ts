@@ -4,7 +4,8 @@
  ******************************************************************************/
 
 import { INOUT } from "../global.ts";
-import type { id_t, int, Runr as IRunr } from "./alias.ts";
+import type { int } from "./alias.ts";
+import type { id_t, Runr as IRunr } from "./alias.ts";
 import { assert } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -162,7 +163,7 @@ type MooCtorP_<T extends {} | null, I = any> = {
   info?: I | undefined;
   active?: boolean;
   forcing?: boolean;
-  _name_?: string;
+  _name_?: string | undefined;
 };
 
 export const FrstCb_i = -100;
@@ -196,6 +197,10 @@ type OnO_ = {
 /**
  * `Moo` instance concerns about one value, whether it changes or not.\
  * `Moo` instance stores many callbacks.
+ *
+ * In principle, while register handlers by Moo instance's host itself or
+ * others, trigger callbacks by itself (exceptions e.g. `this.coor.run();` in
+ * `Pale.constructor()`).
  */
 export class Moo<T extends {} | null, D = any, I = any> {
   static #ID = 0 as id_t;
@@ -241,18 +246,24 @@ export class Moo<T extends {} | null, D = any, I = any> {
   }
 
   #data: D | undefined;
-  set data(data_x: D) {
+  set data(_x: D) {
     // // #if INOUT
     //   assert( this.#data === undefined );
     // // #endif
-    this.#data = data_x;
+    this.#data = _x;
   }
-  setData(data_x: D): this {
-    this.#data = data_x;
+  setData(_x: D): this {
+    this.#data = _x;
     return this;
   }
 
-  readonly #info;
+  #info: I | undefined;
+  set info(_x: I) {
+    /*#static*/ if (INOUT) {
+      assert(this.#info === undefined);
+    }
+    this.#info = _x;
+  }
 
   constructor({
     val,
@@ -275,9 +286,10 @@ export class Moo<T extends {} | null, D = any, I = any> {
   /**
    * Not invoking any callbacks
    * @final
+   * @headconst @param val_x
    */
-  set_Moo(val: T): this {
-    this.#val = this.#newval = val;
+  set_Moo(val_x: T): this {
+    this.#val = this.#newval = val_x;
     return this;
   }
 
@@ -292,6 +304,7 @@ export class Moo<T extends {} | null, D = any, I = any> {
     this.#forcingOnce = this.#forcing;
     return this;
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /**
    * Small index callbacks will be called first
@@ -348,7 +361,7 @@ export class Moo<T extends {} | null, D = any, I = any> {
     this.registOnceHandler(h_x, { n: n_x, f, i });
   }
 
-  static _count = 0;
+  // static _count = 0;
   /** @primaryconst @param n_x only potentially changed by  `#eq` */
   set val(n_x: T) {
     if (
@@ -362,35 +375,35 @@ export class Moo<T extends {} | null, D = any, I = any> {
     this.#oldval = this.#val;
     this.#newval = n_x;
     if (this.#active) this.#val = n_x;
-    this.#handler_db.get(n_x, this.#oldval, this.#forcing_)
-      .forEach((h_y) => {
-        h_y(n_x, this.#oldval, this.#data, this.#info);
-        // /*#static*/ if (DEV) Moo._count += 1;
-      });
+    const h_a = this.#handler_db.get(n_x, this.#oldval, this.#forcing_);
+    h_a.forEach((h_y) => {
+      h_y(n_x, this.#oldval, this.#data, this.#info);
+      // /*#static*/ if (DEBUG) Moo._count += 1;
+    });
     this.#val = n_x;
     this.#forcingOnce = this.#forcing;
     this.#data = undefined; // it is used once
 
     // if( this.once_ ) this.#handler_db.clear();
 
-    // /*#static*/ if (DEV) {
+    // /*#static*/ if (DEBUG) {
     //   console.log(
     //     `[${this._name_ ?? `Moo_${this.id}`}]\t\tMoo._count = ${Moo._count}`,
     //   );
     // }
   }
 
-  refreshMoo() {
+  refresh_Moo() {
     this.force().val = this.#val;
   }
 
-  shareHandlerTo(rhs: Moo<T, D, I>) {
-    /*#static*/ if (INOUT) {
-      assert(rhs.nCb === 0 || rhs.#handler_db_ === this.#handler_db_);
-    }
-    // console.log( rhs.#handler_db );
-    rhs.#handler_db_ = this.#handler_db_;
-  }
+  // shareHandlerTo(rhs: Moo<T, D, I>) {
+  //   /*#static*/ if (INOUT) {
+  //     assert(rhs.nCb === 0 || rhs.#handler_db_ === this.#handler_db_);
+  //   }
+  //   // console.log( rhs.#handler_db );
+  //   rhs.#handler_db_ = this.#handler_db_;
+  // }
 }
 // new Moo(undefined); // error
 // new Moo(null); // ok
@@ -398,30 +411,8 @@ export class Moo<T extends {} | null, D = any, I = any> {
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
-export class Runr<D = any, I = any> implements IRunr {
-  #_mo = new Moo<boolean, D, I>({ val: true, forcing: true });
-
-  set data(data_x: D) {
-    this.#_mo.data = data_x;
-  }
-
-  add(_x: (n_y: boolean, o_y: boolean, d_y?: D, i_y?: I) => void) {
-    this.#_mo.on(true, _x);
-  }
-
-  del(_x: (n_y: boolean, o_y: boolean, d_y?: D, i_y?: I) => void) {
-    this.#_mo.off(true, _x);
-  }
-
-  /** @implement */
-  run() {
-    this.#_mo.val = true;
-  }
-}
-
-/** @final */
 export class Boor<D = any, I = any> {
-  #_mo;
+  readonly #_mo;
   get val() {
     return this.#_mo.val;
   }
@@ -443,22 +434,87 @@ export class Boor<D = any, I = any> {
     this.#_mo.data = data_x;
   }
 
-  constructor(forcing = false, info?: I) {
-    this.#_mo = new Moo<boolean, D, I>({ val: false, info, forcing });
+  constructor(_x: Omit<MooCtorP_<boolean, I>, "eq_"> = { val: false }) {
+    this.#_mo = new Moo<boolean, D, I>(_x);
   }
 
-  onTru(_x: (n_y: boolean, o_y: boolean, d_y?: D, i_y?: I) => void) {
+  /**
+   * Not invoking any callbacks
+   * @const @param val_x
+   */
+  set_Boor(val_x: boolean): this {
+    this.#_mo.set_Moo(val_x);
+    return this;
+  }
+
+  reset_Boor(): this {
+    this.#_mo.reset_Moo();
+    return this;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  onTru(_x: MooHandler<boolean, D, I>) {
     this.#_mo.on(true, _x);
   }
-  offTru(_x: (n_y: boolean, o_y: boolean, d_y?: D, i_y?: I) => void) {
+  offTru(_x: MooHandler<boolean, D, I>) {
+    this.#_mo.off(true, _x);
+  }
+  onTruOnce(_x: MooHandler<boolean, D, I>) {
+    this.#_mo.once(true, _x);
+  }
+
+  onFos(_x: MooHandler<boolean, D, I>) {
+    this.#_mo.on(false, _x);
+  }
+  offFos(_x: MooHandler<boolean, D, I>) {
+    this.#_mo.off(false, _x);
+  }
+  onFosOnce(_x: MooHandler<boolean, D, I>) {
+    this.#_mo.once(false, _x);
+  }
+
+  syncTo(_x: Boor | Moo<boolean> | MooHandler<boolean, D, I>) {
+    const ret = _x instanceof Boor || _x instanceof Moo
+      ? (n_y: boolean) => _x.val = n_y
+      : _x;
+    this.#_mo.registHandler(ret);
+    return ret;
+  }
+}
+
+/** @final */
+export class Runr<D = any, I = any> implements IRunr {
+  readonly #_mo; // = new Moo<true, D, I>({ val: true, forcing: true });
+
+  set data(_x: D) {
+    this.#_mo.data = _x;
+  }
+
+  set info(_x: I) {
+    this.#_mo.info = _x;
+  }
+
+  constructor(info_x?: I, name_x?: string) {
+    this.#_mo = new Moo<true, D, I>({
+      val: true,
+      info: info_x,
+      forcing: true, //!
+      _name_: name_x,
+    });
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  addFn(_x: MooHandler<true, D, I>) {
+    this.#_mo.on(true, _x);
+  }
+
+  delFn(_x: MooHandler<true, D, I>) {
     this.#_mo.off(true, _x);
   }
 
-  onFos(_x: (n_y: boolean, o_y: boolean, d_y?: D, i_y?: I) => void) {
-    this.#_mo.on(false, _x);
-  }
-  offFos(_x: (n_y: boolean, o_y: boolean, d_y?: D, i_y?: I) => void) {
-    this.#_mo.off(false, _x);
+  /** @implement */
+  run() {
+    this.#_mo.val = true;
   }
 }
 /*80--------------------------------------------------------------------------*/

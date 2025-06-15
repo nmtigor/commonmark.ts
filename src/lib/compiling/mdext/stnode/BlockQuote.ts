@@ -12,7 +12,7 @@ import type { SortedStnod_id } from "../../Stnode.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
-import { _toHTML, gathrUnrelTk } from "../util.ts";
+import { _toHTML, gathrUnrelTk_$ } from "../util.ts";
 import { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import type { Inline } from "./Inline.ts";
@@ -72,7 +72,7 @@ export class BlockQuote extends CtnrBlock {
     );
 
     for (const tk of this.#mrkrTk_a) {
-      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
     return ret;
   }

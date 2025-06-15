@@ -4,7 +4,8 @@
  ******************************************************************************/
 
 import { INOUT } from "../../global.ts";
-import type { int, uint } from "../alias.ts";
+import type { uint } from "../alias.ts";
+import type { int } from "../alias.ts";
 import { assert } from "./trace.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -31,7 +32,7 @@ export abstract class Factory<V> {
   //   this.init();
   // }
 
-  init(hard_x?: "hard") {
+  reset_Factory(hard_x?: "hard") {
     // if( this.nUsed$ )
     // {
     //   assert( this.nUsed$ <= this.val_a$.length );
@@ -47,9 +48,7 @@ export abstract class Factory<V> {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /**
-   * Create and use
-   */
+  /** Create and use */
   protected abstract createVal$(i_x: uint): V;
 
   /**
@@ -130,7 +129,7 @@ export abstract class Factory<V> {
    * @final
    */
   revoke(val_x: V): this {
-    let i_ = this.lastIndexOf(val_x);
+    const i_ = this.lastIndexOf(val_x);
     if (0 <= i_) {
       const v_ = this.resetVal$(i_);
       for (let j = i_ + 1, LEN = this.nUsed$; j < LEN; ++j) {

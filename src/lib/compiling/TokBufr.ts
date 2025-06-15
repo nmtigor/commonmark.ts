@@ -3,8 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { lnum_t } from "../alias.ts";
-import { BufrDir } from "../alias.ts";
+import type { BufrDir, lnum_t } from "../alias.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import { Bufr } from "./Bufr.ts";
 import type { Ranval } from "./Ranval.ts";
@@ -40,7 +39,7 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
    */
   constructor(
     text_x?: string,
-    dir_x = BufrDir.ltr,
+    dir_x = "ltr" as BufrDir,
     fh_x?: FileSystemFileHandle,
     tabsize_x: 2 | 4 | 8 = 4,
   ) {

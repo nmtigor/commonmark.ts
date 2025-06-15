@@ -9,15 +9,22 @@ import { Hover, Pointer, type uint } from "./lib/alias.ts";
 // deno-fmt-ignore
 /* preprocessor names */
 export const 
-  INOUT = true // contracts
-, DEV = true // debug build
+  DEV = true // dev.premsys.org
+
+, CF = false // cloudflare
+, DENO = true
+, LOCAL = false
+, MOZCENTRAL = false
+
+, INOUT = true // contracts
+, DEBUG = true // debug build
   , COLR = true
   , INFO = true
   , STEP = true
   , TRACE = true
   
-  , RESIZ = true // "resize", ResizeObserver
-  , INTRS = true // IntersectionObserver
+  , RESIZ = true // "resize", `ResizeObserver`
+  , INTRS = true // `IntersectionObserver`
 
   , THEMESETTING = false
   , EDITOR = true
@@ -26,18 +33,16 @@ export const
     , PDFTS_v = true // verbose
       , PDFTS_vv = false // very verbose
 , /** @deprecated */APP = false // release build 
-, PRF = true
+, /** PeRFormance */PRF = true
 
-, DENO = true
 , TESTING = true
 , CYPRESS = false 
 
-, _COLR = DEV && COLR
-, _INFO = DEV && INFO
-, _STEP = DEV && STEP && !TESTING
-, _TRACE = DEV && TRACE && !TESTING
+, _COLR = DEBUG && COLR
+, _INFO = DEBUG && INFO
+, _STEP = DEBUG && STEP && !TESTING
+, _TRACE = DEBUG && TRACE && !TESTING
 
-, MOZCENTRAL = false
 /* Only in ./pdf/ */
 , PDFJSDev = true
 , GENERIC = true

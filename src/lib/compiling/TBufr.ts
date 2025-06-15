@@ -8,6 +8,7 @@ import { assert } from "../util/trace.ts";
 import { Bufr } from "./Bufr.ts";
 import { TLVert } from "./TLayr.ts";
 import { TLine } from "./TLine.ts";
+import * as Is from "../util/is.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -70,7 +71,7 @@ export class TBufr extends Bufr {
     const VALVE = 1_000;
     let valve = VALVE;
     do {
-      if (i >= n || !line.text_a_$.eq(txt_x[i])) return false;
+      if (i >= n || !line.text_a_$.eql(txt_x[i])) return false;
 
       line = line.nextLine;
       i++;
@@ -138,14 +139,14 @@ export class TBufr extends Bufr {
   // }
 
   // #match(key_x: string | string[], uchr_x: string | string[]) {
-  //   if (Array.isArray(uchr_x)) {
-  //     if (Array.isArray(key_x)) {
+  //   if (Is.array(uchr_x)) {
+  //     if (Is.array(key_x)) {
   //       return uchr_x.some((s) => key_x.some((k) => s.startsWith(k)));
   //     } else {
   //       return uchr_x.some((s) => s.startsWith(key_x));
   //     }
   //   } else {
-  //     if (Array.isArray(key_x)) {
+  //     if (Is.array(key_x)) {
   //       return key_x.some((k) => uchr_x.startsWith(k));
   //     } else {
   //       return uchr_x.startsWith(key_x);

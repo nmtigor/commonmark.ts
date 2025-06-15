@@ -6,7 +6,7 @@
 import type { lnum_t, uint } from "@fe-lib/alias.ts";
 import { assert } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
-import { gathrUnrelTk } from "@fe-src/lib/compiling/mdext/util.ts";
+import { gathrUnrelTk_$ } from "@fe-src/lib/compiling/mdext/util.ts";
 import { Loc } from "../../Loc.ts";
 import { SortedSnt_id } from "../../Snt.ts";
 import { type MdextTk } from "../../Token.ts";
@@ -89,10 +89,6 @@ export class HTMLBlock extends Block {
   /** chunk tokens, one line one token, may contain `empty` tokens */
   #chunkTk_a: MdextTk[] = [];
 
-  override get children() {
-    return undefined;
-  }
-
   override get frstToken() {
     return this.frstToken$ ??= this.#chunkTk_a[0];
   }
@@ -122,7 +118,7 @@ export class HTMLBlock extends Block {
   ): uint {
     let ret = 0;
     for (const tk of this.#chunkTk_a) {
-      ret += gathrUnrelTk(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      ret += gathrUnrelTk_$(tk, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     }
     return ret;
   }

@@ -3,14 +3,17 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import * as Is from "../util/is.ts";
 import { z } from "@zod";
 import { INOUT } from "../../global.ts";
-import { Moo } from "../Moo.ts";
+import { Boor, Runr } from "../Moo.ts";
 import type { id_t, uint } from "../alias.ts";
 import { type Less, SortedArray } from "../util/SortedArray.ts";
 import { assert, warn } from "../util/trace.ts";
 import { createColr, csscLess, csscname } from "./Colr.ts";
-import { ColrFn, type ColrStep, isColrFn, zColrFn } from "./ColrFn.ts";
+import type { ColrFnRaw } from "./ColrFn.ts";
+import { ColrFn, isColrFn, zColrFnRaw } from "./ColrFn.ts";
+import { ColrStep } from "./ColrStep.ts";
 import { Colran } from "./Colran.ts";
 import type { ColranQRaw } from "./ColranQ.ts";
 import { ColranQ, createColranQRaw, zColranQRaw } from "./ColranQ.ts";
@@ -25,18 +28,18 @@ export const zPaleName = z.string();
 export type PaleCoorRaw = {
   axes?: PaleName[] | undefined;
   /** Array of ColranQRaw Map */
-  qm_a: [ColranQRaw | null, Cssc | ColrStep[]][];
+  qm_a: [ColranQRaw | null, Cssc | ColrFnRaw][];
 };
 export const zPaleCoorRaw = z.object({
-  axes: z.union([z.array(zPaleName), z.undefined()]),
+  axes: z.array(zPaleName).optional(),
   qm_a: z.array(z.tuple([
-    z.union([zColranQRaw, z.null()]),
-    z.union([zCssc, zColrFn]),
+    zColranQRaw.nullable(),
+    z.union([zCssc, zColrFnRaw]),
   ])).nonempty(),
 });
 
 export function createPaleCoorRaw(): PaleCoorRaw {
-  return { qm_a: [[null, "#0000"]] };
+  return { qm_a: [[null, "#333"]] };
 }
 /*64----------------------------------------------------------*/
 
@@ -46,13 +49,15 @@ type QM_ = [ColranQ | undefined, Cssc | ColrFn];
  * Pale coordinate
  * @final
  */
-export class PaleCoor extends Moo<PaleCoor> {
+export class PaleCoor extends Runr<unknown, PaleCoor> {
   static #ID = 0 as id_t;
-  override readonly id = ++PaleCoor.#ID as id_t;
+  readonly id = ++PaleCoor.#ID as id_t;
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
+  #_palename_: PaleName;
+
   /**
-   * The same as `PaleCoorRaw.raw` if it's not `undefined`
+   * The same as `PaleCoorRaw.raw` if it's not `undefined`\
    * Can be empty
    */
   readonly axes: PaleName[];
@@ -63,19 +68,17 @@ export class PaleCoor extends Moo<PaleCoor> {
   //   return this.#axes[_x];
   // }
 
-  /**
-   * Array of ColranQ Map
-   * Nonempty
-   */
+  //jjjj TOCLEANUP
   // readonly qm_a: [ColranQ | undefined, Cssc | ColrFn][] = [];
-  readonly qm_sa = new SortedQM();
+  /** Nonempty array of ColranQ Map, sorted by descending priority */
+  readonly qm_sa = new SortedQM_();
   get nQM() {
     return this.qm_sa.length;
   }
 
-  readonly modified_mo = new Moo({
+  readonly modified_br_PaleCoor = new Boor({
     val: false,
-    _name_: `PaleCoor_${this.id}.modified_mo`,
+    _name_: `PaleCoor_${this.id}.modified_br`,
   });
   // /** For `qm_a` and `Cssc | ColrFn` part. Not for `ColranQ` part. */
   // #modified = false;
@@ -109,8 +112,9 @@ export class PaleCoor extends Moo<PaleCoor> {
   }
   /* ~ */
 
-  readonly sample_c = csscname("red");
-  readonly #sampleMapped_c = csscname("red");
+  //jjjj TOCLEANUP
+  // readonly sample_c = csscname("red");
+  // readonly #sampleMapped_c = csscname("red");
 
   /** Helper */
   readonly #colr = createColr();
@@ -118,9 +122,14 @@ export class PaleCoor extends Moo<PaleCoor> {
   #iQM_1 = -1;
   readonly mapped_c = csscname("red");
 
-  /** @const @param raw_x */
-  constructor(raw_x: PaleCoorRaw) {
-    super({ val: null as any });
+  /**
+   * @const @param raw_x
+   * @const @param palename_x For debugging only
+   */
+  constructor(raw_x: PaleCoorRaw, palename_x: PaleName = "") {
+    super();
+    this.info = this;
+    this.#_palename_ = palename_x;
 
     this.axes = raw_x.axes ?? [];
     if (this.dim > 0) this.#iAx = 0;
@@ -132,36 +141,42 @@ export class PaleCoor extends Moo<PaleCoor> {
       const qraw = qm[0] ?? undefined;
       if (qraw === undefined || this.dim === qraw.length) {
         const q_ = qraw ? new ColranQ(qraw) : undefined;
-        this.qm_sa.add([q_, Array.isArray(qm[1]) ? new ColrFn(qm[1]) : qm[1]]);
-        q_?.on(q_, this.#upR);
-        q_?.modified_mo.on(true, this.#onQModified);
+        this.qm_sa.add([
+          q_,
+          Is.array(qm[1])
+            ? new ColrFn(qm[1].map((_y) => new ColrStep(_y)))
+            : qm[1],
+        ]);
+        q_?.addFn(this.#upR);
+        q_?.modified_br_ColranQ.onTru(this.#onQModified);
       } else {
-        this.modified_mo.val = true;
+        this.modified_br_PaleCoor.val = true;
       }
     }
 
-    this.sample().update().set_Moo(this);
+    this.update();
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  #upR = () => {
-    this.update().refreshMoo();
+  readonly #upR = () => {
+    this.update().run();
   };
 
-  #onQModified = (_x: boolean) => {
-    this.modified_mo.val = _x;
+  readonly #onQModified = (_x: boolean) => {
+    this.modified_br_PaleCoor.val = _x;
   };
 
-  /** No business with `#iAx` */
-  getMapped(iQM_x = this.#iQM): Cssc | ColrFn {
+  /** Not related to `#iAx` */
+  getMapped(iQM_x = this.#iQM_1): Cssc | ColrFn {
     return this.qm_sa[iQM_x][1];
   }
   setMapped(_x: Cssc | ColrFn) {
     if (isColrFn(_x) && this.dim !== 1) {
-      this.sample_c.setByCssc("red");
-      this.#sampleMapped_c.setByCssc("red");
+      //jjjj TOCLEANUP
+      // this.sample_c.setByCssc("red");
+      // this.#sampleMapped_c.setByCssc("red");
       warn(
-        `Ignore setting ColrFn "${_x.repr()}" to PaleCoor_${this.id} with dim ${this.dim}`,
+        `Ignore setting ColrFn "${_x}" to PaleCoor_${this.id} with dim ${this.dim}`,
       );
       return;
     }
@@ -172,42 +187,46 @@ export class PaleCoor extends Moo<PaleCoor> {
     //   this.refresh();
     // }
     this.#upR();
-    this.modified_mo.val = true;
+    this.modified_br_PaleCoor.val = true;
   }
 
   #validateQM(qm_x: QM_) {
     qm_x[1] = "red";
-    this.modified_mo.val = true;
+    this.modified_br_PaleCoor.val = true;
   }
 
-  /**
-   * Assign `sample_c`, `#sampleMapped_c`
-   * ! No business with `#iAx`
-   */
-  sample(): this {
-    const sampleMapped_ = this.getMapped();
-    if (isColrFn(sampleMapped_)) {
-      if (this.dim === 1) {
-        const colran_ = this.getColran();
-        if (colran_) {
-          colran_.sample(this.sample_c);
-          this.#sampleMapped_c.setByColr(this.sample_c);
-          sampleMapped_.get(this.#sampleMapped_c);
-        } else {
-          this.#validateQM(this.qm_sa[this.#iQM]);
-        }
-      } else {
-        this.#validateQM(this.qm_sa[this.#iQM]);
-      }
-    } else {
-      this.#sampleMapped_c.setByCssc(sampleMapped_);
-    }
-    return this;
-  }
+  //jjjj TOCLEANUP
+  // /**
+  //  * Assign `sample_c`, `#sampleMapped_c`\
+  //  * ! No actual relation to `#iAx`
+  //  */
+  // sample(): this {
+  //   const sampleMapped_ = this.getMapped();
+  //   if (isColrFn(sampleMapped_)) {
+  //     if (this.dim === 1) {
+  //       /*#static*/ if (INOUT) {
+  //         assert(this.#iAx === 0);
+  //       }
+  //       const colran_ = this.getColran();
+  //       if (colran_) {
+  //         colran_.sample(this.sample_c);
+  //         this.#sampleMapped_c.setByColr(this.sample_c);
+  //         sampleMapped_.get(this.#sampleMapped_c);
+  //       } else {
+  //         this.#validateQM(this.qm_sa[this.#iQM]);
+  //       }
+  //     } else {
+  //       this.#validateQM(this.qm_sa[this.#iQM]);
+  //     }
+  //   } else {
+  //     this.#sampleMapped_c.setByCssc(sampleMapped_);
+  //   }
+  //   return this;
+  // }
 
   /**
-   * Assign `mapped_c`
-   * No business with `#iQM`, `#iAx`
+   * Assign `mapped_c`\
+   * Not related to `#iQM`, `#iAx`
    */
   update(): this {
     let contain_0 = false;
@@ -219,7 +238,7 @@ export class PaleCoor extends Moo<PaleCoor> {
       this.mapped_c.setByCssc(qm_[1] as Cssc);
     } else if (this.dim === 1) {
       this.#colr.setByCssc(Pale.get(this.axes[0]).cssc);
-      for (let i = 0; i < this.nQM; ++i) {
+      for (let i = 0, iI = this.nQM; i < iI; ++i) {
         const qm = this.qm_sa[i];
         if (qm[0] === undefined || qm[0].axis(0).contain(this.#colr)) {
           contain_0 = true;
@@ -234,7 +253,7 @@ export class PaleCoor extends Moo<PaleCoor> {
         }
       }
     } else {
-      for (let i = 0; i < this.nQM; ++i) {
+      for (let i = 0, iI = this.nQM; i < iI; ++i) {
         const qm_ = this.qm_sa[i];
         if (qm_[0] === undefined) {
           contain_0 = true;
@@ -278,18 +297,19 @@ export class PaleCoor extends Moo<PaleCoor> {
       qm_[0] = undefined;
     } else {
       const q_ = new ColranQ(createColranQRaw(this.dim));
-      q_.on(q_, this.#upR);
-      q_.modified_mo.on(true, this.#onQModified);
+      q_.addFn(this.#upR);
+      q_.modified_br_ColranQ.onTru(this.#onQModified);
       qm_[0] = q_;
     }
 
     if (iQM_x === this.#iQM) {
-      // no need to re-`sample()` here
-      // this.sample();
+      //jjjj TOCLEANUP
+      // /* no need to re-`sample()` here */
+      // // this.sample();
       resample_ = true;
     }
     this.#upR();
-    this.modified_mo.val = true;
+    this.modified_br_PaleCoor.val = true;
 
     return resample_;
   }
@@ -304,19 +324,17 @@ export class PaleCoor extends Moo<PaleCoor> {
     /*#static*/ if (INOUT) {
       assert(i_ >= 0);
     }
-    q_?.on(q_, this.#upR);
-    q_?.modified_mo.on(true, this.#onQModified);
+    q_?.addFn(this.#upR);
+    q_?.modified_br_ColranQ.onTru(this.#onQModified);
 
     if (i_ <= this.#iQM) {
       this.#iQM += 1;
     }
     this.#upR();
-    this.modified_mo.val = true;
+    this.modified_br_PaleCoor.val = true;
   }
 
-  /**
-   * @const @param iQM_x
-   */
+  /** @const @param iQM_x */
   deleteQM(iQM_x: uint): boolean {
     /*#static*/ if (INOUT) {
       assert(2 <= this.nQM);
@@ -333,12 +351,13 @@ export class PaleCoor extends Moo<PaleCoor> {
       this.#iQM -= 1;
     } else if (iQM_x === this.#iQM) {
       if (iQM_x >= this.nQM) this.#iQM = this.nQM - 1;
-      // no need to re-`sample()` here
-      // this.sample();
+      //jjjj TOCLEANUP
+      // /* no need to re-`sample()` here */
+      // // this.sample();
       resample_ = true;
     }
     this.#upR();
-    this.modified_mo.val = true;
+    this.modified_br_PaleCoor.val = true;
 
     return resample_;
   }
@@ -358,7 +377,7 @@ export class PaleCoor extends Moo<PaleCoor> {
     this.axes[iAx_x] = palename_x;
 
     this.#upR();
-    this.modified_mo.val = true;
+    this.modified_br_PaleCoor.val = true;
   }
 
   /**
@@ -373,19 +392,20 @@ export class PaleCoor extends Moo<PaleCoor> {
     this.axes.push(palename_x);
     Pale.get(palename_x).registCsscHandler(this.#upR);
     for (const qm of this.qm_sa) {
-      qm[0]?.add();
+      qm[0]?.addColran();
     }
 
     if (this.dim === 1) {
       this.#iAx = 0;
     }
     if (this.dim === 2 && isColrFn(this.getMapped())) {
-      // no need to re-`sample()` here
-      // this.sample();
+      //jjjj TOCLEANUP
+      // /* no need to re-`sample()` here */
+      // // this.sample();
       resample_ = true;
     }
     this.#upR();
-    this.modified_mo.val = true;
+    this.modified_br_PaleCoor.val = true;
 
     return resample_;
   }
@@ -399,7 +419,7 @@ export class PaleCoor extends Moo<PaleCoor> {
     if (this.dim === 1) {
       for (const qm of this.qm_sa) qm[0] = undefined;
     } else {
-      for (const qm of this.qm_sa) qm[0]?.delete(iAx_x);
+      for (const qm of this.qm_sa) qm[0]?.delColran(iAx_x);
     }
     Pale.get(this.axes[iAx_x]).removeCsscHandler(this.#upR);
     this.axes.splice(iAx_x, 1);
@@ -407,22 +427,23 @@ export class PaleCoor extends Moo<PaleCoor> {
     if (iAx_x < this.#iAx) {
       this.#iAx -= 1;
     } else if (iAx_x === this.#iAx) {
-      // This includes the case `dim` changes from 1 to 0, which could
-      // invalidate the current "qm"
+      /* This includes the case `dim` changes from 1 to 0, which could
+      invalidate the current "qm" */
       if (iAx_x >= this.dim) this.#iAx = this.dim - 1;
-      // no need to re-`sample()` here
-      // this.sample();
+      //jjjj TOCLEANUP
+      // /* no need to re-`sample()` here */
+      // // this.sample();
       resample_ = true;
     }
     this.#upR();
-    this.modified_mo.val = true;
+    this.modified_br_PaleCoor.val = true;
 
     return resample_;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   toJSON(): PaleCoorRaw {
-    this.modified_mo.set_Moo(false); //!
+    this.modified_br_PaleCoor.set_Boor(false); //!
     return {
       axes: this.axes.length ? this.axes : undefined,
       qm_a: this.qm_sa as any,
@@ -431,13 +452,10 @@ export class PaleCoor extends Moo<PaleCoor> {
 }
 
 /** @final */
-class SortedQM extends SortedArray<QM_> {
-  /**
-   * Regard `undefined` as volume `Infinity`, i.e., last element
-   */
+class SortedQM_ extends SortedArray<QM_> {
+  /** Regard `undefined` as volume `Infinity`, i.e., last element */
   static #less: Less<QM_> = (a_x, b_x) => {
-    let vol_a_: number | undefined,
-      vol_b_: number | undefined;
+    let vol_a_ = NaN, vol_b_ = NaN;
     if (
       a_x[0] === undefined && b_x[0] === undefined ||
       a_x[0] !== undefined && b_x[0] !== undefined &&
@@ -448,7 +466,8 @@ class SortedQM extends SortedArray<QM_> {
       } else if (!isColrFn(a_x[1]) && !isColrFn(b_x[1])) {
         return csscLess(a_x[1], b_x[1]);
       } else {
-        return isColrFn(b_x[1]);
+        /* In general, `Cssc` is as a fallback, so has lower priority. */
+        return !isColrFn(b_x[1]);
       }
     } else {
       return b_x[0] === undefined || Number.apxS(vol_a_!, vol_b_!);
@@ -456,7 +475,7 @@ class SortedQM extends SortedArray<QM_> {
   };
 
   constructor() {
-    super(SortedQM.#less);
+    super(SortedQM_.#less);
   }
 
   // /**

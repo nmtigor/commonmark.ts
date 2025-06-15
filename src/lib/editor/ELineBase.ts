@@ -4,8 +4,8 @@
  ******************************************************************************/
 
 import { LOG_cssc } from "../../alias.ts";
-import { _TRACE, CYPRESS, DEV, global, INOUT, RESIZ } from "../../global.ts";
-import type { id_t, loff_t } from "../alias.ts";
+import { _TRACE, CYPRESS, DEBUG, global, INOUT, RESIZ } from "../../global.ts";
+import type { id_t, lnum_t, loff_t } from "../alias.ts";
 import { WritingMode } from "../alias.ts";
 import { Bidi, type Bidir } from "../Bidi.ts";
 import type { Line } from "../compiling/Line.ts";
@@ -42,6 +42,9 @@ export class TailV extends TextV {
   }
 }
 
+/**
+ * A non-generic base s.t. many related uses (e.g. Caret) can be non-generic.
+ */
 export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   extends HTMLVuu<EdtrBase<CI>, HTMLDivElement>
   implements Bidir {
@@ -50,6 +53,9 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   bline_$;
+  get lidx_1(): lnum_t {
+    return this.bline_$.lidx_1;
+  }
   //jjjj TOCLEANUP
   // get bline_$(): Line {
   //   return this.#bline;
@@ -131,7 +137,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     //   this.empty$ ? new TokLoc(bln,this.indent_) : new TokLoc(bln) );
     // this.el$.firstChild[ ranseq_sym ] = new Ranseq( [ran] );
 
-    // /*#static*/ if (DEV) {
+    // /*#static*/ if (DEBUG) {
     //   ++g_count.newVuu;
     // }
     // /*#static*/ if (INOUT) {
@@ -194,7 +200,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
       this.#wrap_a,
       bln.bidi.embedLevels, //!
     );
-    if (!this.#wrap_a.eq(wrap_a_0)) this.bidi$.validate();
+    if (!this.#wrap_a.eql(wrap_a_0)) this.bidi$.validate();
   }
 
   #onResiz = () => {

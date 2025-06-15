@@ -130,20 +130,26 @@ export const fontFamilyMono = [
 /* Fallback system font:
 https://bitsofco.de/the-new-system-font-stack/
 */
-/*80--------------------------------------------------------------------------*/
+/*64----------------------------------------------------------*/
 /* zIndex */
 
 /* Stacking context: Windl */
-export const ThemeSetting_z = 10;
 export const ToolbarResizer_z = 8;
 export const SwipteNailLifting_z = 6;
 export const Popmenu_z = 5;
-export const Signup_z = 4;
-export const Login_z = 3;
+export const PopfoldActiv_z = 4;
+export const PopfoldInact_z = 3;
 export const Pocusd_z = 2;
 /*80--------------------------------------------------------------------------*/
 
 export const ClickExtent = 2;
+/**
+ * @const @param x
+ * @const @param y
+ * @const @param x_0
+ * @const @param y_0
+ * @const @param extent_x
+ */
 export function isClick(
   x: number,
   y: number,
@@ -235,12 +241,13 @@ export const LOG_cssc = {
 change all dbs correspondingly. */
 export enum BeReturn {
   success,
-  invalid_db,
+  invalid_db, //kkkk
+  fail_nostrt,
   fail_connection,
   fail_unknown,
   _max,
 }
-console.assert(BeReturn._max <= 4);
+console.assert(BeReturn._max <= 10);
 /*80--------------------------------------------------------------------------*/
 
 // export const PALEGRUP = Object.freeze([

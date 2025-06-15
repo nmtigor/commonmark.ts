@@ -8,9 +8,10 @@ import { fail } from "@fe-lib/util/trace.ts";
 import { INOUT } from "@fe-src/global.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
-import { MdextTk } from "../../Token.ts";
+import { Token } from "../../Token.ts";
+import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
-import { _toHTML, gathrUnrelTk } from "../util.ts";
+import { _toHTML, gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -22,14 +23,15 @@ export class Emphasis extends Inline {
   #lastTk;
   #textSnt_a;
 
+  #children?: Inline[];
   override get children(): Inline[] {
-    if (this.children$) return this.children$ as Inline[];
+    if (this.#children) return this.#children;
 
     const ret: Inline[] = [];
     for (const snt of this.#textSnt_a) {
       if (snt instanceof Inline) ret.push(snt);
     }
-    return this.children$ = ret;
+    return this.#children = ret;
   }
 
   override get frstToken() {
@@ -84,7 +86,7 @@ export class Emphasis extends Inline {
     let ret = super.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
     if (ret) return ret;
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#frstTk,
       drtStrtLoc_x,
       drtStopLoc_x,
@@ -92,14 +94,14 @@ export class Emphasis extends Inline {
     );
 
     for (const snt of this.#textSnt_a) {
-      if (snt instanceof MdextTk) {
-        ret += gathrUnrelTk(snt, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
+      if (snt instanceof Token) {
+        ret += gathrUnrelTk_$(snt, drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
       } else {
         ret += snt.gathrUnrelSnt(drtStrtLoc_x, drtStopLoc_x, unrelSnt_sa_x);
       }
     }
 
-    ret += gathrUnrelTk(
+    ret += gathrUnrelTk_$(
       this.#lastTk,
       drtStrtLoc_x,
       drtStopLoc_x,

@@ -3,7 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { _TRACE, DEV, global } from "../../global.ts";
+import { _TRACE, DEBUG, global } from "../../global.ts";
 import type { id_t, uint } from "../alias.ts";
 import type { Cssc } from "../color/alias.ts";
 import { Pale } from "../color/Pale.ts";
@@ -96,11 +96,11 @@ class Selec extends HTMLVuu<EdtrBase, HTMLSpanElement> {
   }
 
   reuse_Selec(): this {
-    /*#static*/ if (DEV) this.observeTheme();
+    this.observeTheme();
     return this;
   }
   reset_Selec(): this {
-    /*#static*/ if (DEV) this.unobserveTheme();
+    this.unobserveTheme();
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -176,6 +176,7 @@ export class SelecFac extends Factory<Selec> {
   //     this.produce(0);
   //   }
   // }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @implement */
   protected createVal$() {

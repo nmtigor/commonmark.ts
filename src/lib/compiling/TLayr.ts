@@ -3,9 +3,8 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
 import type { Chr, Dulstr } from "../alias.ts";
-import { assert } from "../util/trace.ts";
+import * as Is from "../util/is.ts";
 import type { Dulmap } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -24,7 +23,7 @@ abstract class TLayr {
   abstract dull(src_x: Chr[], acc_x: Set<Dulstr>, ret_x?: Set<Dulstr>): void;
 }
 
-/** @fianl */
+/** @final */
 export class TLVert extends TLayr {
   /** Record intermediate `dull()` results */
   readonly #rir;
@@ -84,7 +83,7 @@ export class TLVert extends TLayr {
   }
 }
 
-/** @fianl */
+/** @final */
 export class TLHorz extends TLayr {
   #tlayr_a;
 
@@ -142,7 +141,7 @@ export class DulmapTL extends TLayr {
     for (const chr of src_x) {
       /** Dulstr */
       const ds_ = this.#dulmap.get(chr);
-      if (Array.isArray(ds_)) {
+      if (Is.array(ds_)) {
         ds_.forEach(acc_x.add, acc_x);
         if (ret_x) ds_.forEach(ret_x.add, ret_x);
       } else if (ds_) {

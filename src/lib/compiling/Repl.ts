@@ -3,6 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import * as Is from "../util/is.ts";
 import { _TRACE, global, INOUT } from "../../global.ts";
 import type { id_t, lnum_t } from "../alias.ts";
 import { linesOf } from "../util/string.ts";
@@ -91,22 +92,20 @@ export class Repl {
    * Use `Ranval` not `Ran` directly because `Ran` can be invalid
    * after `undo()` / `redo()`.
    * @headconst @param bufr_x
-   * @headconst @param replin_x [COPIED] if `this` will not be abandoned
+   * @move @headconst @param replin_x if `this` will not be abandoned
    *  immediately after `replFRun()` (e.g. queued in `Bufr.#doq`).\
    *  If `Replin[]`, `.rv`s MUST be disjoint!.
    */
   constructor(bufr_x: Bufr, replin_x: Replin | Replin[]) {
     this.#bufr = bufr_x;
-    if (Array.isArray(replin_x)) {
+    if (Is.array(replin_x)) {
       this.aoa = true;
       const LEN = replin_x.length;
       this.#ranval_a = new Array(LEN);
       this.#text_a2 = new Array(LEN);
       new SortedReplin_(replin_x).forEach((e_y, i_y) => {
         this.#ranval_a![i_y] = e_y.rv;
-        this.#text_a2![i_y] = Array.isArray(e_y.txt)
-          ? e_y.txt
-          : linesOf(e_y.txt);
+        this.#text_a2![i_y] = Is.array(e_y.txt) ? e_y.txt : linesOf(e_y.txt);
       });
       this.#ranval_rev_a = Array.from(
         { length: LEN },
@@ -116,7 +115,7 @@ export class Repl {
     } else {
       this.aoa = false;
       this.#ranval = replin_x.rv;
-      this.#text_a = Array.isArray(replin_x.txt)
+      this.#text_a = Is.array(replin_x.txt)
         ? replin_x.txt as string[]
         : linesOf(replin_x.txt);
       this.#ranval_rev = new Ranval(0 as lnum_t, 0);
@@ -428,13 +427,11 @@ export class Repl {
           assert(this.#ranval_a!.length === txt_x.length);
         }
         this.#text_a2 = (txt_x as (string[] | string)[]).map((_y) =>
-          Array.isArray(_y) ? _y : linesOf(_y)
+          Is.array(_y) ? _y : linesOf(_y)
         );
         this.#text_a = this.#text_a2[0];
       } else {
-        this.#text_a = Array.isArray(txt_x)
-          ? txt_x as string[]
-          : linesOf(txt_x);
+        this.#text_a = Is.array(txt_x) ? txt_x as string[] : linesOf(txt_x);
         // this.#ranval = this.#ranval_rev.dup(); //!
         // replText_a_save = [...this.#replText_a]; //!
       }

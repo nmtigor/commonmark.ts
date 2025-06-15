@@ -11,8 +11,8 @@
  ******************************************************************************/
 
 import { _TRACE, global, INOUT } from "../global.ts";
-import type { Chr, id_t, loff_t, uint, uint8 } from "./alias.ts";
-import { BufrDir, ChrTyp } from "./alias.ts";
+import type { BufrDir, Chr, id_t, loff_t, uint, uint8 } from "./alias.ts";
+import { ChrTyp } from "./alias.ts";
 import { canonicalOf, chrTypOf, closingOf, openingOf } from "./loadBidi.ts";
 import { assert, out, traceOut } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
@@ -84,7 +84,7 @@ type IsolRunSeq = {
  */
 function getEmbeddingLevels(
   string_x: string,
-  baseDirection_x: "ltr" | "rtl" | "auto",
+  baseDirection_x: BufrDir | "auto",
 ): GetEmbeddingLevelsR_ {
   const MAX_DEPTH = 125;
   const IN_LEN = string_x.length;
@@ -975,7 +975,7 @@ export class Bidi {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   #text!: string;
-  #dir!: "ltr" | "rtl";
+  #dir!: BufrDir;
 
   /* #wrap_a */
   #wrap_a!: loff_t[];
@@ -1183,7 +1183,7 @@ export class Bidi {
     embedLevels_x?: GetEmbeddingLevelsR_,
   ): this {
     this.#text = text_x;
-    this.#dir = dir_x === BufrDir.ltr ? "ltr" : "rtl";
+    this.#dir = dir_x;
     // console.log({ dir_x });
     this.#wrap_a = wrap_a_x;
     this.#embedLevels = embedLevels_x;

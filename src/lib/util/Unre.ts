@@ -23,10 +23,6 @@ export class Unre<T extends {} | null> {
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   readonly #Len: uint;
-  get LenMax() {
-    return this.#Len - 1;
-  }
-
   protected readonly ary$: Array<T>;
 
   protected i_0$: uint = 0;
@@ -48,35 +44,26 @@ export class Unre<T extends {} | null> {
       : this.ary$.at(this.#loopMinusOne(this.i$));
   }
 
-  /** @const */
-  _repr_(): Record<string, unknown> {
-    return {
-      ary: this.ary$,
-      ran: `[${this.i_0$}, ${this.i_1$})`,
-      i$: this.i$,
-    };
-  }
-
   /** @const @param len_x */
   constructor(len_x: uint) {
     /*#static*/ if (INOUT) {
-      assert(1 <= len_x);
+      assert(2 <= len_x); // to prevent `i_0$` === `i_1$`
     }
-    this.#Len = len_x + 1; // to prevent `i_0$` === `i_1$`
+    this.#Len = len_x; // to prevent `i_0$` === `i_1$`
     this.ary$ = new Array<T>(this.#Len);
   }
 
-  resetUnre() {
+  reset_Unre() {
     this.i$ = this.i_1$ = this.i_0$;
     this.lastUR$ = LastUR.bakw;
   }
 
   /** @const */
   protected dupEmpty$() {
-    return new Unre<T>(this.LenMax);
+    return new Unre<T>(this.#Len);
   }
   /** @const */
-  dup(n_x?: uint) {
+  dup_Unre(n_x?: uint) {
     const ret = this.dupEmpty$();
     if (n_x === undefined) {
       for (let i = 0, LEN = this.ary$.length; i < LEN; ++i) {
@@ -151,5 +138,15 @@ export class Unre<T extends {} | null> {
   }
   peekRe() {
     return this.canGetRe() ? this.getRe() : undefined;
+  }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  /** @const */
+  _repr_(): Record<string, unknown> {
+    return {
+      ary: this.ary$,
+      ran: `[${this.i_0$}, ${this.i_1$})`, // see `add()` for why "[...)"
+      i$: this.i$,
+    };
   }
 }

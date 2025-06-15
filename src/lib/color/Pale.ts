@@ -5,13 +5,12 @@
 
 import { z } from "@zod";
 import { INOUT } from "../../global.ts";
-import { Moo, type MooHandler } from "../Moo.ts";
+import { Boor, Moo, type MooHandler } from "../Moo.ts";
 import type { id_t } from "../alias.ts";
-import "../loadTheme.ts";
-import { $theme } from "../symbols.ts";
 import { assert, warn } from "../util/trace.ts";
 import type { PaleCoorRaw, PaleName } from "./PaleCoor.ts";
 import { createPaleCoorRaw, PaleCoor, zPaleCoorRaw } from "./PaleCoor.ts";
+import { Theme } from "./Theme.ts";
 import type { CsscHexNorm } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -35,7 +34,7 @@ export type PaleColr = [PaleName, PaleCidx];
 // /** @final */
 // class PMoo extends Moo<p_t> {
 //   constructor(p_x: p_t) {
-//     super(p_x, (a, b) => a === b || Array.isArray(a) && a.eq(b));
+//     super(p_x, (a, b) => a === b || Is.array(a) && a.eq(b));
 //   }
 
 //   dup() {
@@ -62,6 +61,7 @@ export class Pale {
   // get desc() {
   //   return this.#raw.d;
   // }
+  #_name_: PaleName;
 
   // #lUpd: string | undefined;
   // readonly #l_mo: Moo<string>;
@@ -130,9 +130,9 @@ export class Pale {
     return this.coor_a[this.cidx];
   }
 
-  readonly modified_mo = new Moo({
+  readonly modified_br_Pale = new Boor({
     val: false,
-    _name_: `Pale_${this.id}.modified_mo`,
+    _name_: `Pale_${this.id}.modified_br`,
   });
   // /** For `coor_a` and `#cidx`. Not for elements of `coor_a`. */
   // #modified = false;
@@ -161,7 +161,8 @@ export class Pale {
   //   document[$theme_modified].modified_mo.val = modified_pale_m.size !== 0;
   // }
 
-  #hex_mo = new Moo<CsscHexNorm>({
+  /* @hex_mo */
+  readonly #hex_mo = new Moo<CsscHexNorm>({
     val: "#ff0000",
     active: true,
     _name_: `Pale_${this.id}.#hex_mo`,
@@ -169,20 +170,34 @@ export class Pale {
   get cssc() {
     return this.#hex_mo.val;
   }
+
   // resetCssHandler() { return this.#hex_mo.reset(); }
-  registCsscHandler(handler: MooHandler<CsscHexNorm>) {
-    this.#hex_mo.registHandler(handler);
+  registCsscHandler(h_x: MooHandler<CsscHexNorm>) {
+    this.#hex_mo.registHandler(h_x);
   }
-  removeCsscHandler(handler: MooHandler<CsscHexNorm>) {
-    this.#hex_mo.removeHandler(handler);
+  removeCsscHandler(h_x: MooHandler<CsscHexNorm>) {
+    this.#hex_mo.removeHandler(h_x);
   }
 
-  /** @const @param raw_x */
-  private constructor(raw_x: PaleRaw) {
+  /**
+   * After changing cidx, to make sure to trigger the chain reaction, `#hex_mo`
+   * needs to set `#forcingOnce` explicitly.
+   */
+  forceHex(): this {
+    this.#hex_mo.force();
+    return this;
+  }
+  /* ~ */
+
+  /**
+   * @const @param raw_x
+   * @const @param name_x For debugging only
+   */
+  private constructor(raw_x: PaleRaw, name_x: PaleName = "") {
     // /*#static*/ if (INOUT) {
     //   assert(!this.#constructing);
     // }
-    // this.#raw = document[$theme].theme_o[name_x];
+    // this.#raw = Theme.instance.theme_o[name_x];
 
     // this.#l_mo = new Moo(<string | undefined> this.#raw.l ?? "");
 
@@ -209,6 +224,7 @@ export class Pale {
     //   );
     // }
     // this.#constructing = false;
+    this.#_name_ = name_x;
 
     // this.#pmUpd_a = new Array(CLEN).fill(undefined);
     // this.#cnmUpd_a = new Array(CLEN).fill(undefined);
@@ -218,20 +234,21 @@ export class Pale {
     // this.#cidx = Pale.loadCidxOf(this);
     this.cidx_mo.set_Moo(raw_x.cidx);
     for (const coor of raw_x.coors) {
-      const coor_ = new PaleCoor(coor);
+      const coor_ = new PaleCoor(coor, this.#_name_);
       this.coor_a.push(coor_);
-      coor_.on(coor_, this.#onCoor);
-      coor_.modified_mo.on(true, this.#onCoorModified);
+      coor_.addFn(this.#onCoor);
+      coor_.modified_br_PaleCoor.onTru(this.#onCoorModified);
     }
+
+    this.cidx_mo.registHandler((n_y) => {
+      this.modified_br_Pale.val = true;
+      this.#hex_mo.val = this.coor_a[n_y].mapped_c.hex;
+    });
+
     if (this.cidx < 0 || this.coor_a.length <= this.cidx) {
       this.cidx_mo.val = 0;
     }
-    this.coor_a[this.cidx].refreshMoo();
-
-    this.cidx_mo.registHandler((_y) => {
-      this.modified_mo.val = true;
-      this.#hex_mo.val = this.coor_a[_y].mapped_c.hex;
-    });
+    this.coor.run();
 
     // // this.#pmUpd_a = new Array( this.#raw.r.length ); /** @member { (Number[2]|undefined)[] } */
     // // this.rmoo_ = this.#raw.r.map( r => new Moo(r,(a,b)=>a.eq(b)) ); /** @member { Map[] } */
@@ -244,22 +261,22 @@ export class Pale {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  #onCoor = (_x: PaleCoor) => {
+  readonly #onCoor = ((_: unknown, _1: unknown, _2: unknown, _x: PaleCoor) => {
     if (this.coor_a.indexOf(_x) === this.cidx) {
       this.#hex_mo.val = _x.mapped_c.hex;
     }
-  };
-  #onCoorModified = (_x: boolean) => {
-    this.modified_mo.val = _x;
+  }) as MooHandler<true, unknown, PaleCoor>;
+  readonly #onCoorModified = (_x: boolean) => {
+    this.modified_br_Pale.val = _x;
   };
 
   addCoor() {
-    const coor_ = new PaleCoor(createPaleCoorRaw());
+    const coor_ = new PaleCoor(createPaleCoorRaw(), this.#_name_);
     this.coor_a.push(coor_);
-    coor_.on(coor_, this.#onCoor);
-    coor_.modified_mo.on(true, this.#onCoorModified);
+    coor_.addFn(this.#onCoor);
+    coor_.modified_br_PaleCoor.onTru(this.#onCoorModified);
 
-    this.modified_mo.val = true;
+    this.modified_br_Pale.val = true;
   }
 
   deleteCoor(_x: PaleCidx): boolean {
@@ -278,7 +295,7 @@ export class Pale {
       this.cidx_mo.force().val = _x;
       recidx = true;
     }
-    this.modified_mo.val = true;
+    this.modified_br_Pale.val = true;
 
     return recidx;
   }
@@ -323,7 +340,7 @@ export class Pale {
   // //   ) return this.subna_;
 
   // //   this.subna_ = [];
-  // //   const theme_o = document[$theme].theme_o;
+  // //   const theme_o = Theme.instance.theme_o;
   // //   const thisname = this.name;
   // //   for( let palename in theme_o )
   // //   {
@@ -829,16 +846,6 @@ export class Pale {
 
   //   this.modified = false;
   // }
-  // /*49-----------------------------------------*/
-
-  toJSON(): PaleRaw {
-    this.modified_mo.set_Moo(false); //!
-    return {
-      coors: this.coor_a.map((coor) => coor.toJSON()),
-      cidx: this.cidx,
-    };
-  }
-  /*49-----------------------------------------*/
 
   static #createUndefined() {
     return new Pale({
@@ -852,35 +859,36 @@ export class Pale {
   }
 
   static readonly #creating_a: PaleName[] = [];
-  /**
-   * @const @param name_x
-   */
+  /** @const @param name_x */
   static get(name_x: PaleName): Pale {
-    // let ret = document[$theme].pale_modified_m.get(name_x);
+    const theme = Theme.instance;
+    // let ret = Theme.instance.pale_modified_m.get(name_x);
     // if (ret) return ret;
-    let ret = document[$theme].pale_m.get(name_x);
+    let ret = theme.pale_m.get(name_x);
     if (ret) return ret;
 
-    const raw = document[$theme].raw_o[name_x];
-    if (raw) {
-      if (Pale.#creating_a.includes(name_x)) {
-        console.error(`"name_x" depends indirectly on itself!`);
-        ret = Pale.#createUndefined();
-      } else {
-        Pale.#creating_a.push(name_x);
-        ret = new Pale(raw);
-        document[$theme].pale_m.set(name_x, ret);
-        // `false` of `Pale.modified_mo` won't have effects.
-        ret.modified_mo.on(true, (_y) => {
-          document[$theme].modified_mo.val = _y;
-        });
-        assert(Pale.#creating_a.at(-1) === name_x);
-        Pale.#creating_a.pop();
-      }
-    } else {
+    const raw = theme.raw_o[name_x];
+    if (!raw) {
       warn(`Pale "${name_x}" not found`);
-      ret = Pale.#createUndefined();
+      return Pale.#createUndefined();
     }
+
+    if (Pale.#creating_a.includes(name_x)) {
+      console.error(`"name_x" depends indirectly on itself!`);
+      return Pale.#createUndefined();
+    }
+
+    Pale.#creating_a.push(name_x);
+    ret = new Pale(raw, name_x);
+    theme.pale_m.set(name_x, ret);
+    /* `false` of `Pale.modified_br_Pale` won't have effects. */
+    ret.modified_br_Pale.onTru((n_y) => {
+      theme.modified_br_Theme.val = n_y;
+    });
+    /*#static*/ if (INOUT) {
+      assert(Pale.#creating_a.at(-1) === name_x);
+    }
+    Pale.#creating_a.pop();
     return ret;
   }
 
@@ -906,9 +914,9 @@ export class Pale {
   // static collectForSave(all_x = false): ThemeTsRaw {
   //   // console.log( "Pale.collectForSave():" );
   //   const ret = Object.create(null);
-  //   ret.theme_ts = document[$theme].theme_ts;
+  //   ret.theme_ts = Theme.instance.theme_ts;
   //   ret.theme_o = Object.create(null);
-  //   const theme_o = document[$theme].theme_o;
+  //   const theme_o = Theme.instance.theme_o;
   //   const modified_pale_m = document[$theme_modified].pale_m;
   //   for (let palename in theme_o) {
   //     const pale_o = ret.theme_o[palename] = Object.create(null);
@@ -960,6 +968,15 @@ export class Pale {
   //   assert(document[$theme_modified].pale_m.size === 0);
   //   assert(document[$theme_modified].modified_mo.val === false);
   // }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  toJSON(): PaleRaw {
+    this.modified_br_Pale.set_Boor(false); //!
+    return {
+      coors: this.coor_a.map((coor) => coor.toJSON()),
+      cidx: this.cidx,
+    };
+  }
 }
 /*80--------------------------------------------------------------------------*/
 

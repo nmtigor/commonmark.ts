@@ -191,7 +191,8 @@ export abstract class Vuu<C extends Coo = Coo, E extends Element = Element> {
     return this;
   }
 
-  get bcr(): DOMRect {
+  /** @final */
+  get bcr_1(): DOMRect {
     return this.el$.getBoundingClientRect();
   }
 }

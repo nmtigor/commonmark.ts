@@ -15,8 +15,9 @@ import type { Inline } from "./Inline.ts";
 
 export abstract class CtnrBlock extends Block {
   /* children$ */
+  protected children$: Block[];
   override get children(): Block[] {
-    return this.children$ as Block[];
+    return this.children$;
   }
 
   getChildAftr(_x: Block): Block | undefined {

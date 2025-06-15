@@ -7,8 +7,10 @@ export {};
 /*80--------------------------------------------------------------------------*/
 
 export const g_count = {
+  newLoc: 0,
   newRan: 0,
   newToken: 0,
+  oldToken: 0,
 
   newVuu: 0,
   newSTNode: 0,

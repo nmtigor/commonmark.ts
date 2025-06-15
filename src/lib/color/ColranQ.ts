@@ -5,7 +5,7 @@
 
 import { z } from "@zod";
 import type { id_t, int, uint } from "../alias.ts";
-import { Moo } from "../Moo.ts";
+import { Boor, Runr } from "../Moo.ts";
 import {
   Colran,
   type ColranRaw,
@@ -26,9 +26,9 @@ export function createColranQRaw(dim_x: uint): ColranQRaw {
  * Color range cuboid
  * @final
  */
-export class ColranQ extends Moo<ColranQ> {
+export class ColranQ extends Runr<unknown, ColranQ> {
   static #ID = 0 as id_t;
-  override readonly id = ++ColranQ.#ID as id_t;
+  readonly id = ++ColranQ.#ID as id_t;
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   // readonly dim: uint;
@@ -37,34 +37,33 @@ export class ColranQ extends Moo<ColranQ> {
     return this.#colran_a[_x];
   }
 
-  readonly modified_mo = new Moo({
+  readonly modified_br_ColranQ = new Boor({
     val: false,
-    _name_: `ColranQ_${this.id}.modified_mo`,
+    _name_: `ColranQ_${this.id}.modified_br`,
   });
 
   /** @const @param raw_x */
   constructor(raw_x: ColranQRaw) {
-    super({ val: null as any });
+    super();
+    this.info = this;
 
     // this.dim = raw_x.length;
     this.#colran_a = raw_x.map((_y: ColranRaw) => {
       const ret = new Colran(_y);
-      ret.colr_0.registHandler(this.#r);
-      ret.colr_1.registHandler(this.#r);
-      ret.modified_mo.on(true, this.#onQModified);
+      ret.min_c.registHandler(this.#r);
+      ret.max_c.registHandler(this.#r);
+      ret.modified_br_Colran.onTru(this.#onQModified);
       return ret;
     });
-
-    this.set_Moo(this);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   #r = () => {
-    this.refreshMoo();
+    this.run();
   };
 
   #onQModified = (_x: boolean) => {
-    this.modified_mo.val = _x;
+    this.modified_br_ColranQ.val = _x;
   };
 
   /** @const */
@@ -76,29 +75,29 @@ export class ColranQ extends Moo<ColranQ> {
     return ret;
   }
 
-  add() {
+  addColran() {
     const colran_ = new Colran(createColranRaw());
-    colran_.colr_0.registHandler(this.#r);
-    colran_.colr_1.registHandler(this.#r);
-    colran_.modified_mo.on(true, this.#onQModified);
+    colran_.min_c.registHandler(this.#r);
+    colran_.max_c.registHandler(this.#r);
+    colran_.modified_br_Colran.onTru(this.#onQModified);
     this.#colran_a.push(colran_);
   }
 
   /** @const @param _x */
-  delete(_x: int) {
+  delColran(_x: int) {
     const deleted_a_ = this.#colran_a.splice(_x, 1);
     if (!deleted_a_.length) return;
 
     // ! deleted_` should not be shared, so no need to dismantle handlers
     // const deleted_ = deleted_a_[0];
-    // deleted_.colr_0.removeHandler(this.#r);
-    // deleted_.colr_1.removeHandler(this.#r);
+    // deleted_.min_c.removeHandler(this.#r);
+    // deleted_.max_c.removeHandler(this.#r);
     // deleted_.modified_mo.off(true, this.#onQModified);
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   toJSON(): ColranQRaw {
-    this.modified_mo.set_Moo(false); //!
+    this.modified_br_ColranQ.set_Boor(false); //!
     return this.#colran_a.map((_y) => _y.toJSON());
   }
 }

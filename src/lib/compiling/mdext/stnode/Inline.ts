@@ -7,7 +7,7 @@ import type { uint } from "@fe-lib/alias.ts";
 import type { Loc } from "../../Loc.ts";
 import { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
-import { MdextSN } from "../MdextSN.ts";
+import { MdextSN } from "./MdextSN.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class Inline extends MdextSN {

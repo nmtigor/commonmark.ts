@@ -18,13 +18,13 @@
   "lint": {
     "rules": {
       "exclude": [
-        "adjacent-overload-signatures"
+        "adjacent-overload-signatures",
+        "valid-typeof"
       ]
     }
   },
   "imports": {
     "@b-fuze/deno-dom": "jsr:@b-fuze/deno-dom@^0.1.48",
-    "@denosaurs/argontwo": "jsr:@denosaurs/argontwo@^0.2.0",
     "@fe-3rd/": "./src/3rd/",
     "@fe-cpl/": "./src/lib/compiling/",
     "@fe-edt/": "./src/lib/editor/",
@@ -44,9 +44,9 @@
     "@std/log": "jsr:@std/log@^0.224.9",
     "@std/path": "jsr:@std/path@^1.0.6",
     "@std/testing": "jsr:@std/testing@^1.0.3",
-    "@wretch": "./src/3rd/wretch-2.9.0/dist/index.js",
+    "@wretch": "npm:wretch@^2.11.0",
     "@xstate": "npm:xstate@^5.19.1",
-    "@yaml": "npm:yaml@^2.5.1",
+    "@yaml": "npm:yaml@^2.6.1",
     "@zod": "./src/3rd/zod-3.23.8/lib/index.mjs",
   },
   "workspace": [

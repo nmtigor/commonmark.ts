@@ -76,7 +76,7 @@ export abstract class Tfmr {
     this.tbufr$ = tbufr_x ?? new TBufr(this.bufr$);
 
     if (this.tseg_fac$) {
-      this.tseg_fac$.setTSegFac(this, "hard");
+      this.tseg_fac$.set_TSegFac(this, "hard");
     } else {
       this.tseg_fac$ = new TSegFac(this);
     }

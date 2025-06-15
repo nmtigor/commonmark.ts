@@ -23,7 +23,7 @@ export class ELoc {
   }
 
   /**
-   * @headconst @param ctnr_x
+   * @borrow @const @param ctnr_x
    * @const @param offs_x
    */
   constructor(ctnr_x: Node, offs_x: uint) {

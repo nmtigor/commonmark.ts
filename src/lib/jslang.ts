@@ -4,22 +4,25 @@
  ******************************************************************************/
 
 import { INOUT } from "../global.ts";
+import type { Brand, int, ts_t } from "./alias.ts";
+import type { FloatArray, IntegerArray } from "./alias.ts";
 import type {
   AbstractConstructor,
-  Brand,
   Constructor,
-  FloatArray,
   Func,
-  IntegerArray,
-  ts_t,
   uint,
   uint8,
 } from "./alias.ts";
-import { int } from "./alias.ts";
 import { assert } from "./util/trace.ts";
+import * as Is from "./util/is.ts";
 /*80--------------------------------------------------------------------------*/
+/* Object */
 
 declare global {
+  interface Object {
+    eql(rhs_x: unknown, valve_x?: uint): boolean;
+  }
+
   /* Ref. https://github.com/microsoft/TypeScript/issues/44253#issuecomment-1199936073 */
   interface ObjectConstructor {
     /**
@@ -54,7 +57,7 @@ let valve_ = 0;
  * @headconst @param lhs_x
  * @headconst @param rhs_x
  */
-function eq_impl(lhs_x: unknown, rhs_x: unknown): boolean {
+function eql_impl_(lhs_x: unknown, rhs_x: unknown): boolean {
   /*#static*/ if (INOUT) {
     assert(valve_--, "There is element referencing its ancestor.");
   }
@@ -65,14 +68,14 @@ function eq_impl(lhs_x: unknown, rhs_x: unknown): boolean {
     return true;
   }
 
-  if (Array.isArray(lhs_x)) {
-    if (!Array.isArray(rhs_x)) return false;
+  if (Is.array(lhs_x)) {
+    if (!Is.array(rhs_x)) return false;
 
     if (lhs_x.length !== rhs_x.length) return false;
     if (!lhs_x.length && !rhs_x.length) return true;
 
     for (let i = lhs_x.length; i--;) {
-      if (!eq_impl(lhs_x[i], rhs_x[i])) {
+      if (!eql_impl_(lhs_x[i], rhs_x[i])) {
         return false;
       }
     }
@@ -90,11 +93,11 @@ function eq_impl(lhs_x: unknown, rhs_x: unknown): boolean {
     lhs_x instanceof Float32Array ||
     lhs_x instanceof Float64Array
   ) {
-    return lhs_x.eq(rhs_x);
+    return lhs_x.eql(rhs_x);
   }
 
   if (isObjectLike(lhs_x)) {
-    if (!isObjectLike(rhs_x) || Array.isArray(rhs_x)) return false;
+    if (!isObjectLike(rhs_x) || Is.array(rhs_x)) return false;
 
     const keys_lhs = Object.keys(lhs_x as object);
     const keys_rhs = Object.keys(rhs_x as object);
@@ -104,7 +107,7 @@ function eq_impl(lhs_x: unknown, rhs_x: unknown): boolean {
     for (const key of keys_lhs) {
       if (
         !Object.hasOwn(rhs_x as object, key) ||
-        !eq_impl((lhs_x as object)[key], (rhs_x as object)[key])
+        !eql_impl_((lhs_x as object)[key], (rhs_x as object)[key])
       ) {
         return false;
       }
@@ -114,25 +117,19 @@ function eq_impl(lhs_x: unknown, rhs_x: unknown): boolean {
 
   return false;
 }
-export function eq(lhs_x: unknown, rhs_x: unknown, valve_x = 100): boolean {
+export function eql(lhs_x: unknown, rhs_x: unknown, valve_x = 100): boolean {
   valve_ = valve_x;
-  return eq_impl(lhs_x, rhs_x);
-}
-
-declare global {
-  interface Object {
-    eq(rhs_x: unknown, valve_x?: uint): boolean;
-  }
+  return eql_impl_(lhs_x, rhs_x);
 }
 
 /**
  * @headconst @param rhs
  * @const @param valve_x
  */
-Reflect.defineProperty(Object.prototype, "eq", {
+Reflect.defineProperty(Object.prototype, "eql", {
   value(this: Object, rhs_x: unknown, valve_x = 100) {
     valve_ = valve_x;
-    return eq_impl(this, rhs_x);
+    return eql_impl_(this, rhs_x);
   },
 });
 
@@ -145,6 +142,7 @@ Reflect.defineProperty(Object.prototype, "eq", {
 //   }
 // })
 /*80--------------------------------------------------------------------------*/
+/* Array */
 
 declare global {
   //! Make sure non-`enumerable`
@@ -157,7 +155,7 @@ declare global {
      * @headconst @param rhs
      * @const @param valve_x
      */
-    eq(rhs_x: unknown, valve_x?: uint): boolean;
+    eql(rhs_x: unknown, valve_x?: uint): boolean;
 
     /** @const @param ary_x */
     fillArray(ary_x: T[]): this;
@@ -195,10 +193,10 @@ Reflect.defineProperty(Array.prototype, "become_Array", {
   },
 });
 
-Reflect.defineProperty(Array.prototype, "eq", {
+Reflect.defineProperty(Array.prototype, "eql", {
   value(this: any[], rhs_x: unknown, valve_x = 100) {
     valve_ = valve_x;
-    return eq_impl(this, rhs_x);
+    return eql_impl_(this, rhs_x);
   },
 });
 
@@ -234,12 +232,46 @@ Reflect.defineProperty(Array.prototype, "swap", {
   },
 });
 /*80--------------------------------------------------------------------------*/
+/* String */
+
+declare global {
+  interface String {
+    /** surrogate leading */
+    isSurLeadAt(i_x?: uint): boolean;
+    /** surrogate trailing */
+    isSurTralAt(i_x?: uint): boolean;
+    /**
+     * Ref. "lone surrogate" in [UTF-16 characters...](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#utf-16_characters_unicode_code_points_and_grapheme_clusters)
+     * @const @param i_x Same as `charCodeAt()`'s parameter.
+     */
+    isWellAt(i_x?: uint): boolean;
+  }
+}
+
+Reflect.defineProperty(String.prototype, "isSurLeadAt", {
+  value(this: string, i_x?: uint) {
+    const cc_ = this.charCodeAt(i_x ?? 0);
+    return cc_ !== undefined && (0x0_D800 <= cc_ && cc_ <= 0x0_DBFF);
+  },
+});
+Reflect.defineProperty(String.prototype, "isSurTralAt", {
+  value(this: string, i_x?: uint) {
+    const cc_ = this.charCodeAt(i_x ?? 0);
+    return cc_ !== undefined && (0x0_DC00 <= cc_ && cc_ <= 0x0_DFFF);
+  },
+});
+Reflect.defineProperty(String.prototype, "isWellAt", {
+  value(this: string, i_x?: uint) {
+    const cc_ = this.charCodeAt(i_x ?? 0);
+    return cc_ !== undefined && !(0x0_DC00 <= cc_ && cc_ <= 0x0_DFFF);
+  },
+});
+/*80--------------------------------------------------------------------------*/
+/* Number */
 
 declare global {
   interface Number {
-    /**
-     * `in( 0 <= digits && digits <= 20 )`
-     */
+    /** `in( 0 <= digits && digits <= 20 )` */
     fixTo(digits?: uint8): number;
 
     reprRatio(fixTo_x?: uint8): string;
@@ -264,6 +296,20 @@ declare global {
      * @const @param to_x
      */
     normalize(in_x: int, to_x: uint): uint;
+
+    /**
+     * If `min_x >= max_x`, return `min_x`.
+     * @const @param val_x
+     * @const @param min_x
+     * @const @param max_x
+     * @const @param inclusive_x
+     */
+    moduloize(
+      val_x: number,
+      min_x: number,
+      max_x: number,
+      inclusive_x?: "inclusive",
+    ): number;
   }
 }
 
@@ -287,6 +333,21 @@ Number.normalize = (in_x, to_x) => {
   if (ret < 0) ret += to_x;
   return ret;
 };
+Number.moduloize = (val_x, min_x, max_x, inclusive_x) => {
+  const divisor = max_x - min_x;
+  if (divisor <= 0) return min_x;
+
+  let dividend = val_x - min_x;
+  if (dividend < 0 || dividend >= divisor) {
+    dividend %= divisor;
+    if (inclusive_x) {
+      if (dividend <= 0) dividend += divisor;
+    } else {
+      if (dividend < 0) dividend += divisor;
+    }
+  }
+  return dividend + min_x;
+};
 
 Number.prototype.fixTo = function (this, digits = 0) {
   const mul = 10 ** digits;
@@ -307,7 +368,7 @@ Number.prototype.reprRatio = function (this, fixTo_x = 2) {
  * TypedArray
 ** ---------- */
 
-function iaEq_impl<TA extends IntegerArray>(lhs_x: TA, rhs_x: TA) {
+function iaEql_impl_<TA extends IntegerArray>(lhs_x: TA, rhs_x: TA) {
   if (rhs_x.length !== lhs_x.length) return false;
 
   for (let i = lhs_x.length; i--;) {
@@ -315,7 +376,7 @@ function iaEq_impl<TA extends IntegerArray>(lhs_x: TA, rhs_x: TA) {
   }
   return true;
 }
-function faEq_impl<TA extends FloatArray>(lhs_x: TA, rhs_x: TA) {
+function faEql_impl_<TA extends FloatArray>(lhs_x: TA, rhs_x: TA) {
   if (rhs_x.length !== lhs_x.length) return false;
 
   for (let i = lhs_x.length; i--;) {
@@ -326,125 +387,108 @@ function faEq_impl<TA extends FloatArray>(lhs_x: TA, rhs_x: TA) {
 
 declare global {
   interface Int8Array {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
   interface Uint8Array {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
   interface Uint8ClampedArray {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
   interface Int16Array {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
   interface Uint16Array {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
   interface Int32Array {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
   interface Uint32Array {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
   interface Float32Array {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
   interface Float64Array {
-    /**
-     * @const @param rhs_x
-     */
-    eq(rhs_x: unknown): boolean;
+    /** @const @param rhs_x */
+    eql(rhs_x: unknown): boolean;
   }
 }
 
-Reflect.defineProperty(Int8Array.prototype, "eq", {
+Reflect.defineProperty(Int8Array.prototype, "eql", {
   value(this: Int8Array, rhs_x: unknown) {
     if (!(rhs_x instanceof Int8Array)) return false;
 
-    return iaEq_impl(this, rhs_x);
+    return iaEql_impl_(this, rhs_x);
   },
 });
-Reflect.defineProperty(Uint8Array.prototype, "eq", {
+Reflect.defineProperty(Uint8Array.prototype, "eql", {
   value(this: Uint8Array, rhs_x: unknown) {
     if (!(rhs_x instanceof Uint8Array)) return false;
 
-    return iaEq_impl(this, rhs_x);
+    return iaEql_impl_(this, rhs_x);
   },
 });
-Reflect.defineProperty(Uint8ClampedArray.prototype, "eq", {
+Reflect.defineProperty(Uint8ClampedArray.prototype, "eql", {
   value(this: Uint8ClampedArray, rhs_x: unknown) {
     if (!(rhs_x instanceof Uint8ClampedArray)) return false;
 
-    return iaEq_impl(this, rhs_x);
+    return iaEql_impl_(this, rhs_x);
   },
 });
-Reflect.defineProperty(Int16Array.prototype, "eq", {
+Reflect.defineProperty(Int16Array.prototype, "eql", {
   value(this: Int16Array, rhs_x: unknown) {
     if (!(rhs_x instanceof Int16Array)) return false;
 
-    return iaEq_impl(this, rhs_x);
+    return iaEql_impl_(this, rhs_x);
   },
 });
-Reflect.defineProperty(Uint16Array.prototype, "eq", {
+Reflect.defineProperty(Uint16Array.prototype, "eql", {
   value(this: Uint16Array, rhs_x: unknown) {
     if (!(rhs_x instanceof Uint16Array)) return false;
 
-    return iaEq_impl(this, rhs_x);
+    return iaEql_impl_(this, rhs_x);
   },
 });
-Reflect.defineProperty(Int32Array.prototype, "eq", {
+Reflect.defineProperty(Int32Array.prototype, "eql", {
   value(this: Int32Array, rhs_x: unknown) {
     if (!(rhs_x instanceof Int32Array)) return false;
 
-    return iaEq_impl(this, rhs_x);
+    return iaEql_impl_(this, rhs_x);
   },
 });
-Reflect.defineProperty(Uint32Array.prototype, "eq", {
+Reflect.defineProperty(Uint32Array.prototype, "eql", {
   value(this: Uint32Array, rhs_x: unknown) {
     if (!(rhs_x instanceof Uint32Array)) return false;
 
-    return iaEq_impl(this, rhs_x);
+    return iaEql_impl_(this, rhs_x);
   },
 });
-Reflect.defineProperty(Float32Array.prototype, "eq", {
+Reflect.defineProperty(Float32Array.prototype, "eql", {
   value(this: Float32Array, rhs_x: unknown) {
     if (!(rhs_x instanceof Float32Array)) return false;
 
-    return faEq_impl(this, rhs_x);
+    return faEql_impl_(this, rhs_x);
   },
 });
-Reflect.defineProperty(Float64Array.prototype, "eq", {
+Reflect.defineProperty(Float64Array.prototype, "eql", {
   value(this: Float64Array, rhs_x: unknown) {
     if (!(rhs_x instanceof Float64Array)) return false;
 
-    return faEq_impl(this, rhs_x);
+    return faEql_impl_(this, rhs_x);
   },
 });
 /*80--------------------------------------------------------------------------*/
+/* JSON */
 
 //#region Stringified_<>
 /* Ref. https://youtu.be/z7pDvyVhUnE */
@@ -476,6 +520,7 @@ declare global {
   }
 }
 /*80--------------------------------------------------------------------------*/
+/* Date */
 
 declare global {
   interface Date {
@@ -645,6 +690,7 @@ Date.now_1 = () => {
   return Date._lastNow = ts_ as ts_t;
 };
 /*80--------------------------------------------------------------------------*/
+/* Math */
 
 declare global {
   interface Math {

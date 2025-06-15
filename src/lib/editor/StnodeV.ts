@@ -16,6 +16,7 @@ import { assert } from "../util/trace.ts";
 import { CtorRest, type ReplRest } from "./CtorRest.ts";
 import type { ELineBase } from "./ELineBase.ts";
 import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
+import * as Is from "../util/is.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** "Code" mode */
@@ -233,7 +234,7 @@ export abstract class StnodeV<
   protected shortcut$(): boolean {
     const rest = StnodeV.ctorRest.replRest_$;
     const r0_ = rest?.[0];
-    if (!rest || r0_ === undefined || Array.isArray(r0_)) return false;
+    if (!rest || r0_ === undefined || Is.array(r0_)) return false;
 
     for (let i = 0, iI = rest.length - 1; i < iI; ++i) {
       this.el$.append(rest[i] as Node);
