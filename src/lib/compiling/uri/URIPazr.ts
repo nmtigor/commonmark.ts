@@ -3,21 +3,19 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { assert, fail, out } from "@fe-lib/util/trace.ts";
-import { INOUT, PRF } from "@fe-src/global.ts";
+import { assert } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
+import type { uint } from "../../alias.ts";
+import { Factory } from "../../util/Factory.ts";
 import { Pazr } from "../Pazr.ts";
-import type { URIBufr } from "./URIBufr.ts";
+import { URITk } from "../Token.ts";
 import type { URILexr } from "./URILexr.ts";
 import { URITok } from "./URITok.ts";
-import { URI } from "./stnode/URI.ts";
-import { PathPart } from "./stnode/PathPart.ts";
 import { Authority } from "./stnode/Authority.ts";
-import { URITk } from "../Token.ts";
-import { Query } from "./stnode/Query.ts";
 import { Fragment } from "./stnode/Fragment.ts";
-import { Factory } from "../../util/Factory.ts";
-import { LOG_cssc } from "@fe-src/alias.ts";
-import type { uint } from "../../alias.ts";
+import { PathPart } from "./stnode/PathPart.ts";
+import { Query } from "./stnode/Query.ts";
+import { URI } from "./stnode/URI.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */

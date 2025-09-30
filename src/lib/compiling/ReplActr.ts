@@ -4,8 +4,8 @@
  ******************************************************************************/
 
 import { createActor, setup } from "@xstate";
-import { INOUT } from "../../global.ts";
-import { assert } from "../util/trace.ts";
+import { INOUT } from "../../preNs.ts";
+import { assert } from "../util.ts";
 import type { Bufr } from "./Bufr.ts";
 import { Lexr } from "./Lexr.ts";
 import { Pazr } from "./Pazr.ts";

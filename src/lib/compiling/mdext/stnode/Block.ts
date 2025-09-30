@@ -4,16 +4,16 @@
  ******************************************************************************/
 
 import type { lnum_t } from "@fe-lib/alias.ts";
-import { assert, fail, out } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert, fail, out } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import type { MdextTk } from "../../Token.ts";
 import { Err } from "../../alias.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
-import { MdextSN } from "./MdextSN.ts";
 import { BlockCont } from "../alias.ts";
 import type { CtnrBlock } from "./CtnrBlock.ts";
 import type { Inline } from "./Inline.ts";
+import { MdextSN } from "./MdextSN.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class Block extends MdextSN {

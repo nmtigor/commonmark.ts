@@ -3,13 +3,14 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { _TRACE, global, INOUT } from "../../global.ts";
+import { _TRACE, INOUT } from "../../preNs.ts";
 import type { id_t, ldt_t, loff_t, uint, uint16 } from "../alias.ts";
-import { MAX_lnum } from "../alias.ts";
+import { lnum_MAX } from "../alias.ts";
 import "../jslang.ts";
+import { assert, out } from "../util.ts";
 import { SortedIdo } from "../util/SortedArray.ts";
 import { ws_a } from "../util/string.ts";
-import { assert, out, traceOut } from "../util/trace.ts";
+import { trace, traceOut } from "../util/trace.ts";
 import type { Err, Locval, Tok } from "./alias.ts";
 import { BaseTok } from "./BaseTok.ts";
 import { LocCompared } from "./Loc.ts";
@@ -164,13 +165,13 @@ export abstract class Lexr<T extends Tok = BaseTok> {
 
   #destroyed = false;
   /** `in( this.bufr$)` */
-  destructor(): void {
+  destructor() {
     if (this.#destroyed) return;
 
     this.batchForw_$((tk) => tk.destructor(), this.frstLexTk);
 
     let ln_: TokLine<T> | undefined = this.bufr$.frstLine;
-    const VALVE = MAX_lnum;
+    const VALVE = lnum_MAX;
     let valve = VALVE;
     while (ln_ && --valve) {
       ln_.delFrstTokenBy_$(this);
@@ -405,7 +406,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
     if (!strtTk_x) return;
 
     let tk_: Token<T> | undefined = strtTk_x;
-    const VALVE = MAX_lnum;
+    const VALVE = lnum_MAX;
     let valve = VALVE;
     while (tk_ && tk_ !== stopTk_x && --valve) {
       fn_x(tk_);
@@ -464,7 +465,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   lexmrk_$(oldRan_a_x: TokRan<T>[]): this {
     /*#static*/ if (_TRACE) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.lexmrk_$(${oldRan_a_x}) >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.lexmrk_$(${oldRan_a_x}) >>>>>>>`,
       );
     }
     /*#static*/ if (INOUT) {
@@ -586,7 +587,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   lexadj_$(newRan_a_x: TokRan<T>[]): this {
     /*#static*/ if (_TRACE) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.lexadj_$(${newRan_a_x}) >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.lexadj_$(${newRan_a_x}) >>>>>>>`,
       );
     }
     const LEN = newRan_a_x.length;
@@ -703,7 +704,7 @@ export abstract class Lexr<T extends Tok = BaseTok> {
   lex(valve_x = 10): void {
     assert(valve_x--, "Cycle call!");
     /*#static*/ if (_TRACE) {
-      console.log(`${global.indent}>>>>>>> ${this._type_id_}.lex() >>>>>>>`);
+      console.log(`${trace.indent}>>>>>>> ${this._type_id_}.lex() >>>>>>>`);
     }
     if (this.strtLexTk$ === this.stopLexTk$) { //llll review (one Bufr with different Lexr? etc)
       /* This is the case of one `Bufr` with two or more `EdtrScrolr`. */

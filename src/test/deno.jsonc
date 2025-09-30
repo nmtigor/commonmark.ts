@@ -1,8 +1,0 @@
-{
-  "test": {
-    "include": [
-      "../lib/compiling/mdext/MdextLexr_test.ts"
-    ]
-    // "exclude": [""]
-  }
-}

@@ -4,17 +4,17 @@
  ******************************************************************************/
 
 import type { lcol_t, lnum_t, loff_t, uint, uint16 } from "@fe-lib/alias.ts";
-import { assert } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { FencedCBHead_LI, MdextLexr } from "../MdextLexr.ts";
 import type { BlockCont } from "../alias.ts";
 import {
-  _escapeXml,
-  _tag,
-  _unescapeString,
+  _escapeXml_,
+  _tag_,
+  _unescapeString_,
   gathrUnrelTk_$,
   lastNonblankIn,
 } from "../util.ts";
@@ -108,10 +108,10 @@ export class IndentedCodeBlock extends CodeBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(): string {
+  override _toHTML_(): string {
     const s_a = ["<pre><code>"];
     for (const tk of this.chunkTk_a$) {
-      s_a.push(_escapeXml(tk.getText()), "\n");
+      s_a.push(_escapeXml_(tk.getText()), "\n");
     }
     s_a.push("</code></pre>");
     return s_a.join("");
@@ -284,22 +284,22 @@ export class FencedCodeBlock extends CodeBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(): string {
+  override _toHTML_(): string {
     const attrs: [k: string, v: string][] = [];
 
-    const info_s = _unescapeString(this.#headChunkTk?.getText().trim() ?? "");
+    const info_s = _unescapeString_(this.#headChunkTk?.getText().trim() ?? "");
     let lang_s = info_s.split(/\s+/).at(0);
     if (lang_s?.length) {
-      lang_s = _escapeXml(lang_s);
+      lang_s = _escapeXml_(lang_s);
       attrs.push([
         "class",
         `${/^language-/.test(lang_s) ? "" : "language-"}${lang_s}`,
       ]);
     }
 
-    const s_a = [`<pre>${_tag("code", attrs)}`];
+    const s_a = [`<pre>${_tag_("code", attrs)}`];
     for (const tk of this.chunkTk_a$) {
-      s_a.push(_escapeXml(tk.getText()), "\n");
+      s_a.push(_escapeXml_(tk.getText()), "\n");
     }
     s_a.push("</code></pre>");
     return s_a.join("");

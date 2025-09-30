@@ -3,10 +3,11 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT, PRF } from "../../global.ts";
-import type { BufrDir, int } from "../alias.ts";
+import { INOUT, PRF } from "../../preNs.ts";
 import type {
+  BufrDir,
   id_t,
+  int,
   lcol_t,
   lnum_t,
   loff_t,
@@ -14,15 +15,14 @@ import type {
   uint,
   uint16,
 } from "../alias.ts";
-import { assert } from "../util/trace.ts";
+import { Endpt } from "../alias.ts";
 import type { Bidir } from "../Bidi.ts";
+import { assert } from "../util.ts";
+import { Factory } from "../util/Factory.ts";
+import { g_count } from "../util/performance.ts";
+import type { Bufr } from "./Bufr.ts";
 import type { Line } from "./Line.ts";
 import { Ranval } from "./Ranval.ts";
-import type { Bufr } from "./Bufr.ts";
-import { Factory } from "../util/Factory.ts";
-import { LOG_cssc } from "../../alias.ts";
-import { Endpt } from "../alias.ts";
-import { g_count } from "../util/performance.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type LocInfo = {

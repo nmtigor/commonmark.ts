@@ -3,12 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
+import { INOUT } from "../../preNs.ts";
 import type { id_t } from "../alias.ts";
-import { assert, out } from "../util/trace.ts";
+import { assert, out } from "../util.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import type { Lexr } from "./Lexr.ts";
-import { SortedStnod_depth, SortedStnod_id, Stnode } from "./Stnode.ts";
+import { SortedStnod_id, Stnode } from "./Stnode.ts";
 import type { TokBart } from "./TokBart.ts";
 import type { TokBufr } from "./TokBufr.ts";
 import { type Token } from "./Token.ts";

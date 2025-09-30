@@ -3,12 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { LOG_cssc } from "../../alias.ts";
-import { INOUT, PRF } from "../../global.ts";
+import * as v from "@valibot/valibot";
+import { INOUT } from "../../preNs.ts";
 import type { id_t, lnum_t, loff_t, uint } from "../alias.ts";
-import { zUint } from "../alias.ts";
+import { vUint } from "../alias.ts";
+import { assert, out } from "../util.ts";
 import { Factory } from "../util/Factory.ts";
-import { assert, out } from "../util/trace.ts";
 import { Line } from "./Line.ts";
 import { Loc } from "./Loc.ts";
 import { Ran } from "./Ran.ts";
@@ -348,8 +348,8 @@ export class TSeg {
 
   _Repr_(prevN_x?: uint, nextN_x?: uint): [string[], string, string[]] {
     /*#static*/ if (INOUT) {
-      if (prevN_x !== undefined) zUint.parse(prevN_x);
-      if (nextN_x !== undefined) zUint.parse(nextN_x);
+      if (prevN_x !== undefined) v.parse(vUint, prevN_x);
+      if (nextN_x !== undefined) v.parse(vUint, nextN_x);
     }
     const prev_a: string[] = [],
       next_a: string[] = [];
@@ -406,12 +406,12 @@ export class TSegFac extends Factory<TSeg> {
     /*#static*/ if (INOUT) {
       assert(this.#tfmr.tseg_fac === this);
     }
-    /*#static*/ if (PRF) {
-      console.log(
-        `%c# of cached TSeg instances: ${this.val_a$.length + 1}`,
-        `color:${LOG_cssc.performance}`,
-      );
-    }
+    // /*#static*/ if (PRF) {
+    //   console.log(
+    //     `%c# of cached TSeg instances: ${this.val_a$.length + 1}`,
+    //     `color:${LOG_cssc.performance}`,
+    //   );
+    // }
     return new TSeg(this.#tfmr);
   }
 

@@ -4,9 +4,9 @@
  ******************************************************************************/
 
 import type { lnum_t, uint } from "@fe-lib/alias.ts";
-import { assert } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert } from "@fe-lib/util.ts";
 import { gathrUnrelTk_$ } from "@fe-src/lib/compiling/mdext/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import { Loc } from "../../Loc.ts";
 import { SortedSnt_id } from "../../Snt.ts";
 import { type MdextTk } from "../../Token.ts";
@@ -139,7 +139,7 @@ export class HTMLBlock extends Block {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(): string {
+  override _toHTML_(): string {
     /*#static*/ if (INOUT) {
       assert(this.#chunkTk_a.length);
     }

@@ -3,10 +3,9 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../global.ts";
-import type { int } from "./alias.ts";
-import type { id_t, Runr as IRunr } from "./alias.ts";
-import { assert } from "./util/trace.ts";
+import { INOUT } from "../preNs.ts";
+import type { id_t, int, Runr as IRunr } from "./alias.ts";
+import { assert } from "./util.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type MooEq<T extends {} | null> = (a: T, b: T) => boolean;
@@ -314,7 +313,7 @@ export class Moo<T extends {} | null, D = any, I = any> {
   registHandler(
     h_x: MooHandler<T, D, I>,
     { n, o, f, i = 0 } = {} as RegistHandlerO_<T>,
-  ) {
+  ): void {
     /*#static*/ if (INOUT) {
       assert(FrstCb_i <= i && i <= LastCb_i);
     }
@@ -322,7 +321,10 @@ export class Moo<T extends {} | null, D = any, I = any> {
     // console.log( `this.#handler_db.size=${this.#handler_db.size}` );
   }
   /** @final */
-  removeHandler(h_x: MooHandler<T, D, I>, { n, o } = {} as RemoveHandlerO_<T>) {
+  removeHandler(
+    h_x: MooHandler<T, D, I>,
+    { n, o } = {} as RemoveHandlerO_<T>,
+  ): void {
     this.#handler_db.del(h_x, n, o);
     // console.log( `this.#handler_db.size=${this.#handler_db.size}` );
   }
@@ -331,7 +333,7 @@ export class Moo<T extends {} | null, D = any, I = any> {
    * @headconst @param h_x
    * @h2ndconst @param o_x
    */
-  registOnceHandler(h_x: MooHandler<T, D, I>, o_x?: RegistHandlerO_<T>) {
+  registOnceHandler(h_x: MooHandler<T, D, I>, o_x?: RegistHandlerO_<T>): void {
     const wrap_ = (n_y: T, o_y: T, d_y?: D) => {
       h_x(n_y, o_y, d_y);
       this.removeHandler(wrap_, o_x);
@@ -382,7 +384,7 @@ export class Moo<T extends {} | null, D = any, I = any> {
     });
     this.#val = n_x;
     this.#forcingOnce = this.#forcing;
-    this.#data = undefined; // it is used once
+    this.#data = undefined; // `#data` is used once
 
     // if( this.once_ ) this.#handler_db.clear();
 
@@ -416,18 +418,10 @@ export class Boor<D = any, I = any> {
   get val() {
     return this.#_mo.val;
   }
+
   force(): this {
     this.#_mo.force();
     return this;
-  }
-  set val(_x: boolean) {
-    this.#_mo.val = _x;
-  }
-  tru() {
-    this.#_mo.val = true;
-  }
-  fos() {
-    this.#_mo.val = false;
   }
 
   set data(data_x: D) {
@@ -452,6 +446,19 @@ export class Boor<D = any, I = any> {
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  registHandler(
+    h_x: MooHandler<boolean, D, I>,
+    o_x?: RegistHandlerO_<boolean>,
+  ): void {
+    this.#_mo.registHandler(h_x, o_x);
+  }
+  removeHandler(
+    h_x: MooHandler<boolean, D, I>,
+    o_x?: RemoveHandlerO_<boolean>,
+  ): void {
+    this.#_mo.removeHandler(h_x, o_x);
+  }
 
   onTru(_x: MooHandler<boolean, D, I>) {
     this.#_mo.on(true, _x);
@@ -479,6 +486,20 @@ export class Boor<D = any, I = any> {
       : _x;
     this.#_mo.registHandler(ret);
     return ret;
+  }
+
+  set val(_x: boolean) {
+    this.#_mo.val = _x;
+  }
+  tru() {
+    this.#_mo.val = true;
+  }
+  fos() {
+    this.#_mo.val = false;
+  }
+
+  refresh_Moor() {
+    this.force().val = this.val;
   }
 }
 

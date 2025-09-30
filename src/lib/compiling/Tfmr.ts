@@ -5,9 +5,10 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { _TRACE, global, INOUT } from "../../global.ts";
+import { _TRACE, INOUT } from "../../preNs.ts";
 import type { id_t, ldt_t, loff_t } from "../alias.ts";
-import { assert, out, traceOut } from "../util/trace.ts";
+import { assert, out } from "../util.ts";
+import { trace, traceOut } from "../util/trace.ts";
 import { Bufr } from "./Bufr.ts";
 import { Ran } from "./Ran.ts";
 import { TBufr } from "./TBufr.ts";
@@ -107,7 +108,7 @@ export abstract class Tfmr {
   tfmmrk_$(oldRan_a_x: Ran[]): this {
     /*#static*/ if (_TRACE) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.tfmmrk_$(${oldRan_a_x}) >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.tfmmrk_$(${oldRan_a_x}) >>>>>>>`,
       );
     }
     /*#static*/ if (INOUT) {
@@ -190,7 +191,7 @@ export abstract class Tfmr {
   tfmadj_$(newRan_a_x: Ran[]): this {
     /*#static*/ if (_TRACE) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.tfmadj_$(${newRan_a_x}) >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.tfmadj_$(${newRan_a_x}) >>>>>>>`,
       );
     }
     /*#static*/ if (INOUT) {
@@ -266,7 +267,7 @@ export abstract class Tfmr {
   })
   tfm(): void {
     /*#static*/ if (_TRACE) {
-      console.log(`${global.indent}>>>>>>> ${this._type_id_}.tfm() >>>>>>>`);
+      console.log(`${trace.indent}>>>>>>> ${this._type_id_}.tfm() >>>>>>>`);
     }
     /* llll review similarly as `Lexr.lex()`  */
     if (!this.curTSeg$ || !this.stopTSeg$ || !this.reachTfmBdry$()) {

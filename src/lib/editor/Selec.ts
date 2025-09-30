@@ -3,14 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { _TRACE, DEBUG, global } from "../../global.ts";
 import type { id_t, uint } from "../alias.ts";
 import type { Cssc } from "../color/alias.ts";
 import { Pale } from "../color/Pale.ts";
 import { HTMLVuu } from "../cv.ts";
 import { span } from "../dom.ts";
 import { Factory } from "../util/Factory.ts";
-import { traceOut } from "../util/trace.ts";
 import {
   Ovlap_passive_z,
   Ovlap_proactive_z,
@@ -109,7 +107,7 @@ class Selec extends HTMLVuu<EdtrBase, HTMLSpanElement> {
   // #onPointerDown(_evt_x: PointerEvent) {
   //   /*#static*/ if (_TRACE) {
   //     console.log(
-  //       `${global.indent}>>>>>>> ${this._type_id_}.#onPointerDown() >>>>>>>`,
+  //       `${trace.indent}>>>>>>> ${this._type_id_}.#onPointerDown() >>>>>>>`,
   //     );
   //   }
   // }

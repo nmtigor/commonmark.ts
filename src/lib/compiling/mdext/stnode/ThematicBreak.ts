@@ -46,7 +46,7 @@ export class ThematicBreak extends Block {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(): string {
+  override _toHTML_(): string {
     return `<hr />`;
   }
 }

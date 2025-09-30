@@ -3,9 +3,6 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { assert } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
-import { Err } from "../../alias.ts";
 import type { URITk } from "../../Token.ts";
 import { URI_SN } from "./URI_SN.ts";
 /*80--------------------------------------------------------------------------*/

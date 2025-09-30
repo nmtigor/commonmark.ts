@@ -3,10 +3,9 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { assert, fail, out } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert, fail, out } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import { Pazr } from "../Pazr.ts";
-import type { MdextBufr } from "./MdextBufr.ts";
 import type { MdextLexr } from "./MdextLexr.ts";
 import type { MdextTok } from "./MdextTok.ts";
 import { Block } from "./stnode/Block.ts";

@@ -3,8 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { LOG_cssc } from "../../alias.ts";
-import { _TRACE, CYPRESS, DEBUG, global, INOUT, RESIZ } from "../../global.ts";
+import { _TRACE, CYPRESS, DEBUG, INOUT } from "../../preNs.ts";
 import type { id_t, lnum_t, loff_t } from "../alias.ts";
 import { WritingMode } from "../alias.ts";
 import { Bidi, type Bidir } from "../Bidi.ts";
@@ -14,8 +13,8 @@ import { HTMLVuu, Vuu } from "../cv.ts";
 import { div, textnode } from "../dom.ts";
 import "../jslang.ts";
 import { $tail_ignored, $vuu } from "../symbols.ts";
-import { g_count } from "../util/performance.ts";
-import { assert, traceOut } from "../util/trace.ts";
+import { assert } from "../util.ts";
+import { trace, traceOut } from "../util/trace.ts";
 import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
 import { StnodeV } from "./StnodeV.ts";
 import { TextV } from "./TextV.ts";
@@ -68,12 +67,24 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   /** To be consistent with `StnodeV.eline_$` */
   eline_$ = this;
 
-  /** `bidi$.valid` if there is wrapping. Otherwise, use `bline_$.bidi`. */
-  protected readonly bidi$ = new Bidi();
+  /* #bidi */
+  //jjjj TOCLEANUP
+  // /** `#bidi.valid` if there is wrapping. Otherwise, use `bline_$.bidi`. */
+  readonly #bidi = new Bidi();
+
   /** @final @implement */
   get bidi(): Bidi {
-    return this.bidi$.valid ? this.bidi$ : this.bline_$.bidi;
+    if (
+      this.#bidi.bidiLastCont_ts <
+        Math.max(this.bline_$.lineLastCont_ts, this.coo$.lastSize_ts)
+    ) {
+      this.setBidi$();
+    }
+    //jjjj TOCLEANUP
+    // return this.#bidi.valid ? this.#bidi : this.bline_$.bidi;
+    return this.#bidi;
   }
+  /* ~ */
 
   // protected empty$ = true;
   /** @final */
@@ -89,12 +100,13 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
     super(coo_x, div());
     this.bline_$ = bln_x;
 
-    /*#static*/ if (CYPRESS) {
-      this.el$.cyName = this._type_id_;
+    /*#static*/ if (CYPRESS || DEBUG) {
+      this.el$.hint = this._type_id_;
     }
     // this.assignStylo({});
 
-    new ResizeObserver(this.#onResiz).observe(this.el$);
+    //jjjj TOCLEANUP
+    // new ResizeObserver(this.#onResiz).observe(this.el$);
   }
 
   /** @final */
@@ -109,7 +121,7 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   refreshPlain(): this {
     // /*#static*/ if (_TRACE) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id_}.refreshPlain() >>>>>>>`,
+    //     `${trace.indent}>>>>>>> ${this._type_id_}.refreshPlain() >>>>>>>`,
     //   );
     // }
     this.reset_ELineBase$();
@@ -153,70 +165,84 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
   protected setBidi$(): void {
     /*#static*/ if (_TRACE) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.setBidi$() >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.setBidi$() >>>>>>>`,
       );
     }
     /*#static*/ if (INOUT) {
       assert(this.el$.isConnected);
     }
-    const edtr = this.coo;
     const bln = this.bline_$;
-    using rv_u = g_ranval_fac.oneMore().setRanval(bln.lidx_1, 0);
-    let fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
     const LEN = bln.uchrLen;
-    const wrap_a_0 = this.#wrap_a.slice();
+    //jjjj TOCLEANUP
+    // const wrap_a_0 = this.#wrap_a.slice();
     this.#wrap_a.length = 0;
-    const impl_ = (blockOf_y: BlockOf, samerow_y: SameRow) => {
-      let block_0 = blockOf_y(fsrec.fat);
-      // const _a_ = [];
-      for (let i = 1; i < LEN; ++i) {
-        rv_u.anchrLoff = i;
-        fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
-        // _a_.push(fsrec.top.fixTo(1));
-        if (samerow_y(fsrec.fat, block_0)) continue;
+    const edtr = this.coo$;
+    if (edtr._scrolr.wrap) {
+      using rv_u = g_ranval_fac.oneMore().setRanval(bln.lidx_1, 0);
+      let fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
+      const impl_ = (blockOf_y: BlockOf, samerow_y: SameRow) => {
+        let block_0 = blockOf_y(fsrec.fat);
+        // const _a_ = [];
+        for (let i = 1; i < LEN; ++i) {
+          rv_u.anchrLoff = i;
+          fsrec = edtr._scrolr.anchrRecOf_$(rv_u);
+          // _a_.push(fsrec.top.fixTo(1));
+          if (samerow_y(fsrec.fat, block_0)) continue;
 
-        this.#wrap_a.push(rv_u.anchrLoff);
-        block_0 = blockOf_y(fsrec.fat);
-      }
-    };
-    /* final switch */ ({
-      [WritingMode.htb]: () => {
-        impl_((rec_z) => rec_z.bottom, samerow_bot);
-      },
-      [WritingMode.vrl]: () => {
-        impl_((rec_z) => rec_z.left, samerow_left);
-      },
-      [WritingMode.vlr]: () => {
-        impl_((rec_z) => rec_z.right, samerow_rigt);
-      },
-    }[edtr._writingMode])();
+          this.#wrap_a.push(rv_u.anchrLoff);
+          block_0 = blockOf_y(fsrec.fat);
+        }
+      };
+      /* final switch */ ({
+        [WritingMode.htb]: () => {
+          impl_((rec_z) => rec_z.bottom, samerow_bot);
+        },
+        [WritingMode.vrl]: () => {
+          impl_((rec_z) => rec_z.left, samerow_left);
+        },
+        [WritingMode.vlr]: () => {
+          impl_((rec_z) => rec_z.right, samerow_rigt);
+        },
+      }[edtr._writingMode_])();
+    }
     this.#wrap_a.push(LEN);
     // console.log(this.#wrap_a);
     // console.log(_a_);
 
-    this.bidi$.reset_Bidi(
+    this.#bidi.reset_Bidi(
       bln.text,
       edtr._scrolr.bufrDir,
       this.#wrap_a,
       bln.bidi.embedLevels, //!
     );
-    if (!this.#wrap_a.eql(wrap_a_0)) this.bidi$.validate();
+    //jjjj TOCLEANUP
+    // if (!this.#wrap_a.eql(wrap_a_0)) this.#bidi.validate();
   }
 
-  #onResiz = () => {
-    if (!this.el$.isConnected) return;
+  //jjjj TOCLEANUP
+  // #onResiz = () => {
+  //   if (!this.el$.isConnected) return;
 
-    /*#static*/ if (_TRACE && RESIZ) {
-      console.log(
-        `%c${global.indent}>>>>>>> ${this._type_id_}.#onResiz() (${this.bline_$._type_id_}) >>>>>>>`,
-        `color:${LOG_cssc.resiz}`,
-      );
-    }
-    this.coo$.updateLastViewTs(); //!
-    this.setBidi$(); //kkkk not need to call this in wrap mode
-    /*#static*/ if (_TRACE && RESIZ) global.outdent;
-    return;
-  };
+  //   /*#static*/ if (_TRACE && RESIZ) {
+  //     console.log(
+  //       `%c${trace.indent}>>>>>>> ${this._type_id_}.#onResiz() (${this.bline_$._type_id_}) >>>>>>>`,
+  //       `color:${LOG_cssc.resiz}`,
+  //     );
+  //   }
+  //   //jjjj TOCLEANUP because width of `el$` is always same as size of `main_el`
+  //   // this.coo$.updateLastSizeTs(); //!
+  //   this.setBidi$();
+  //   /*#static*/ if (PRF) {
+  //     console.log(
+  //       `%c${trace.dent}Have passed ${
+  //         ((performance.now() - g_count.hr_0) / 1000).toFixed(1)
+  //       } seconds`,
+  //       `color:${LOG_cssc.performance}`,
+  //     );
+  //   }
+  //   /*#static*/ if (_TRACE && RESIZ) trace.outdent;
+  //   return;
+  // };
 
   /** @final */
   get removed() {
@@ -241,20 +267,20 @@ export abstract class ELineBase<CI extends EdtrBaseCI = EdtrBaseCI>
       } else {
         /*#static*/ if (INOUT) {
           // console.log(
-          //   `loff: ${loff}, strtLoff_$: ${(subNd[$vuu] as StnodeV).strtLoff_$}`,
+          //   `loff: ${loff}, strtLoff_$: ${(subNd.vuu as StnodeV).strtLoff_$}`,
           // );
           assert(
-            subNd[$vuu] instanceof StnodeV && loff === subNd[$vuu].strtLoff_$,
+            subNd.vuu instanceof StnodeV && loff === subNd.vuu.strtLoff_$,
           );
         }
-        if (subNd[$vuu] instanceof TailV) {
-          ret = subNd[$vuu].text;
+        if (subNd.vuu instanceof TailV) {
+          ret = subNd.vuu.text;
           break;
         }
 
-        loff_1 = (subNd[$vuu] as StnodeV).stopLoff_$;
+        loff_1 = (subNd.vuu as StnodeV).stopLoff_$;
         if (loff <= loff_x && loff_x < loff_1) {
-          ret = (subNd[$vuu] as StnodeV).caretNodeAt(loff_x);
+          ret = (subNd.vuu as StnodeV).caretNodeAt(loff_x);
           break;
         }
       }

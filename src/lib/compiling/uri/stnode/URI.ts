@@ -3,16 +3,14 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "@fe-src/global.ts";
-import { assert } from "@fe-lib/util/trace.ts";
+import { assert } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
+import { Err } from "../../alias.ts";
 import type { URITk } from "../../Token.ts";
 import type { Fragment } from "./Fragment.ts";
 import { PathKind, type PathPart } from "./PathPart.ts";
 import type { Query } from "./Query.ts";
 import { URI_SN } from "./URI_SN.ts";
-import { Err } from "../../alias.ts";
-import { Stnode } from "../../Stnode.ts";
-import { URITok } from "../URITok.ts";
 /*80--------------------------------------------------------------------------*/
 
 type URICtorP_ = {

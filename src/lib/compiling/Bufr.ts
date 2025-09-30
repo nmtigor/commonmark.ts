@@ -3,16 +3,15 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { DEBUG, INOUT } from "../../global.ts";
+import { DEBUG, INOUT } from "../../preNs.ts";
 import { Boor, LastCb_i, Moo, type MooHandler } from "../Moo.ts";
-import type { id_t, lnum_t, uint } from "../alias.ts";
-import type { BufrDir, ts_t } from "../alias.ts";
-import { MAX_lnum } from "../alias.ts";
+import type { BufrDir, id_t, lnum_t, ts_t, uint } from "../alias.ts";
+import { lnum_MAX } from "../alias.ts";
 import type { EdtrBaseScrolr } from "../editor/EdtrBase.ts";
+import { assert, out } from "../util.ts";
 import { SortedIdo } from "../util/SortedArray.ts";
 import { Unre } from "../util/Unre.ts";
 import { linesOf } from "../util/string.ts";
-import { assert, out } from "../util/trace.ts";
 import { Line } from "./Line.ts";
 import type { Ran } from "./Ran.ts";
 import { g_ranval_fac } from "./Ranval.ts";
@@ -90,13 +89,13 @@ export class Bufr {
     return this.modified_br_Bufr.val;
   }
   /**
-   * Also update `lastRead_ts` if `modified_x`
+   * Also update `bufrLastCont_ts` if `modified_x`
    * @const @param modified_x
    */
   set modified(modified_x: boolean) {
     this.modified_br_Bufr.val = modified_x;
     if (modified_x) {
-      this.updateLastReadTs();
+      this.#updateLastContTs();
     } else {
       this.#repl_saved = this.#lastRepl;
     }
@@ -172,13 +171,16 @@ export class Bufr {
   readonly repl_actr = new ReplActr(this);
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  #lastRead_ts = 0 as ts_t;
-  get lastRead_ts() {
-    return this.#lastRead_ts;
+  /* bufrLastCont_ts */
+  #lastCont_ts = Date.now_1();
+  /** @final */
+  get bufrLastCont_ts() {
+    return this.#lastCont_ts;
   }
-  updateLastReadTs(): ts_t {
-    return this.#lastRead_ts = Date.now_1();
+  #updateLastContTs(): ts_t {
+    return this.#lastCont_ts = Date.now_1();
   }
+  /* ~ */
 
   /* #sigPool */
   #sigPool: sig_t = 0xffff_ffff;
@@ -208,7 +210,7 @@ export class Bufr {
   /* ~ */
 
   readonly edtr_sa = new SortedIdo();
-  #onEdtrActive: MooHandler<boolean, unknown, EdtrBaseScrolr> = (
+  readonly #onEdtrActiv: MooHandler<boolean, unknown, EdtrBaseScrolr> = (
     n_x,
     _o_x,
     _d_x,
@@ -219,11 +221,11 @@ export class Bufr {
   };
   addEdtr(_x: EdtrBaseScrolr) {
     this.edtr_sa.add(_x);
-    _x.activ_mo.registHandler(this.#onEdtrActive);
+    _x.edtrActiv_mo.registHandler(this.#onEdtrActiv);
   }
   remEdtr(_x: EdtrBaseScrolr) {
     this.edtr_sa.delete(_x);
-    _x.activ_mo.removeHandler(this.#onEdtrActive);
+    _x.edtrActiv_mo.removeHandler(this.#onEdtrActiv);
 
     _x.reset_EdtrBaseScrolr(); //!
   }
@@ -261,7 +263,7 @@ export class Bufr {
 
     this.#filehandle = fh_x;
 
-    // // #if DEBUG && !TESTING
+    // // #if DEBUG && !AUTOTEST
     //   reportBuf( text_a );
     // // #endif
     /*#static*/ if (INOUT) {
@@ -307,7 +309,7 @@ export class Bufr {
     // this.#onReplStateChange = undefined;
     this.repl_actr.fina();
 
-    this.updateLastReadTs();
+    this.#updateLastContTs();
 
     /*#static*/ if (DEBUG) {
       assert(this.#sigPool === 0xffff_ffff); //kkkk
@@ -368,7 +370,7 @@ export class Bufr {
     return ret!;
   }
 
-  frstLineWith(cb_x: (ln_y: Line) => boolean, valve_x = MAX_lnum) {
+  frstLineWith(cb_x: (ln_y: Line) => boolean, valve_x = lnum_MAX) {
     // let ln_ = this.frstLine_$;
     // while (!cb_x(ln_) && ln_.nextLine && --valve_x) {
     //   ln_ = ln_.nextLine;
@@ -383,10 +385,10 @@ export class Bufr {
     }
     return undefined;
   }
-  frstNonemptyLine(valve_x = MAX_lnum) {
+  frstNonemptyLine(valve_x = lnum_MAX) {
     return this.frstLineWith((ln_y) => !!ln_y.uchrLen, valve_x);
   }
-  lastLineWith(cb_x: (ln_y: Line) => boolean, valve_x = MAX_lnum) {
+  lastLineWith(cb_x: (ln_y: Line) => boolean, valve_x = lnum_MAX) {
     // let ln_ = this.lastLine_$;
     // while (!cb_x(ln_) && ln_.prevLine && --valve_x) {
     //   ln_ = ln_.prevLine;
@@ -401,7 +403,7 @@ export class Bufr {
     }
     return undefined;
   }
-  lastNonemptyLine(valve_x = MAX_lnum) {
+  lastNonemptyLine(valve_x = lnum_MAX) {
     return this.lastLineWith((ln_y) => !!ln_y.uchrLen, valve_x);
   }
 
@@ -414,7 +416,7 @@ export class Bufr {
 
     let sz = 0;
     let ln: Line | undefined = this.frstLine;
-    const VALVE = MAX_lnum;
+    const VALVE = lnum_MAX;
     let valve = VALVE;
     while (ln && --valve) {
       ret.push(ln.text);
@@ -498,7 +500,7 @@ export class Bufr {
 
       // this.#doq.getUn().replBRun();
       // this.#updateDoCap();
-      // this.#lastRepl = this.#doq.peekUn(); //!
+      // this.#lastRepl = this.#doq.tryGetUn(); //!
       this.#lastRepl = this.#doq.getUn();
       this.#lastRepl.replBRun();
       this.modified = this.#lastRepl !== this.#repl_saved;

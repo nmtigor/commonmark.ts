@@ -3,23 +3,23 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import type { int } from "@fe-lib/alias.ts";
 import type {
   Constructor,
+  int,
   lnum_t,
   loff_t,
   uint,
   uint16,
 } from "@fe-lib/alias.ts";
-import { assert, fail, out } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert, fail, out } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { LexdInfo } from "../../Lexr.ts";
 import type { Loc } from "../../Loc.ts";
+import { g_ran_fac } from "../../RanFac.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import { TokLoc } from "../../TokLoc.ts";
-import { TokRan } from "../../TokRan.ts";
-import { Token } from "../../Token.ts";
 import type { MdextTk } from "../../Token.ts";
+import { Token } from "../../Token.ts";
 import type { BrktOpen_LI, EmphDelim_LI, MdextLexr } from "../MdextLexr.ts";
 import { MdextTok } from "../MdextTok.ts";
 import { gathrUnrelTk_$ } from "../util.ts";
@@ -33,7 +33,6 @@ import { Inline } from "./Inline.ts";
 import { Link, type LinkMode } from "./Link.ts";
 import { Linkdef } from "./Linkdef.ts";
 import type { TokenSN } from "./TokenSN.ts";
-import { g_ran_fac } from "../../RanFac.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** primaryconst: const exclude +`#poc`,`iCurSnt_$` */

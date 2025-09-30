@@ -4,8 +4,8 @@
  ******************************************************************************/
 
 import type { uint } from "@fe-lib/alias.ts";
-import { fail } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { fail } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";

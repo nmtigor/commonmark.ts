@@ -173,10 +173,15 @@ export const uint8FromB64 = (b64_x: string): Uint8Array => {
   return uint8;
 };
 
+/** @const @param b64_x */
+export const decodeB64 = (b64_x: string): string => {
+  return decodeABV(uint8FromB64(b64_x));
+};
+
 /**
  * Ref. https://github.com/denoland/std/blob/e02e89fef3cd7f625e487f76e9d56b8b60137102/encoding/base64url.ts#L31
- * @throw `TypeError`
  * @param b64url_x
+ * @throw `TypeError`
  */
 export const b64FromB64url = (b64url_x: string): string => {
   if (!/^[-_A-Z0-9]*?={0,2}$/i.test(b64url_x)) {
@@ -198,9 +203,18 @@ export const b64FromB64url = (b64url_x: string): string => {
 /**
  * Ref. https://github.com/denoland/std/blob/e02e89fef3cd7f625e487f76e9d56b8b60137102/encoding/base64url.ts#L88
  * @param b64url_x
+ * @throw `TypeError`
  */
 export const uint8FromB64url = (b64url_x: string): Uint8Array => {
   return uint8FromB64(b64FromB64url(b64url_x));
+};
+
+/**
+ * @const @param b64url_x
+ * @throw `TypeError`
+ */
+export const decodeB64url = (b64url_x: string): string => {
+  return decodeABV(uint8FromB64url(b64url_x));
 };
 /*80--------------------------------------------------------------------------*/
 

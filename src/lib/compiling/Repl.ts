@@ -3,12 +3,13 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import * as Is from "../util/is.ts";
-import { _TRACE, global, INOUT } from "../../global.ts";
+import { _TRACE, INOUT } from "../../preNs.ts";
 import type { id_t, lnum_t } from "../alias.ts";
-import { linesOf } from "../util/string.ts";
+import { assert, fail } from "../util.ts";
+import * as Is from "../util/is.ts";
 import { type Less, SortedArray } from "../util/SortedArray.ts";
-import { assert, fail, traceOut } from "../util/trace.ts";
+import { linesOf } from "../util/string.ts";
+import { trace, traceOut } from "../util/trace.ts";
 import { BufrReplState } from "./alias.ts";
 import type { Bufr } from "./Bufr.ts";
 import { Line } from "./Line.ts";
@@ -385,7 +386,7 @@ export class Repl {
     outTxt_a_x: string[] | string[][],
   ) {
     /*#static*/ if (_TRACE) {
-      console.log(`${global.indent}>>>>>>> ${this._type_id_}._impl() >>>>>>>`);
+      console.log(`${trace.indent}>>>>>>> ${this._type_id_}._impl() >>>>>>>`);
     }
     const inRan_a = this.#pre(inRv_x);
 

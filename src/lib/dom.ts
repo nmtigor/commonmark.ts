@@ -3,7 +3,7 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { DENO } from "../global.ts";
+import { DENO } from "../preNs.ts";
 import type { CSSStyle, loff_t, uint } from "./alias.ts";
 import type { Vuu } from "./cv.ts";
 import { $cssstylesheet, $loff, $ovlap, $tail_ignored } from "./symbols.ts";
@@ -46,11 +46,11 @@ declare global {
      * For "pointerup" by `MouseButton.Main`, to prevent `DragPopmenu` from
      * `idleHide()`.
      *
-     * Do not `stopPropagation()` in advance because "pointerup" by
-     * `MouseButton.Main` requires bubble up to top in general to `off()` some
+     * Do not `stopPropagation()` in advance because in general, "pointerup" by
+     * `MouseButton.Main` requires to bubble up to the top to `off()` some
      * global event listeners. (see uses of `g_vco.off()`)
      */
-    isDragd?: boolean;
+    keepPop?: boolean;
   }
 
   interface WheelEvent {
@@ -89,15 +89,6 @@ if (globalThis.WheelEvent) {
       };
     },
   });
-}
-/*64----------------------------------------------------------*/
-
-export const enum MouseButton {
-  Main = 0,
-  Auxiliary = 1,
-  Secondary = 2,
-  Back = 3,
-  Forward = 4,
 }
 /*64----------------------------------------------------------*/
 
@@ -225,9 +216,7 @@ if (globalThis.Node) {
 
 declare global {
   interface Document {
-    /**
-     * Used for adding CSS pseudo-element like `::-webkit-scrollbar`
-     */
+    /** Used for adding CSS pseudo-element like `::-webkit-scrollbar` */
     [$cssstylesheet]: CSSStyleSheet;
   }
 }
@@ -250,7 +239,7 @@ declare global {
     readonly scrollRight: number;
     readonly scrollBottom: number;
 
-    cyName: string;
+    hint: string;
   }
 }
 
@@ -273,12 +262,12 @@ if (globalThis.Element) {
     },
   });
 
-  Reflect.defineProperty(Element.prototype, "cyName", {
+  Reflect.defineProperty(Element.prototype, "hint", {
     get(this: Element) {
-      return this.getAttribute("data-cy");
+      return this.getAttribute("hint");
     },
     set(this: Element, name_x: string) {
-      this.setAttribute("data-cy", name_x);
+      this.setAttribute("hint", name_x);
     },
   });
 }

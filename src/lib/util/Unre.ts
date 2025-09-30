@@ -3,9 +3,9 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
+import { INOUT } from "../../preNs.ts";
 import type { id_t, uint } from "../alias.ts";
-import { assert } from "./trace.ts";
+import { assert } from "../util.ts";
 /*80--------------------------------------------------------------------------*/
 
 export const enum LastUR {
@@ -133,10 +133,10 @@ export class Unre<T extends {} | null> {
     return this.ary$[i_];
   }
 
-  peekUn() {
+  tryGetUn() {
     return this.canGetUn() ? this.getUn() : undefined;
   }
-  peekRe() {
+  tryGetRe() {
     return this.canGetRe() ? this.getRe() : undefined;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/

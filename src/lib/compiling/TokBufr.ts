@@ -211,12 +211,12 @@ export class TokBufr<T extends Tok = BaseTok> extends Bufr {
 //  * @headconst @param lexr_x
 //  */
 // const bakeRanval_ = <T extends Tok>(bufr_x: TokBufr<T>, lexr_x: Lexr<T>) => {
-//   // console.log(`${global.dent}newRan: ${bufr_x.newRan_$?.toString()}`);
+//   // console.log(`${trace.dent}newRan: ${bufr_x.newRan_$?.toString()}`);
 //   const loc_0 = bufr_x.newRan_$!.strtLoc;
 //   const ln_0 = loc_0.line;
 //   let ln_ = ln_0;
 //   let tk_0 = ln_.frstTokenBy(lexr_x);
-//   const VALVE = MAX_lnum * 10;
+//   const VALVE = lnum_MAX * 10;
 //   let valve = VALVE;
 //   while (!tk_0 && ln_.nextLine && --valve) {
 //     ln_ = ln_.nextLine;

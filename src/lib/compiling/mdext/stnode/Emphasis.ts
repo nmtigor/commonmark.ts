@@ -4,14 +4,14 @@
  ******************************************************************************/
 
 import type { uint } from "@fe-lib/alias.ts";
-import { fail } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { fail } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
-import { Token } from "../../Token.ts";
 import type { MdextTk } from "../../Token.ts";
+import { Token } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
-import { _toHTML, gathrUnrelTk_$ } from "../util.ts";
+import { _toHTML_, gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -111,14 +111,14 @@ export class Emphasis extends Inline {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
+  override _toHTML_(lexr_x: MdextLexr): string {
     return lexr_x._enableTags
       ? [
         this.#strong ? "<strong>" : "<em>",
-        _toHTML(lexr_x, this.#textSnt_a),
+        _toHTML_(lexr_x, this.#textSnt_a),
         this.#strong ? "</strong>" : "</em>",
       ].join("")
-      : _toHTML(lexr_x, this.#textSnt_a);
+      : _toHTML_(lexr_x, this.#textSnt_a);
   }
 }
 /*80--------------------------------------------------------------------------*/

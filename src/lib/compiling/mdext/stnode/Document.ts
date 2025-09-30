@@ -3,14 +3,14 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { fail } from "@fe-lib/util/trace.ts";
-import { Block } from "./Block.ts";
-import { BlockCont } from "../alias.ts";
-import { ListItem } from "./ListItem.ts";
-import type { MdextLexr } from "../MdextLexr.ts";
-import { _toHTML } from "../util.ts";
-import { CtnrBlock } from "./CtnrBlock.ts";
 import type { Loc } from "@fe-lib/compiling/Loc.ts";
+import { fail } from "@fe-lib/util.ts";
+import { BlockCont } from "../alias.ts";
+import type { MdextLexr } from "../MdextLexr.ts";
+import { _toHTML_ } from "../util.ts";
+import { Block } from "./Block.ts";
+import { CtnrBlock } from "./CtnrBlock.ts";
+import { ListItem } from "./ListItem.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -58,8 +58,8 @@ export class Document extends CtnrBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
-    return _toHTML(lexr_x, this.children);
+  override _toHTML_(lexr_x: MdextLexr): string {
+    return _toHTML_(lexr_x, this.children);
   }
 }
 /*80--------------------------------------------------------------------------*/

@@ -3,15 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { z } from "@zod";
-import type { id_t, Ratio, Runr, uint } from "../alias.ts";
-import { zRatio } from "../alias.ts";
+import * as v from "@valibot/valibot";
+import type { Runr } from "../alias.ts";
 import "../jslang.ts";
-import type { alpha_t, chroma_t, Cssc, hue_t, red_t, tone_t } from "./alias.ts";
-import { zAlpha, zChroma, zHue, zRed, zTone } from "./alias.ts";
-import { type Colr, createColr } from "./Colr.ts";
-import { fail } from "../util/trace.ts";
-import type { SortedArray } from "../util/SortedArray.ts";
+import type { alpha_t, chroma_t, hue_t, red_t, tone_t } from "./alias.ts";
+import type { Colr } from "./Colr.ts";
+import { createColr } from "./Colr.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type ColrStepRaw = {
@@ -21,26 +18,12 @@ export type ColrStepRaw = {
   min?: number;
   max?: number;
 };
-export const zColrStepRaw = z.object({
-  channel: z.union([
-    z.literal("r"),
-    z.literal("g"),
-    z.literal("b"),
-    z.literal("h"),
-    z.literal("c"),
-    z.literal("t"),
-    z.literal("a"),
-  ]),
-  value: z.number(),
-  flag: z.union([
-    z.literal("+"),
-    z.literal("+%"),
-    z.literal("-"),
-    z.literal("-%"),
-    z.literal("/"),
-  ]).optional(),
-  min: z.number().optional(),
-  max: z.number().optional(),
+export const vColrStepRaw = v.object({
+  channel: v.picklist(["r", "g", "b", "h", "c", "t", "a"]),
+  value: v.number(),
+  flag: v.exactOptional(v.picklist(["+", "+%", "-", "-%", "/"])),
+  min: v.exactOptional(v.number()),
+  max: v.exactOptional(v.number()),
 });
 
 // export type ColrStep_old =
@@ -56,17 +39,17 @@ export const zColrStepRaw = z.object({
 //   | ["t-", Ratio]
 //   | ["a", alpha_t];
 // const zColrStep_old = z.union([
-//   z.tuple([z.literal("r"), zRed]),
-//   z.tuple([z.literal("g"), zRed]),
-//   z.tuple([z.literal("b"), zRed]),
-//   z.tuple([z.literal("h"), zHue]),
-//   z.tuple([z.literal("c"), zChroma]),
-//   z.tuple([z.literal("c+"), zRatio]),
-//   z.tuple([z.literal("c-"), zRatio]),
-//   z.tuple([z.literal("t"), zTone]),
-//   z.tuple([z.literal("t+"), zRatio]),
-//   z.tuple([z.literal("t-"), zRatio]),
-//   z.tuple([z.literal("a"), zAlpha]),
+//   z.tuple([z.literal("r"), vRed]),
+//   z.tuple([z.literal("g"), vRed]),
+//   z.tuple([z.literal("b"), vRed]),
+//   z.tuple([z.literal("h"), vHue]),
+//   z.tuple([z.literal("c"), vChroma]),
+//   z.tuple([z.literal("c+"), vRatio]),
+//   z.tuple([z.literal("c-"), vRatio]),
+//   z.tuple([z.literal("t"), vTone]),
+//   z.tuple([z.literal("t+"), vRatio]),
+//   z.tuple([z.literal("t-"), vRatio]),
+//   z.tuple([z.literal("a"), vAlpha]),
 // ]);
 /*64----------------------------------------------------------*/
 

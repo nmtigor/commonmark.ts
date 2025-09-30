@@ -3,11 +3,10 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { CYPRESS } from "../global.ts";
+import { CYPRESS } from "../preNs.ts";
 import type { CSSStyle, id_t } from "./alias.ts";
 import { svg } from "./dom.ts";
 import { mix } from "./jslang.ts";
-import { $vuu } from "./symbols.ts";
 import type { ReportedError } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -47,8 +46,7 @@ export abstract class Coo<CI extends CooInterface = CooInterface> {
 
 declare global {
   interface Node {
-    [$vuu]?: Vuu;
-    "cy.vuu": Vuu;
+    vuu?: Vuu;
     // [$Vuu]?: AbstractConstructor<Vuu>;
   }
 }
@@ -60,12 +58,12 @@ declare global {
 export abstract class Vuu<C extends Coo = Coo, E extends Element = Element> {
   static #ID = 0 as id_t;
   readonly id = ++Vuu.#ID as id_t;
-  get _type() {
+  get _type_() {
     return this.constructor.name;
   }
   /** @final */
   get _type_id_() {
-    return `${this._type}_${this.id}`;
+    return `${this._type_}_${this.id}`;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
@@ -94,9 +92,8 @@ export abstract class Vuu<C extends Coo = Coo, E extends Element = Element> {
     this.coo$ = coo_x;
     this.el$ = el_x;
 
-    this.el$[$vuu] = this;
+    this.el$.vuu = this;
     /*#static*/ if (CYPRESS) {
-      this.el$["cy.vuu"] = this;
       this.el$["cy.use"] = 1;
     }
     // this.el$[$Vuu] = Vuu;
@@ -104,15 +101,15 @@ export abstract class Vuu<C extends Coo = Coo, E extends Element = Element> {
 
   get parentVuu_1(): Vuu | undefined {
     let node = this.el$.parentNode;
-    while (node && !node[$vuu]) node = node.parentNode;
-    return node?.[$vuu];
+    while (node && !node.vuu) node = node.parentNode;
+    return node?.vuu;
   }
 
   /** @headconst @param node_x */
   static of(node_x: Node): Vuu | undefined {
     let node: Node | null = node_x;
-    while (node && !node[$vuu]) node = node.parentNode;
-    return node?.[$vuu];
+    while (node && !node.vuu) node = node.parentNode;
+    return node?.vuu;
   }
 
   // /**

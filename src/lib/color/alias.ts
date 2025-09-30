@@ -3,30 +3,36 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { z } from "@zod";
+import * as v from "@valibot/valibot";
 import type { ArrEl, Ratio, uint8 } from "../alias.ts";
-import { zRatio, zUint8 } from "../alias.ts";
+import { vRatio, vUint8 } from "../alias.ts";
 import { html } from "../dom.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type red_t = uint8;
-export const zRed = zUint8;
+export const vRed = vUint8;
 
 export type alpha_t = Ratio;
-export const zAlpha = zRatio.min(0).max(1);
+export const vAlpha = v.pipe(vRatio, v.minValue(0), v.maxValue(1));
 
 export type rgb_t = [red_t, red_t, red_t];
 export type rgba_t = [red_t, red_t, red_t, alpha_t];
 
 /** [0,360) */
 export type hue_t = number;
-export const zHue = z.number().min(0).lt(360);
+//jjjj TOCLEANUP
+// export const zHue = z.number().min(0).lt(360);
+export const vHue = v.pipe(v.number(), v.minValue(0), v.ltValue(360));
 /** [0,100] */
 export type chroma_t = number;
-export const zChroma = z.number().min(0).max(100);
+//jjjj TOCLEANUP
+// export const zChroma = z.number().min(0).max(100);
+export const vChroma = v.pipe(v.number(), v.minValue(0), v.maxValue(100));
 /** [0,100] */
 export type tone_t = number;
-export const zTone = z.number().min(0).max(100);
+//jjjj TOCLEANUP
+// export const zTone = z.number().min(0).max(100);
+export const vTone = v.pipe(v.number(), v.minValue(0), v.maxValue(100));
 /*64----------------------------------------------------------*/
 
 /** "#123456" */
@@ -143,14 +149,16 @@ const style_ = html("option").style;
  * ! Not work (i.e., always true) if `!globalThis.Option`
  * @const @param cssc_x
  */
-export function isValidCssc(cssc_x: string): cssc_x is Cssc {
+export function isValidCssc(cssc_x: unknown): cssc_x is Cssc {
   if (cssc_x === "currentcolor") return false;
 
   style_.color = "";
-  style_.color = cssc_x;
+  style_.color = cssc_x as string;
   // console.log( style_.color );
   return !!style_.color;
 }
 // console.log( isValidCssc("#23202F") );
-export const zCssc = z.custom(isValidCssc);
+//jjjj TOCLEANUP
+// export const zCssc = z.custom(isValidCssc);
+export const vCssc = v.custom<Cssc>(isValidCssc);
 /*80--------------------------------------------------------------------------*/

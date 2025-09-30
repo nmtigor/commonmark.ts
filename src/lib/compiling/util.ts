@@ -3,18 +3,11 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "@fe-src/global.ts";
-import type { loff_t, uint, uint16 } from "../alias.ts";
-import { domParser } from "../util/dom.ts";
-import { isASCIILetter, isDecimalDigit, isHexDigit } from "../util/string.ts";
-import { assert } from "../util/trace.ts";
-import { BaseTok } from "./BaseTok.ts";
-import type { Line } from "./Line.ts";
-import type { Loc } from "./Loc.ts";
-import { SortedSnt_id } from "./Snt.ts";
-import { MdextTk } from "./Token.ts";
 import * as Is from "@fe-lib/util/is.ts";
-import { ws_a } from "../util/string.ts";
+import { INOUT } from "@fe-src/preNs.ts";
+import type { loff_t, uint16 } from "../alias.ts";
+import { assert } from "../util.ts";
+import type { Line } from "./Line.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**

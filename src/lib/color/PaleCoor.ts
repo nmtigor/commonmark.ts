@@ -3,39 +3,42 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import * as Is from "../util/is.ts";
-import { z } from "@zod";
-import { INOUT } from "../../global.ts";
+import * as v from "@valibot/valibot";
+import { INOUT } from "../../preNs.ts";
 import { Boor, Runr } from "../Moo.ts";
 import type { id_t, uint } from "../alias.ts";
+import { assert, warn } from "../util.ts";
 import { type Less, SortedArray } from "../util/SortedArray.ts";
-import { assert, warn } from "../util/trace.ts";
+import * as Is from "../util/is.ts";
 import { createColr, csscLess, csscname } from "./Colr.ts";
 import type { ColrFnRaw } from "./ColrFn.ts";
-import { ColrFn, isColrFn, zColrFnRaw } from "./ColrFn.ts";
+import { ColrFn, isColrFn, vColrFnRaw } from "./ColrFn.ts";
 import { ColrStep } from "./ColrStep.ts";
 import { Colran } from "./Colran.ts";
 import type { ColranQRaw } from "./ColranQ.ts";
-import { ColranQ, createColranQRaw, zColranQRaw } from "./ColranQ.ts";
+import { ColranQ, createColranQRaw, vColranQRaw } from "./ColranQ.ts";
 import { Pale } from "./Pale.ts";
-import { type Cssc, zCssc } from "./alias.ts";
+import { type Cssc, vCssc } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** valid pale name */
 export type PaleName = string;
-export const zPaleName = z.string();
+export const vPaleName = v.string();
 
 export type PaleCoorRaw = {
   axes?: PaleName[] | undefined;
   /** Array of ColranQRaw Map */
   qm_a: [ColranQRaw | null, Cssc | ColrFnRaw][];
 };
-export const zPaleCoorRaw = z.object({
-  axes: z.array(zPaleName).optional(),
-  qm_a: z.array(z.tuple([
-    zColranQRaw.nullable(),
-    z.union([zCssc, zColrFnRaw]),
-  ])).nonempty(),
+export const vPaleCoorRaw = v.object({
+  axes: v.optional(v.array(vPaleName)),
+  qm_a: v.pipe(
+    v.array(v.tuple([
+      v.nullable(vColranQRaw),
+      v.union([vCssc, vColrFnRaw]),
+    ])),
+    v.nonEmpty(),
+  ),
 });
 
 export function createPaleCoorRaw(): PaleCoorRaw {

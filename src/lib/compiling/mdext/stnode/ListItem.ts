@@ -10,7 +10,7 @@ import { SortedStnod_id } from "../../Stnode.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { ListMrkr_LI, MdextLexr } from "../MdextLexr.ts";
 import type { BlockCont } from "../alias.ts";
-import { _toHTML, gathrUnrelTk_$ } from "../util.ts";
+import { _toHTML_, gathrUnrelTk_$ } from "../util.ts";
 import { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import { Inline } from "./Inline.ts";
@@ -121,8 +121,8 @@ export abstract class ListItem extends CtnrBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
-    const s_ = _toHTML(lexr_x, this.children);
+  override _toHTML_(lexr_x: MdextLexr): string {
+    const s_ = _toHTML_(lexr_x, this.children);
     if (!s_) return "<li></li>";
 
     const lf_0 = this.frstChild instanceof Paragraph && this.parent._tight

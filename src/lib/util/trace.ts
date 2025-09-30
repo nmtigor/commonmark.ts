@@ -3,52 +3,70 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { g_getRootVCo } from "@fe-src/alias.ts";
-import { global, INOUT, TESTING } from "../../global.ts";
+import { global } from "../../global.ts";
 import type { ts_t } from "../alias.ts";
+import { space } from "../util.ts";
 /*80--------------------------------------------------------------------------*/
 
-/**
- * @const @param assertion
- * @const @param msg
- */
-export function assert(
-  assertion: any,
-  ...data: any[]
-  // meta?: { url: string },
-) {
-  // if (!assertion && meta) {
-  //   const match = meta.url.match(/\/([^\/]+\.js)/);
-  //   // console.log(match);
-  //   if (match) msg += ` (${match[1]})`;
-  // }
-  /*#static*/ if (!TESTING) {
-    console.assert(assertion, ...data);
+export const trace = new class {
+  readonly #tabsize = 4;
+
+  #dent = 0;
+  get dent() {
+    let ret;
+    if (this.#dent === 0) ret = "";
+    else ret = space(this.#dent);
+    return ret;
+  }
+  get indent() {
+    const ret = this.dent;
+    this.#dent += this.#tabsize;
+    return ret;
+  }
+  get outdent() {
+    this.#dent -= this.#tabsize;
+    console.assert(
+      this.#dent >= 0,
+      "There are more outdent than indent!",
+    );
+    return this.dent;
   }
 
-  if (!assertion) throw new Error(data[0], { cause: data });
-}
-
-export function fail(...data: any[]): never {
-  /*#static*/ if (!TESTING) {
-    console.assert(false, ...data);
+  #_dent_ = 0;
+  get _dent_() {
+    let ret;
+    if (this.#_dent_ === 0) ret = "";
+    else ret = space(this.#_dent_);
+    return ret;
+  }
+  get _indent_() {
+    const ret = this._dent_;
+    this.#_dent_ += this.#tabsize;
+    return ret;
+  }
+  get _outdent_() {
+    this.#_dent_ -= this.#tabsize;
+    console.assert(
+      this.#_dent_ >= 0,
+      "There are more _outdent_ than _indent_!",
+    );
+    return this._dent_;
   }
 
-  throw new Error(data[0], { cause: data });
-}
-
-export function warn(
-  ...data: any[]
-  // meta?: { url: string }
-) {
-  /*#static*/ if (TESTING) return;
-
-  // if (meta) {
-  //   const match = meta.url.match(/\/([^\/]+\.js)/);
-  //   if (match) msg += ` (${match[1]})`;
+  // inlog( s_x:string, c_x?:string )
+  // {
+  //   if( c_x === undefined )
+  //        console.log( `${this.indent}${s_x}` );
+  //   else console.log( `%c${this.indent}${s_x}`, `color:${c_x}` );
   // }
-  console.warn(...data);
-}
+  // log( s_x:string, c_x?:string )
+  // {
+  //   if( c_x === undefined )
+  //        console.log( `${this.dent}${s_x}` );
+  //   else console.log( `%c${this.dent}${s_x}`, `color:${c_x}` );
+  // }
+}();
+/*80--------------------------------------------------------------------------*/
 
 let reporting_: Error | undefined;
 let count_reported_ = 0;
@@ -83,10 +101,8 @@ Reflect.defineProperty(Error.prototype, "toJ", {
   },
 });
 
-/**
- * @headconst @param err_x
- */
-export const reportError = async <E extends Error>(err_x: E) => {
+/** @headconst @param err_x */
+export const reportError = <E extends Error>(err_x: E) => {
   if (reporting_) return;
   reporting_ = err_x;
 
@@ -95,7 +111,7 @@ export const reportError = async <E extends Error>(err_x: E) => {
 
   const err_j = err_x?.toJ(); //! `err_x` seems still  could be `null` at runtime
   // console.log(err_j);
-  g_getRootVCo()?.showReportedError?.({
+  global.mw?.showReportedError?.({
     err_j,
     ts: Date.now() as ts_t,
   });
@@ -121,7 +137,7 @@ export const reportError = async <E extends Error>(err_x: E) => {
 
   // if( res.ok )
   // {
-  //   g_getRootVCo()?.showReportedError?.( data_be.data_fe );
+  //   global.mw?.showReportedError?.( data_be.data_fe );
 
   //   count_reported_++;
   //   if( count_reported_ > MAX_reported_ )
@@ -138,22 +154,6 @@ export const reportError = async <E extends Error>(err_x: E) => {
 
 /**
  * Ref. https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/#decorators
- * @headconst @param _tgt_x
- * @headconst @param ctx_x
- */
-export const bind = (_tgt_x: unknown, ctx_x: ClassMethodDecoratorContext) => {
-  const methodName = ctx_x.name;
-  assert(
-    !ctx_x.private,
-    `'bound' cannot decorate private properties like ${methodName as string}.`,
-  );
-  ctx_x.addInitializer(function (this: any) {
-    this[methodName] = this[methodName].bind(this);
-  });
-};
-
-/**
- * Ref. https://devblogs.microsoft.com/typescript/announcing-typescript-5-0/#decorators
  * @const @param _x
  */
 export const traceOut = (_x: boolean) => {
@@ -163,21 +163,7 @@ export const traceOut = (_x: boolean) => {
     return _x
       ? function (this: This, ...args: Args): Return {
         const ret = tgt_x.call(this, ...args);
-        global.outdent;
-        return ret;
-      }
-      : tgt_x;
-  };
-};
-
-export const out = <This, Return, Args extends any[]>(
-  _x: (self_y: This, ret_y: Return, args_y: Args) => void,
-) => {
-  return (tgt_x: (this: This, ...args: Args) => Return) => {
-    return /*#static*/ INOUT
-      ? function (this: This, ...args: Args): Return {
-        const ret = tgt_x.call(this, ...args);
-        _x(this, ret, args);
+        trace.outdent;
         return ret;
       }
       : tgt_x;

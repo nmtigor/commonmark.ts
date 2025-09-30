@@ -3,11 +3,11 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT, PRF, space } from "../../global.ts";
+import { INOUT, PRF } from "../../preNs.ts";
 import type { id_t, lnum_t, loff_t } from "../alias.ts";
 import { Endpt } from "../alias.ts";
+import { assert, out, space } from "../util.ts";
 import { g_count } from "../util/performance.ts";
-import { assert, out } from "../util/trace.ts";
 import type { Bufr } from "./Bufr.ts";
 import type { Line } from "./Line.ts";
 import { Loc } from "./Loc.ts";

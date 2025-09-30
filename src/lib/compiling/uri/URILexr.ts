@@ -3,14 +3,13 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { LOG_cssc } from "@fe-src/alias.ts";
-import { PRF } from "@fe-src/global.ts";
 import type { loff_t, uint, uint16 } from "../../alias.ts";
+import { assert } from "../../util.ts";
 import { Factory } from "../../util/Factory.ts";
 import { isDecimalDigit, isWhitespaceUCod } from "../../util/string.ts";
-import { assert } from "../../util/trace.ts";
 import { Err } from "../alias.ts";
 import { Lexr } from "../Lexr.ts";
+import type { TokBart } from "../TokBart.ts";
 import type { URITk } from "../Token.ts";
 import { TokRan } from "../TokRan.ts";
 import { frstNon } from "../util.ts";
@@ -28,7 +27,6 @@ import {
   peekSeqIUPSC,
   peekSeqIUPSCA,
 } from "./util.ts";
-import type { TokBart } from "../TokBart.ts";
 /*80--------------------------------------------------------------------------*/
 
 const enum Ctx_ {

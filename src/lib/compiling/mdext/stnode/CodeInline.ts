@@ -4,13 +4,13 @@
  ******************************************************************************/
 
 import type { uint } from "@fe-lib/alias.ts";
-import { fail } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { fail } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
-import { _escapeXml, gathrUnrelTk_$ } from "../util.ts";
+import { _escapeXml_, gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -86,7 +86,7 @@ export class CodeInline extends Inline {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
+  override _toHTML_(lexr_x: MdextLexr): string {
     const s_a: string[] = [];
     let curLn = this.#chunkTk_a[0].sntFrstLine;
     for (const tk of this.#chunkTk_a) {
@@ -108,8 +108,8 @@ export class CodeInline extends Inline {
       s_ = s_.slice(1, -1);
     }
     return lexr_x._enableTags
-      ? `<code>${_escapeXml(s_)}</code>`
-      : _escapeXml(s_);
+      ? `<code>${_escapeXml_(s_)}</code>`
+      : _escapeXml_(s_);
   }
 }
 /*80--------------------------------------------------------------------------*/

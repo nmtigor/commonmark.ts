@@ -32,7 +32,7 @@ export abstract class MdextSN extends Stnode<MdextTok> {
   /**
    * @headconst @param _lexr_x
    */
-  _toHTML(_lexr_x: MdextLexr): string {
+  _toHTML_(_lexr_x: MdextLexr): string {
     return "";
   }
 }

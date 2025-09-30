@@ -3,8 +3,9 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "@fe-src/global.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { lcol_t, lnum_t, loff_t, uint, uint16 } from "../../alias.ts";
+import { assert, fail, out } from "../../util.ts";
 import {
   isASCIIControl,
   isASCIILetter,
@@ -12,15 +13,20 @@ import {
   isLFOr0,
   isSpaceOrTab,
   isWhitespaceUCod,
-  isWordLetter,
 } from "../../util/string.ts";
-import { assert, fail, out } from "../../util/trace.ts";
 import { LexdInfo, Lexr } from "../Lexr.ts";
 import type { Line } from "../Line.ts";
 import type { Loc } from "../Loc.ts";
 import { g_ran_fac } from "../RanFac.ts";
 import { type Snt, SortedSnt_id } from "../Snt.ts";
+import { TokBart } from "../TokBart.ts";
 import { MdextTk, Token } from "../Token.ts";
+import { Err } from "../alias.ts";
+import { g_urilexr_fac, URILexr } from "../uri/URILexr.ts";
+import { g_uripazr_fac, URIPazr } from "../uri/URIPazr.ts";
+import type { URITok } from "../uri/URITok.ts";
+import type { URI } from "../uri/stnode/URI.ts";
+import { isURIHead } from "../uri/util.ts";
 import { lastNon } from "../util.ts";
 import type { MdextBufr } from "./MdextBufr.ts";
 import { MdextPazr } from "./MdextPazr.ts";
@@ -54,14 +60,6 @@ import {
   lastNonblankIn,
   lastNonhashIn,
 } from "./util.ts";
-import { TokBart } from "../TokBart.ts";
-import type { URITok } from "../uri/URITok.ts";
-import { g_urilexr_fac, URILexr } from "../uri/URILexr.ts";
-import { g_uripazr_fac, URIPazr } from "../uri/URIPazr.ts";
-import { Err } from "../alias.ts";
-import { LOG_cssc } from "@fe-src/alias.ts";
-import { isURIHead } from "../uri/util.ts";
-import type { URI } from "../uri/stnode/URI.ts";
 /*80--------------------------------------------------------------------------*/
 
 const enum Ctx_ {
@@ -2334,6 +2332,7 @@ export class MdextLexr extends Lexr<MdextTok> {
     return sp_ > 0 || nl_;
   }
 
+  //kkkk use URILexr, URI_LI, etc
   /**
    * reLinkDestinationBraces = /^(?:<(?:[^<>\n\\\x00]|\\.)*>)/
    * @headconst @param ploc_x

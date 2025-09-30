@@ -112,14 +112,14 @@ export const entitySizeAt = (loc_x: Loc): loff_t => {
 /*64----------------------------------------------------------*/
 
 const reXmlSpecial = /[&<>"]/g;
-export const _escapeXml = (s_x: string) =>
+export const _escapeXml_ = (s_x: string) =>
   reXmlSpecial.test(s_x)
     ? s_x.replace(reXmlSpecial, (s_y) => (
       { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[s_y]!
     ))
     : s_x;
 
-export const _toHTML = (
+export const _toHTML_ = (
   lexr_x: MdextLexr,
   snt_a?: (MdextTk | Inline | Block)[],
 ): string => {
@@ -145,8 +145,8 @@ export const _toHTML = (
       sntL = 0;
     }
     s_ = snt_i instanceof Token
-      ? _escapeXml(snt_i.getText())
-      : snt_i._toHTML(lexr_x);
+      ? _escapeXml_(snt_i.getText())
+      : snt_i._toHTML_(lexr_x);
     if (s_) {
       sntL += s_.length;
       s_a.push(s_);
@@ -163,7 +163,7 @@ const reEntityOrEscapedChar =
   /\\[!"#$%&'()*+,.\/:;<=>?@\[\\\]^_`{|}~-]|&(?:#x[a-f0-9]{1,6}|#[0-9]{1,7}|[a-z][a-z0-9]{1,31});/gi;
 //jjjj TOCLEANUP
 // const textArea_ = html("textarea");
-export const _unescapeString = (s_x: string) =>
+export const _unescapeString_ = (s_x: string) =>
   reBackslashOrAmp.test(s_x)
     ? s_x.replace(
       reEntityOrEscapedChar,
@@ -177,12 +177,12 @@ export const _unescapeString = (s_x: string) =>
 const reUnsafeProtocol = /^javascript:|vbscript:|file:|data:/i;
 const reSafeDataProtocol = /^data:image\/(?:png|gif|jpeg|webp)/i;
 //kkkk
-export const _isSafeURL = (url: string): boolean => {
+export const _isSafeURL_ = (url: string): boolean => {
   return !reUnsafeProtocol.test(url) || reSafeDataProtocol.test(url);
 };
 
 /** Helper function to produce an HTML tag. */
-export const _tag = (
+export const _tag_ = (
   name: string,
   attrs?: [k: string, v: string | number][],
   selfclosing = false,

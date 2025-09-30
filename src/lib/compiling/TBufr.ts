@@ -4,11 +4,10 @@
  ******************************************************************************/
 
 import type { lnum_t } from "../alias.ts";
-import { assert } from "../util/trace.ts";
+import { assert } from "../util.ts";
 import { Bufr } from "./Bufr.ts";
 import { TLVert } from "./TLayr.ts";
 import { TLine } from "./TLine.ts";
-import * as Is from "../util/is.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -105,12 +104,12 @@ export class TBufr extends Bufr {
   // search(key_x: string): Ranval[] | undefined {
   //   /*#static*/ if (_TRACE) {
   //     console.log(
-  //       `${global.indent}>>>>>>> ${this._type_id_}.search("${key_x}") >>>>>>>`,
+  //       `${trace.indent}>>>>>>> ${this._type_id_}.search("${key_x}") >>>>>>>`,
   //     );
   //   }
   //   key_x = key_x.split(/\r\n|\r|\n/g)[0]; // Only search first line.
   //   if (!key_x.length) {
-  //     /*#static*/ if (_TRACE) global.outdent;
+  //     /*#static*/ if (_TRACE) trace.outdent;
   //     return;
   //   }
 
@@ -134,7 +133,7 @@ export class TBufr extends Bufr {
 
   //   const ret: Ranval[] = [];
   //   tout.forEach((rv) => ret.push(...this.#tmap(rv[0], rv[1], rv[3])));
-  //   /*#static*/ if (_TRACE) global.outdent;
+  //   /*#static*/ if (_TRACE) trace.outdent;
   //   return ret;
   // }
 

@@ -3,11 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
+import { INOUT } from "../../preNs.ts";
 import type { id_t, Ratio, uint32, uint8 } from "../alias.ts";
 import "../jslang.ts";
-import { Moo, type MooHandler } from "../Moo.ts";
-import { assert, fail } from "../util/trace.ts";
+import type { MooHandler } from "../Moo.ts";
+import { Moo } from "../Moo.ts";
+import { assert, fail } from "../util.ts";
 import type {
   alpha_t,
   chroma_t,
@@ -275,7 +276,7 @@ export class Colr {
   }
 
   /**
-   * `in( isValidCssc(cssc_x) )`
+   * `in( isValidCssc(cssc_x))`
    * @const @param cssc_x
    *    Notice, e.g. "rgb(25,55,55,.3)" rather than "rgb(25 55 55 /.3)"
    */
@@ -1008,13 +1009,11 @@ export function csscname(cn_x: CsscName) {
   return new Colr("name", cn_x);
 }
 /**
- * `in( isValidCssc(cssc_x) )`
+ * `in( isValidCssc(cssc_x))`
  * @const @param cssc_x
  */
 export function createColr(cssc_x: Cssc = "#00000000"): Colr {
-  const ret = new Colr();
-  if (cssc_x) ret.setByCssc(cssc_x);
-  return ret;
+  return new Colr().setByCssc(cssc_x);
 }
 
 export function randomRed() {
@@ -1033,6 +1032,17 @@ export function randomRRGGBB(): RRGGBB {
   const xb = randomRed().toString(16).padStart(2, "0");
   return `#${xr}${xg}${xb}`;
 }
+
+// /** Helper */
+// let colr_: Colr | undefined;
+// /**
+//  * `in( isValidCssc(cssc_x))`
+//  * @const @param cssc_x
+//  */
+// export const normCssc = (cssc_x: Cssc): CsscHexNorm => {
+//   colr_ ??= new Colr();
+//   return colr_.setByCssc(cssc_x).hex;
+// };
 /*80--------------------------------------------------------------------------*/
 
 export const csscNameMap = new class {
@@ -1141,6 +1151,7 @@ export class M3KeyColrs {
     );
     this.error = src_x.dup_Colr().setHue(25).setChroma(84).setTone(40);
   }
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
   toJSON() {
     return {

@@ -3,54 +3,55 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { bind, traceOut } from "@fe-lib/util/trace.ts";
-import { z } from "@zod";
-import { _TRACE, global, THEMESETTING } from "../../global.ts";
+import { bind } from "@fe-lib/util.ts";
+import { trace, traceOut } from "@fe-lib/util/trace.ts";
+import * as v from "@valibot/valibot";
+import { _TRACE, THEMESETTING } from "../../preNs.ts";
 import { id_t } from "../alias.ts";
 import { Boor } from "../Moo.ts";
 import type { alpha_t, chroma_t, hue_t, red_t, tone_t } from "./alias.ts";
-import { zAlpha, zChroma, zHue, zRed, zTone } from "./alias.ts";
+import { vAlpha, vChroma, vHue, vRed, vTone } from "./alias.ts";
 import type { Colr, ColranTyp } from "./Colr.ts";
 import { hct, rgb } from "./Colr.ts";
 /*80--------------------------------------------------------------------------*/
 
 type RedRan_ = [min: red_t, max: red_t];
-const zRedRan_ = z.tuple([zRed, zRed]);
+const vRedRan_ = v.tuple([vRed, vRed]);
 
 type RGBRan_ = [r: RedRan_, g: RedRan_, b: RedRan_];
-const zRGBRan_ = z.tuple([zRedRan_, zRedRan_, zRedRan_]);
+const vRGBRan_ = v.tuple([vRedRan_, vRedRan_, vRedRan_]);
 
 type HueRan_ = [min: hue_t, max: hue_t];
-const zHueRan_ = z.tuple([zHue, zHue]);
+const vHueRan_ = v.tuple([vHue, vHue]);
 
 type ChromaRan_ = [min: chroma_t, max: chroma_t];
-const zChromaRan_ = z.tuple([zChroma, zChroma]);
+const vChromaRan_ = v.tuple([vChroma, vChroma]);
 
 type ToneRan_ = [min: tone_t, max: tone_t];
-const zToneRan_ = z.tuple([zTone, zTone]);
+const vToneRan_ = v.tuple([vTone, vTone]);
 
 type HCTRan_ = [h: HueRan_, c: ChromaRan_, t: ToneRan_];
-const zHCTRan_ = z.tuple([zHueRan_, zChromaRan_, zToneRan_]);
+const vHCTRan_ = v.tuple([vHueRan_, vChromaRan_, vToneRan_]);
 
 type AlphaRan_ = [min: alpha_t, max: alpha_t];
-const zAlphaRan_ = z.tuple([zAlpha, zAlpha]);
+const vAlphaRan_ = v.tuple([vAlpha, vAlpha]);
 
 type RGBARan_ = [r: RedRan_, g: RedRan_, b: RedRan_, a: AlphaRan_];
-const zRGBARan_ = z.tuple([zRedRan_, zRedRan_, zRedRan_, zAlphaRan_]);
+const vRGBARan_ = v.tuple([vRedRan_, vRedRan_, vRedRan_, vAlphaRan_]);
 
 type HCTARan_ = [h: HueRan_, c: ChromaRan_, t: ToneRan_, a: AlphaRan_];
-const zHCTARan_ = z.tuple([zHueRan_, zChromaRan_, zToneRan_, zAlphaRan_]);
+const vHCTARan_ = v.tuple([vHueRan_, vChromaRan_, vToneRan_, vAlphaRan_]);
 
 export type ColranRaw =
   | ["rgb", RGBRan_]
   | ["rgba", RGBARan_]
   | ["hct", HCTRan_]
   | ["hcta", HCTARan_];
-export const zColranRaw = z.union([
-  z.tuple([z.literal("rgb"), zRGBRan_]),
-  z.tuple([z.literal("rgba"), zRGBARan_]),
-  z.tuple([z.literal("hct"), zHCTRan_]),
-  z.tuple([z.literal("hcta"), zHCTARan_]),
+export const vColranRaw = v.union([
+  v.tuple([v.literal("rgb"), vRGBRan_]),
+  v.tuple([v.literal("rgba"), vRGBARan_]),
+  v.tuple([v.literal("hct"), vHCTRan_]),
+  v.tuple([v.literal("hcta"), vHCTARan_]),
 ]);
 
 export function createColranRaw(): ColranRaw {
@@ -171,7 +172,7 @@ export class Colran {
   private _correctCRan(tgt_x: 0 | 1 = 1): boolean {
     /*#static*/ if (_TRACE && THEMESETTING) {
       console.log(
-        `${global.indent}>>>>>>> Colran_${this.id}._correctCRan(${tgt_x}) >>>>>>>`,
+        `${trace.indent}>>>>>>> Colran_${this.id}._correctCRan(${tgt_x}) >>>>>>>`,
       );
     }
     let ret = false;
@@ -210,7 +211,7 @@ export class Colran {
       }
     }
     /*#static*/ if (_TRACE && THEMESETTING) {
-      console.log(`${global.dent}ret = ${ret}`);
+      console.log(`${trace.dent}ret = ${ret}`);
     }
     return ret;
   }
@@ -240,7 +241,7 @@ export class Colran {
   private _onColrMin(n_y: Colr) {
     /*#static*/ if (_TRACE && THEMESETTING) {
       console.log(
-        `${global.indent}>>>>>>> Colran_${this.id}._onColrMin() >>>>>>>`,
+        `${trace.indent}>>>>>>> Colran_${this.id}._onColrMin() >>>>>>>`,
       );
     }
     this.#setCRan(0, n_y);
@@ -258,7 +259,7 @@ export class Colran {
   private _onColrMax(n_y: Colr) {
     /*#static*/ if (_TRACE && THEMESETTING) {
       console.log(
-        `${global.indent}>>>>>>> Colran_${this.id}._onColrMax() >>>>>>>`,
+        `${trace.indent}>>>>>>> Colran_${this.id}._onColrMax() >>>>>>>`,
       );
     }
     this.#setCRan(1, n_y);

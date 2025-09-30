@@ -3,26 +3,28 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { z } from "@zod";
-import { INOUT } from "../../global.ts";
+import * as v from "@valibot/valibot";
+import { INOUT } from "../../preNs.ts";
 import { Boor, Moo, type MooHandler } from "../Moo.ts";
 import type { id_t } from "../alias.ts";
-import { assert, warn } from "../util/trace.ts";
+import { vInt } from "../alias.ts";
+import { assert, warn } from "../util.ts";
 import type { PaleCoorRaw, PaleName } from "./PaleCoor.ts";
-import { createPaleCoorRaw, PaleCoor, zPaleCoorRaw } from "./PaleCoor.ts";
+import { createPaleCoorRaw, PaleCoor, vPaleCoorRaw } from "./PaleCoor.ts";
 import { Theme } from "./Theme.ts";
 import type { CsscHexNorm } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type PaleCidx = -1 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+const zPaleCidx_ = v.pipe(vInt, v.minValue(-1), v.maxValue(7));
 
 export type PaleRaw = {
   coors: PaleCoorRaw[];
   cidx: PaleCidx;
 };
-export const zPaleRaw = z.object({
-  coors: z.array(zPaleCoorRaw).nonempty(),
-  cidx: z.number().int().min(-1).max(7),
+export const vPaleRaw = v.object({
+  coors: v.pipe(v.array(vPaleCoorRaw), v.nonEmpty()),
+  cidx: zPaleCidx_,
 });
 /*64----------------------------------------------------------*/
 

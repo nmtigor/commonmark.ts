@@ -3,19 +3,15 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { z } from "@zod";
+import * as v from "@valibot/valibot";
 import type { id_t, int, uint } from "../alias.ts";
 import { Boor, Runr } from "../Moo.ts";
-import {
-  Colran,
-  type ColranRaw,
-  createColranRaw,
-  zColranRaw,
-} from "./Colran.ts";
+import type { ColranRaw } from "./Colran.ts";
+import { Colran, createColranRaw, vColranRaw } from "./Colran.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type ColranQRaw = ColranRaw[];
-export const zColranQRaw = z.array(zColranRaw).nonempty();
+export const vColranQRaw = v.pipe(v.array(vColranRaw), v.nonEmpty());
 
 export function createColranQRaw(dim_x: uint): ColranQRaw {
   return new Array(dim_x).fill(createColranRaw());

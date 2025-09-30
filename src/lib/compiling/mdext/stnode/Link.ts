@@ -4,19 +4,19 @@
  ******************************************************************************/
 
 import type { uint } from "@fe-lib/alias.ts";
-import { assert, fail } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert, fail } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
 import { Token } from "../../Token.ts";
 import type { BrktOpen_LI, MdextLexr } from "../MdextLexr.ts";
 import {
-  _escapeXml,
-  _isSafeURL,
-  _tag,
-  _toHTML,
-  _unescapeString,
+  _escapeXml_,
+  _isSafeURL_,
+  _tag_,
+  _toHTML_,
+  _unescapeString_,
   gathrUnrelTk_$,
 } from "../util.ts";
 import { Inline } from "./Inline.ts";
@@ -189,10 +189,10 @@ export class Link extends Inline {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
+  override _toHTML_(lexr_x: MdextLexr): string {
     const isImg = this.isImg;
     const textSnt_a = this.#textPart.slice(1, -1);
-    if (!lexr_x._enableTags) return _toHTML(lexr_x, textSnt_a);
+    if (!lexr_x._enableTags) return _toHTML_(lexr_x, textSnt_a);
 
     const attrs: [k: string, v: string][] = [];
     const linkdef = this.#mode === LinkMode.inline
@@ -203,17 +203,17 @@ export class Link extends Inline {
     const destPart = this.#destPart ?? linkdef?.destPart;
     if (destPart?.length === 1 || destPart?.length === 3) {
       dest_s = (destPart.length === 3 ? destPart[1] : destPart[0]).getText();
-      dest_s = _unescapeString(dest_s);
+      dest_s = _unescapeString_(dest_s);
       // console.log("🚀 ~ Link ~ override_toHTML ~ dest_s:", dest_s)
       dest_s = encodeURI(decodeURI(dest_s));
     }
-    /*kkkk Instead of `_isSafeURL()`, use a uri parser to validate the link
+    /*kkkk Instead of `_isSafeURL_()`, use a uri parser to validate the link
     destination more precisely. */
-    if (dest_s && _isSafeURL(dest_s)) {
+    if (dest_s && _isSafeURL_(dest_s)) {
       if (isImg) {
-        attrs.push(["src", _escapeXml(dest_s)]);
+        attrs.push(["src", _escapeXml_(dest_s)]);
       } else {
-        attrs.push(["href", _escapeXml(dest_s)]);
+        attrs.push(["href", _escapeXml_(dest_s)]);
       }
     } else {
       //jjjj TOCLEANUP
@@ -227,24 +227,24 @@ export class Link extends Inline {
 
     if (isImg) {
       lexr_x._enableTags = false;
-      attrs.push(["alt", _toHTML(lexr_x, textSnt_a)]);
+      attrs.push(["alt", _toHTML_(lexr_x, textSnt_a)]);
       lexr_x._enableTags = true;
     }
 
     const titlTk_a = this.#titlTk_a ?? linkdef?.titlTk_a;
     if (titlTk_a?.length) {
-      const title_s = _unescapeString(
+      const title_s = _unescapeString_(
         titlTk_a
           .map((tk) => tk.getText())
           .join("\n")
           .slice(1, -1),
       );
-      attrs.push(["title", _escapeXml(title_s)]);
+      attrs.push(["title", _escapeXml_(title_s)]);
     }
 
     return isImg
-      ? _tag("img", attrs, true)
-      : `${_tag("a", attrs)}${_toHTML(lexr_x, textSnt_a)}</a>`;
+      ? _tag_("img", attrs, true)
+      : `${_tag_("a", attrs)}${_toHTML_(lexr_x, textSnt_a)}</a>`;
   }
 }
 /*80--------------------------------------------------------------------------*/

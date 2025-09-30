@@ -3,17 +3,17 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "@fe-src/global.ts";
+import { INOUT } from "@fe-src/preNs.ts";
+import type { uint, uint16 } from "../../alias.ts";
+import { assert } from "../../util.ts";
 import {
   isASCIILetter,
   isDecimalDigit,
   isHexDigit,
 } from "../../util/string.ts";
-import { assert } from "../../util/trace.ts";
-import type { Loc, LocInfo } from "../Loc.ts";
-import type { uint, uint16 } from "../../alias.ts";
-import { frstNon } from "../util.ts";
 import { Err } from "../alias.ts";
+import type { Loc, LocInfo } from "../Loc.ts";
+import { frstNon } from "../util.ts";
 /*80--------------------------------------------------------------------------*/
 
 /**
@@ -301,12 +301,13 @@ export const peekSeqIUPSA = (loc_x: Loc): uint => {
 
 /**
  * isegment = *ipchar = *( iunreserved / pct-encoded / sub-delims / ":" / "@" )
- * @const @param loc_x
+ * @borrow @const @param loc_x
  */
 export const peekSeqIUPSCA = (loc_x: Loc): uint => {
   using poc = loc_x.usingDup();
   let ret = 0;
-  const VALVE = 1_000;
+  /** MUST be `> rnm_MXL` */
+  const VALVE = 2_000;
   let valve = VALVE;
   while (--valve) {
     const n_ = peekIUPSCA(poc);

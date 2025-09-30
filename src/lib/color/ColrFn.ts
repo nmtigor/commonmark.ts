@@ -3,16 +3,16 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { z } from "@zod";
+import * as v from "@valibot/valibot";
 import type { id_t, uint } from "../alias.ts";
 import "../jslang.ts";
+import { fail } from "../util.ts";
 import * as Is from "../util/is.ts";
 import type { SortedArray } from "../util/SortedArray.ts";
-import { fail } from "../util/trace.ts";
 import type { Cssc } from "./alias.ts";
 import type { Colr } from "./Colr.ts";
 import type { ColrStep, ColrStepRaw } from "./ColrStep.ts";
-import { zColrStepRaw } from "./ColrStep.ts";
+import { vColrStepRaw } from "./ColrStep.ts";
 /*80--------------------------------------------------------------------------*/
 
 // export type ColrStep = {
@@ -24,7 +24,7 @@ import { zColrStepRaw } from "./ColrStep.ts";
 // };
 
 export type ColrFnRaw = ColrStepRaw[];
-export const zColrFnRaw = z.array(zColrStepRaw);
+export const vColrFnRaw = v.array(vColrStepRaw);
 /*64----------------------------------------------------------*/
 
 //jjjj TOCLEANUP

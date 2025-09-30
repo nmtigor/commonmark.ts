@@ -3,9 +3,9 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { _TRACE, global, INOUT } from "../../global.ts";
+import { INOUT } from "../../preNs.ts";
 import type { Chr, Dulstr, loff_t } from "../alias.ts";
-import { assert, traceOut } from "../util/trace.ts";
+import { assert } from "../util.ts";
 import { Line } from "./Line.ts";
 import type { TBufr } from "./TBufr.ts";
 /*80--------------------------------------------------------------------------*/
@@ -53,7 +53,7 @@ export class TLine extends Line {
   override splice_$(strt_x: loff_t, stop_x: loff_t, newt_x?: string) {
     // /*#static*/ if (_TRACE) {
     //   console.log([
-    //     global.indent,
+    //     trace.indent,
     //     `>>>>>>> ${this._type_id_}.splice_$( ${strt_x}, ${stop_x}, `,
     //     newt_x === undefined ? "" : `"${newt_x}"`,
     //     " ) >>>>>>>",
@@ -97,13 +97,13 @@ export class TLine extends Line {
    * @const @param stop_x
    * @const @param chr_a_x
    */
-  @traceOut(_TRACE)
+  // @traceOut(_TRACE)
   private _splice_impl(strt_x: loff_t, stop_x: loff_t, chr_a_x: Chr[]): void {
-    /*#static*/ if (_TRACE) {
-      console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}._splice_impl(${strt_x}, ${stop_x}, [${chr_a_x}]) >>>>>>>`,
-      );
-    }
+    // /*#static*/ if (_TRACE) {
+    //   console.log(
+    //     `${trace.indent}>>>>>>> ${this._type_id_}._splice_impl(${strt_x}, ${stop_x}, [${chr_a_x}]) >>>>>>>`,
+    //   );
+    // }
     this.#base_a.splice(strt_x, stop_x - strt_x, ...chr_a_x);
     this.text_a_$.splice(strt_x, stop_x - strt_x, ...chr_a_x);
     const tlayr = this.bufr!.tlvert;

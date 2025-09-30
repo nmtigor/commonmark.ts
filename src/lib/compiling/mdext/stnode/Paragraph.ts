@@ -3,19 +3,16 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import { assert } from "@fe-lib/util.ts";
 import { isLFOr0 } from "@fe-lib/util/string.ts";
-import { assert } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
-import { MdextTok } from "../MdextTok.ts";
 import { BlockCont } from "../alias.ts";
-import { _toHTML, lastNonblankIn } from "../util.ts";
+import { _toHTML_, lastNonblankIn } from "../util.ts";
 import { Inline } from "./Inline.ts";
 import { ILoc, InlineBlock } from "./InlineBlock.ts";
 import { List } from "./List.ts";
-import type { int } from "@fe-lib/alias.ts";
-import { Err } from "../../alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** @final */
@@ -175,8 +172,8 @@ export class Paragraph extends InlineBlock {
   // }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
-    const s_ = _toHTML(lexr_x, this.snt_a_$);
+  override _toHTML_(lexr_x: MdextLexr): string {
+    const s_ = _toHTML_(lexr_x, this.snt_a_$);
     if (!s_) return s_;
 
     const grandparent = this.parent_$?.parent_$;

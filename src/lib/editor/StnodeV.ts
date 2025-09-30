@@ -4,7 +4,7 @@
  ******************************************************************************/
 
 import type { Line } from "@fe-cpl/Line.ts";
-import { CYPRESS, INOUT } from "../../global.ts";
+import { CYPRESS, INOUT } from "../../preNs.ts";
 import type { id_t, ldt_t, loff_t, uint } from "../alias.ts";
 import type { BaseTok } from "../compiling/BaseTok.ts";
 import type { Stnode } from "../compiling/Stnode.ts";
@@ -12,11 +12,11 @@ import type { Token } from "../compiling/Token.ts";
 import type { Tok } from "../compiling/alias.ts";
 import { HTMLVuu } from "../cv.ts";
 import { $loff, $vuu } from "../symbols.ts";
-import { assert } from "../util/trace.ts";
+import * as Is from "../util/is.ts";
+import { assert } from "../util.ts";
 import { CtorRest, type ReplRest } from "./CtorRest.ts";
 import type { ELineBase } from "./ELineBase.ts";
 import type { EdtrBase, EdtrBaseCI } from "./EdtrBase.ts";
-import * as Is from "../util/is.ts";
 /*80--------------------------------------------------------------------------*/
 
 /** "Code" mode */
@@ -57,7 +57,7 @@ export abstract class StnodeV<
       if (subNd.isText) {
         (subNd as Text)[$loff] += ldt_x;
       } else {
-        (subNd[$vuu] as StnodeV | undefined)?.translate_$(ldt_x);
+        (subNd.vuu as StnodeV | undefined)?.translate_$(ldt_x);
       }
     }
   }
@@ -152,12 +152,12 @@ export abstract class StnodeV<
         }
       } else {
         /*#static*/ if (INOUT) {
-          assert(subNd[$vuu] instanceof StnodeV);
+          assert(subNd.vuu instanceof StnodeV);
         }
-        loff = (subNd[$vuu] as StnodeV).strtLoff_$;
-        loff_1 = (subNd[$vuu] as StnodeV).stopLoff_$;
+        loff = (subNd.vuu as StnodeV).strtLoff_$;
+        loff_1 = (subNd.vuu as StnodeV).stopLoff_$;
         if (loff <= loff_x && loff_x < loff_1) {
-          ret = (subNd[$vuu] as StnodeV).caretNodeAt(loff_x);
+          ret = (subNd.vuu as StnodeV).caretNodeAt(loff_x);
           break;
         }
       }
@@ -173,7 +173,7 @@ export abstract class StnodeV<
    * @const @param ldt_x
    */
   protected setReplRest$(i_x: uint, ldt_x: ldt_t) {
-    const subV = this.el$.childNodes[i_x][$vuu] as StnodeV<T, CI, E>;
+    const subV = this.el$.childNodes[i_x].vuu as StnodeV<T, CI, E>;
     /*#static*/ if (INOUT) {
       assert(subV instanceof StnodeV);
     }
@@ -192,10 +192,10 @@ export abstract class StnodeV<
         }
       }
       /*#static*/ if (INOUT) {
-        assert(!nd_i || nd_i[$vuu] instanceof StnodeV);
+        assert(!nd_i || nd_i.vuu instanceof StnodeV);
       }
 
-      const v_ = nd_i ? (nd_i[$vuu] as StnodeV<T, CI, E>) : subV;
+      const v_ = nd_i ? (nd_i.vuu as StnodeV<T, CI, E>) : subV;
       this.stopLoff$ = v_.stopLoff_$;
       this.broken$ = false;
       this.stopToken$ = v_.stopToken$;
@@ -211,7 +211,7 @@ export abstract class StnodeV<
         if (nd_j.isText) {
           (nd_j as Text)[$loff] += ldt_x; //!
         } else {
-          (nd_j[$vuu] as StnodeV | undefined)?.translate_$(ldt_x);
+          (nd_j.vuu as StnodeV | undefined)?.translate_$(ldt_x);
         }
       }
 
@@ -248,9 +248,9 @@ export abstract class StnodeV<
       this.stopLoff$ = (nd_ as Text).stopLoff;
     } else {
       /*#static*/ if (INOUT) {
-        assert(nd_[$vuu] instanceof StnodeV);
+        assert(nd_.vuu instanceof StnodeV);
       }
-      this.stopLoff$ = (nd_[$vuu] as StnodeV<T, CI, E>).stopLoff$;
+      this.stopLoff$ = (nd_.vuu as StnodeV<T, CI, E>).stopLoff$;
     }
 
     /*#static*/ if (INOUT) {
@@ -259,8 +259,8 @@ export abstract class StnodeV<
 
     for (let i = rest.length - 1; i--;) {
       nd_ = rest[i] as Node;
-      if (nd_[$vuu] instanceof StnodeV) {
-        this.stopToken$ = nd_[$vuu].stopToken$;
+      if (nd_.vuu instanceof StnodeV) {
+        this.stopToken$ = nd_.vuu.stopToken$;
         break;
       }
     }

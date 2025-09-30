@@ -4,13 +4,13 @@
  ******************************************************************************/
 
 import type { uint } from "@fe-lib/alias.ts";
-import { assert, fail } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert, fail } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr, URI_LI } from "../MdextLexr.ts";
-import { _escapeXml, _isSafeURL, _tag, gathrUnrelTk_$ } from "../util.ts";
+import { _escapeXml_, _isSafeURL_, _tag_, gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 /*80--------------------------------------------------------------------------*/
 
@@ -94,20 +94,20 @@ export class Autolink extends Inline {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
+  override _toHTML_(lexr_x: MdextLexr): string {
     const text_s = this.#destTk_a
       .map((tk) => tk.getText())
       .join("");
-    if (!lexr_x._enableTags) return _escapeXml(text_s);
+    if (!lexr_x._enableTags) return _escapeXml_(text_s);
 
     const attrs: [k: string, v: string][] = [];
 
     const li_ = this.#destTk_a[0].lexdInfo as URI_LI;
     let dest_s = `${li_?.isEmail_1 ? "mailto:" : ""}${text_s}`;
     dest_s = encodeURI(decodeURI(dest_s));
-    attrs.push(["href", _isSafeURL(dest_s) ? _escapeXml(dest_s) : ""]);
+    attrs.push(["href", _isSafeURL_(dest_s) ? _escapeXml_(dest_s) : ""]);
 
-    return `${_tag("a", attrs)}${_escapeXml(text_s)}</a>`;
+    return `${_tag_("a", attrs)}${_escapeXml_(text_s)}</a>`;
   }
 }
 /*80--------------------------------------------------------------------------*/

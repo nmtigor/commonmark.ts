@@ -4,15 +4,13 @@
  ******************************************************************************/
 
 import type { uint, uint16 } from "@fe-lib/alias.ts";
+import type { Loc } from "../../Loc.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
-import { _tag, _toHTML } from "../util.ts";
+import { _tag_, _toHTML_ } from "../util.ts";
 import type { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import { ListItem } from "./ListItem.ts";
-import type { Loc } from "../../Loc.ts";
-import { fail } from "@fe-lib/util/trace.ts";
-import type { MdextTk } from "../../Token.ts";
 /*80--------------------------------------------------------------------------*/
 
 export abstract class List extends CtnrBlock {
@@ -113,8 +111,8 @@ export class BulletList extends List {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
-    return `<ul>\n${_toHTML(lexr_x, this.children)}\n</ul>`;
+  override _toHTML_(lexr_x: MdextLexr): string {
+    return `<ul>\n${_toHTML_(lexr_x, this.children)}\n</ul>`;
   }
 }
 /*80--------------------------------------------------------------------------*/
@@ -133,10 +131,10 @@ export class OrderdList extends List {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
+  override _toHTML_(lexr_x: MdextLexr): string {
     return `${
-      this.#start !== 1 ? _tag("ol", [["start", this.#start]]) : "<ol>"
-    }\n${_toHTML(lexr_x, this.children)}\n</ol>`;
+      this.#start !== 1 ? _tag_("ol", [["start", this.#start]]) : "<ol>"
+    }\n${_toHTML_(lexr_x, this.children)}\n</ol>`;
   }
 }
 /*80--------------------------------------------------------------------------*/

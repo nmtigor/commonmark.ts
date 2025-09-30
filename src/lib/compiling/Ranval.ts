@@ -3,8 +3,6 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { LOG_cssc } from "../../alias.ts";
-import { PRF } from "../../global.ts";
 import { Moo, type MooEq } from "../Moo.ts";
 import type { lnum_t, loff_t } from "../alias.ts";
 import { Factory } from "../util/Factory.ts";
@@ -217,12 +215,12 @@ export class RanvalMo extends Moo<Ranval> {
 class RanvalFac_ extends Factory<Ranval> {
   /** @implement */
   protected createVal$() {
-    /*#static*/ if (PRF) {
-      console.log(
-        `%c# of cached Ranval instances: ${this.val_a$.length + 1}`,
-        `color:${LOG_cssc.performance}`,
-      );
-    }
+    // /*#static*/ if (PRF) {
+    //   console.log(
+    //     `%c# of cached Ranval instances: ${this.val_a$.length + 1}`,
+    //     `color:${LOG_cssc.performance}`,
+    //   );
+    // }
     return new Ranval(0 as lnum_t, 0);
   }
 }

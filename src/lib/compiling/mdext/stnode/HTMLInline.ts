@@ -4,8 +4,8 @@
  ******************************************************************************/
 
 import type { uint } from "@fe-lib/alias.ts";
-import { assert, fail } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert, fail } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import type { MdextTk } from "../../Token.ts";
@@ -106,7 +106,7 @@ export class HTMLInline extends Inline {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(): string {
+  override _toHTML_(): string {
     const s_a = ["<"];
     let curLn = this.#chunkTk_a[0].sntFrstLine;
     for (const tk of this.#chunkTk_a) {

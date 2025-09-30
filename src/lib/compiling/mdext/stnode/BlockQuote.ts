@@ -12,7 +12,7 @@ import type { SortedStnod_id } from "../../Stnode.ts";
 import type { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
-import { _toHTML, gathrUnrelTk_$ } from "../util.ts";
+import { _toHTML_, gathrUnrelTk_$ } from "../util.ts";
 import { Block } from "./Block.ts";
 import { CtnrBlock } from "./CtnrBlock.ts";
 import type { Inline } from "./Inline.ts";
@@ -108,8 +108,8 @@ export class BlockQuote extends CtnrBlock {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
-    const s_ = _toHTML(lexr_x, this.children);
+  override _toHTML_(lexr_x: MdextLexr): string {
+    const s_ = _toHTML_(lexr_x, this.children);
     return `<blockquote>\n${s_}${s_ ? "\n" : ""}</blockquote>`;
   }
 }

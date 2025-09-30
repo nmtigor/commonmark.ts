@@ -3,8 +3,8 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { _TRACE, CYPRESS, DEBUG, EDITOR, global, INOUT } from "../../global.ts";
-import type { id_t, lnum_t, loff_t } from "../alias.ts";
+import { _TRACE, CYPRESS, DEBUG, EDITOR, INOUT } from "../../preNs.ts";
+import type { id_t, lnum_t } from "../alias.ts";
 import { Endpt, WritingDir } from "../alias.ts";
 import type { Cssc } from "../color/alias.ts";
 import { Pale } from "../color/Pale.ts";
@@ -14,7 +14,8 @@ import { HTMLVuu } from "../cv.ts";
 import { html, span } from "../dom.ts";
 import "../jslang.ts";
 import { $ovlap } from "../symbols.ts";
-import { assert, bind, out, traceOut } from "../util/trace.ts";
+import { assert, bind, out } from "../util.ts";
+import { trace, traceOut } from "../util/trace.ts";
 import { Caret_passive_z, Caret_proactive_z } from "./alias.ts";
 import type { EdtrBase, EdtrBaseScrolr } from "./EdtrBase.ts";
 import { ELoc } from "./ELoc.ts";
@@ -108,7 +109,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   private _setFocusd(_x: boolean): void {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}._setFocusd( ${_x}) >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}._setFocusd( ${_x}) >>>>>>>`,
       );
     }
     if (this.#focusd === _x) return;
@@ -132,7 +133,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     if (this.#setFocusd_to !== undefined) {
       clearTimeout(this.#setFocusd_to);
     }
-    this.#setFocusd_to = setTimeout(() => {
+    this.#setFocusd_to = window.setTimeout(() => {
       this._setFocusd(_x);
     }, 100);
     // this._setFocusd(_x);
@@ -215,6 +216,9 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   }
   /* ~ */
 
+  /** For `proactiveCaret` only */
+  visible?: boolean;
+
   /* #selec_fac, #anchr_el */
   readonly #selec_fac: SelecFac;
   readonly #anchr_el = span();
@@ -284,8 +288,8 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     this.#selec_fac = new SelecFac(coo_x);
 
     this.el$.id = this._type_id_; // Otherwise, Chrome DevTools will issue "A form field element has neither an id nor a name attribute."
-    /*#static*/ if (CYPRESS) {
-      this.el$.cyName = this._type_id_;
+    /*#static*/ if (CYPRESS || DEBUG) {
+      this.el$.hint = this._type_id_;
     }
     this.assignAttro({
       // className: "editor-selection",
@@ -319,7 +323,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
       display: "none",
       position: "absolute",
 
-      outlineWidth: "2px",
+      outlineWidth: "1px",
       outlineStyle: "dotted",
     });
     this.#anchr_el.assignStylo({
@@ -416,7 +420,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   private _onRanvalChange(rv_x: Ranval) {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}._onRanvalChange( [${rv_x}]) >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}._onRanvalChange( [${rv_x}]) >>>>>>>`,
       );
     }
     this.ranval.become_Array(rv_x);
@@ -477,7 +481,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   private _onFocus(_evt_x: FocusEvent) {
     // /*#static*/ if (_TRACE && EDITOR) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id_}._onFocus() >>>>>>>`,
+    //     `${trace.indent}>>>>>>> ${this._type_id_}._onFocus() >>>>>>>`,
     //   );
     // }
     this.focusd_a100 = true;
@@ -487,11 +491,11 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   private _onBlur(_evt_x: FocusEvent) {
     // /*#static*/ if (_TRACE && EDITOR) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id_}._onBlur() >>>>>>>`,
+    //     `${trace.indent}>>>>>>> ${this._type_id_}._onBlur() >>>>>>>`,
     //   );
     // }
-    // console.log(`${global.dent}edtr.dragingM: ${this.edtr.dragingM}`);
-    // console.log(`${global.dent}edtr.draggedM: ${this.edtr.draggedM}`);
+    // console.log(`${trace.dent}edtr.dragingM: ${this.edtr.dragingM}`);
+    // console.log(`${trace.dent}edtr.draggedM: ${this.edtr.draggedM}`);
     if (!this.edtr.dragingM) {
       this.focusd_a100 = false;
     }
@@ -501,12 +505,12 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   // #onKeyUp = (evt_x: KeyboardEvent) => {
   //   /*#static*/ if (_TRACE && EDITOR) {
   //     console.log(
-  //       `${global.indent}>>>>>>> ${this._type_id_}.#onKeyUp() >>>>>>>`,
+  //       `${trace.indent}>>>>>>> ${this._type_id_}.#onKeyUp() >>>>>>>`,
   //     );
-  //     console.log(`${global.dent}value = "${this.el$.value}"`);
+  //     console.log(`${trace.dent}value = "${this.el$.value}"`);
   //   }
   //   // this.el$.value = "";
-  //   /*#static*/ if (_TRACE && EDITOR) global.outdent;
+  //   /*#static*/ if (_TRACE && EDITOR) trace.outdent;
   //   return;
   // };
 
@@ -515,15 +519,15 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   // #onInput = (evt_x: Event) => {
   //   /*#static*/ if (_TRACE && EDITOR) {
   //     console.log(
-  //       `${global.indent}>>>>>>> ${this._type_id_}.#onInput() >>>>>>>`,
+  //       `${trace.indent}>>>>>>> ${this._type_id_}.#onInput() >>>>>>>`,
   //     );
   //     console.log(
-  //       `${global.dent}inputType = "${(evt_x as InputEvent).inputType}"`,
+  //       `${trace.dent}inputType = "${(evt_x as InputEvent).inputType}"`,
   //     );
-  //     console.log(`${global.dent}data = "${(evt_x as InputEvent).data}"`);
+  //     console.log(`${trace.dent}data = "${(evt_x as InputEvent).data}"`);
   //   }
   //   if (!(evt_x instanceof InputEvent)) {
-  //     /*#static*/ if (_TRACE && EDITOR) global.outdent;
+  //     /*#static*/ if (_TRACE && EDITOR) trace.outdent;
   //     return;
   //   }
 
@@ -535,7 +539,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   //       this.el$.value = "";
   //       break;
   //   }
-  //   /*#static*/ if (_TRACE && EDITOR) global.outdent;
+  //   /*#static*/ if (_TRACE && EDITOR) trace.outdent;
   //   return;
   // };
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
@@ -572,7 +576,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   // setByRanval(rv_x: Ranval, force_x?: "force"): void {
   //   /*#static*/ if (_TRACE && EDITOR) {
   //     console.log(
-  //       `${global.indent}>>>>>>> ${this._type_id_}.setByRanval([${rv_x}]${
+  //       `${trace.indent}>>>>>>> ${this._type_id_}.setByRanval([${rv_x}]${
   //         force_x ? `, "${force_x}"` : ""
   //       }) >>>>>>>`,
   //     );
@@ -589,7 +593,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   draw_$() {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.draw_$() >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.draw_$() >>>>>>>`,
       );
     }
     // console.log( this.el$.isConnected );
@@ -630,7 +634,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     //   h_x: h_x.fixTo(1),
     // });
     const edtr = this.edtr;
-    const wm_ = this.coo$._writingMode;
+    const wm_ = this.coo$._writingMode_;
     /**
      * blockSize
      *
@@ -647,11 +651,11 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     //jjjj Why CSS `blockSize`, `inlineSize` do not work?
     el_x.assignStylo({
       left: wm_ & WritingDir.h
-        ? `${Math.clamp(0, x_x - is_ / 2, edtr.el.clientWidth - is_)}px`
+        ? `${Math.clamp(0, x_x - is_ / 2, edtr.el.scrollWidth - is_)}px`
         : `${x_x}px`,
       top: wm_ & WritingDir.h
         ? `${y_x}px`
-        : `${Math.clamp(0, y_x - is_ / 2, edtr.el.clientHeight - is_)}px`,
+        : `${Math.clamp(0, y_x - is_ / 2, edtr.el.scrollHeight - is_)}px`,
       zIndex: this.#zCssc,
 
       width: wm_ & WritingDir.h ? `${is_}px` : `${bs_}px`,
@@ -720,7 +724,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   #drawFocus() {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.#drawFocus() >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.#drawFocus() >>>>>>>`,
       );
     }
     const edtr = this.edtr;
@@ -748,8 +752,8 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     // if (!this.#focusMoved) return;
     // this.#lastFat = fat;
     // this.#lastSin = sin;
-    // // console.log(`${global.dent}🚀 ~ Caret ~ #drawFocus ~ fat: ${fat}`);
-    // // console.log(`${global.dent}🚀 ~ Caret ~ #drawFocus ~ sin: ${sin}`);
+    // // console.log(`${trace.dent}🚀 ~ Caret ~ #drawFocus ~ fat: ${fat}`);
+    // // console.log(`${trace.dent}🚀 ~ Caret ~ #drawFocus ~ sin: ${sin}`);
 
     this.#setPosSiz(
       this.el$,
@@ -778,7 +782,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
     );
 
     if (!this.keepInlineOnce_$) {
-      this.inline_$ = genInlineMidOf(this.coo$._writingMode)(sin);
+      this.inline_$ = genInlineMidOf(this.coo$._writingMode_)(sin);
       // console.log("🚀 ~ Caret ~ #drawFocus ~ inline_$:", this.inline_$);
     }
     this.keepInlineOnce_$ = false;
@@ -789,7 +793,7 @@ export class Caret extends HTMLVuu<EdtrBase, HTMLInputElement> {
   #drawRange() {
     /*#static*/ if (_TRACE && EDITOR) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.#drawRange() >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.#drawRange() >>>>>>>`,
       );
     }
     const edtr = this.edtr;

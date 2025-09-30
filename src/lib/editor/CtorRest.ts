@@ -3,12 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
+import { INOUT } from "../../preNs.ts";
 import type { loff_t } from "../alias.ts";
-import { $vuu } from "../symbols.ts";
-import { assert } from "../util/trace.ts";
-import { StnodeV } from "./StnodeV.ts";
 import { eql } from "../jslang.ts";
+import { $vuu } from "../symbols.ts";
+import { assert } from "../util.ts";
+import { StnodeV } from "./StnodeV.ts";
 /*80--------------------------------------------------------------------------*/
 
 export type ReplRest = [...Node[], undefined | ReplRest];
@@ -95,7 +95,7 @@ export class CtorRest {
               `"${nd_.textContent}"`,
           );
         } else {
-          ret.push((nd_[$vuu] as StnodeV)._info_);
+          ret.push((nd_.vuu as StnodeV)._info_);
         }
       }
     }
@@ -119,9 +119,9 @@ const strtLoffOf_ = (rest_x?: ReplRest): loff_t | undefined => {
       return (r0_ as Text).strtLoff;
     } else {
       /*#static*/ if (INOUT) {
-        assert(r0_[$vuu] instanceof StnodeV);
+        assert(r0_.vuu instanceof StnodeV);
       }
-      return (r0_[$vuu] as StnodeV).strtLoff_$;
+      return (r0_.vuu as StnodeV).strtLoff_$;
     }
   } else {
     return strtLoffOf_(r0_);

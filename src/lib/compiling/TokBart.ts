@@ -3,14 +3,12 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
-import type { BufrDir, lnum_t } from "../alias.ts";
-import { assert } from "../util/trace.ts";
+import { INOUT } from "../../preNs.ts";
+import type { lnum_t } from "../alias.ts";
+import { assert } from "../util.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import { Bufr } from "./Bufr.ts";
-import type { Ranval } from "./Ranval.ts";
 import type { TokLine } from "./TokLine.ts";
-import { TokLoc } from "./TokLoc.ts";
 import type { TokRan } from "./TokRan.ts";
 import type { Tok } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/

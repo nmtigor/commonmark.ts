@@ -3,16 +3,17 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
+import * as v from "@valibot/valibot";
 import wretch from "@wretch";
-import { z } from "@zod";
 import { BeReturn } from "../../alias.ts";
 import { baseUrl } from "../../baseurl.mjs";
-import { _TRACE, DEBUG, DENO, global } from "../../global.ts";
+import { _TRACE, DEBUG } from "../../preNs.ts";
 import { Boor } from "../Moo.ts";
 import { tryCatch } from "../util/general.ts";
-import { traceOut } from "../util/trace.ts";
-import { Pale, type PaleRaw, zPaleRaw } from "./Pale.ts";
-import { type PaleName, zPaleName } from "./PaleCoor.ts";
+import { trace, traceOut } from "../util/trace.ts";
+import { Pale, type PaleRaw, vPaleRaw } from "./Pale.ts";
+import { type PaleName, vPaleName } from "./PaleCoor.ts";
+import type { Cssc } from "./alias.ts";
 /*80--------------------------------------------------------------------------*/
 
 type ThemeRaw_ = { [palename: PaleName]: PaleRaw };
@@ -54,7 +55,7 @@ export class Theme {
     // }
     // // console.log(data_x);
     for (const raw of data_x) {
-      if (z.tuple([zPaleName, zPaleRaw]).safeParse(raw).success) {
+      if (v.safeParse(v.tuple([vPaleName, vPaleRaw]), raw).success) {
         this.raw_o[raw[0]] = raw[1];
         this.ord_a.push(raw[0]);
       }
@@ -73,7 +74,7 @@ export class Theme {
   @traceOut(_TRACE)
   static async load() {
     /*#static*/ if (_TRACE) {
-      console.log(`${global.indent}>>>>>>> Theme.load() >>>>>>>`);
+      console.log(`${trace.indent}>>>>>>> Theme.load() >>>>>>>`);
     }
     const { data: mod, error } = await tryCatch(
       import("../../data/theme/premsys_theme.js"),
@@ -103,13 +104,23 @@ export class Theme {
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** Except "Base", cidx 0 for ligt mode. */
-  setLigt(): void {
-    if (this.#mode === ThemeMode.ligt) return;
+  /** @const @param cssc_x */
+  readonly #act = (cssc_x?: Cssc) => {
+    const baseCoor = Pale.get("Base").forceHex().coor;
+    if (cssc_x) baseCoor.setMapped(cssc_x);
+    else baseCoor.run();
+
+    Pale.get("Error").forceHex().coor.run();
+  };
+
+  /**
+   * Except "Base", cidx 0 for ligt mode.
+   * @const @param cssc_x
+   */
+  setLigt(cssc_x?: Cssc): void {
+    if (this.#mode === ThemeMode.ligt && !cssc_x) return;
 
     for (const palename of this.ord_a) {
-      if (palename === "Base") continue;
-
       const pale = this.pale_m.get(palename);
       if (pale) {
         pale.cidx_mo.set_Moo(0);
@@ -118,20 +129,16 @@ export class Theme {
         this.raw_o[palename].cidx = 0;
       }
     }
-    Pale.get("Base")
-      .forceHex()
-      .coor.run();
+    this.#act(cssc_x);
 
     this.#mode = ThemeMode.ligt;
   }
 
   /** Except "Base", cidx 1 for dark mode, or 0 if there is no cidx 1. */
-  setDark(): void {
-    if (this.#mode === ThemeMode.dark) return;
+  setDark(cssc_x?: Cssc): void {
+    if (this.#mode === ThemeMode.dark && !cssc_x) return;
 
     for (const palename of this.ord_a) {
-      if (palename === "Base") continue;
-
       const pale = this.pale_m.get(palename);
       if (pale) {
         pale.cidx_mo.set_Moo(pale.coor_a.at(1) ? 1 : 0);
@@ -141,11 +148,24 @@ export class Theme {
         raw.cidx = raw.coors.at(1) ? 1 : 0;
       }
     }
-    Pale.get("Base")
-      .forceHex()
-      .coor.run();
+    this.#act(cssc_x);
 
     this.#mode = ThemeMode.dark;
+  }
+
+  /**
+   * @const @param mode
+   * @const @param cssc
+   */
+  set({ mode, cssc }: { mode?: "ligt" | "dark"; cssc?: Cssc }) {
+    if (mode) {
+      /* final switch */ ({
+        ligt: () => this.setLigt(cssc),
+        dark: () => this.setDark(cssc),
+      }[mode])();
+    } else if (cssc) {
+      Pale.get("Base").coor.setMapped(cssc);
+    }
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 

@@ -1,68 +1,16 @@
 /** 80**************************************************************************
+ * This module is loaded with top priority!
+ *
  * @module global
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { Hover, Pointer, type uint } from "./lib/alias.ts";
+import type { HTMLVCo } from "@fe-lib/cv.ts";
+import { Hover, Pointer } from "./lib/alias.ts";
+import { assert, out } from "./lib/util.ts";
+import { trace } from "./lib/util/trace.ts";
+import { _TRACE, AUTOTEST, CYPRESS, RESIZ } from "./preNs.ts";
 /*80--------------------------------------------------------------------------*/
-
-// deno-fmt-ignore
-/* preprocessor names */
-export const 
-  DEV = true // dev.premsys.org
-
-, CF = false // cloudflare
-, DENO = true
-, LOCAL = false
-, MOZCENTRAL = false
-
-, INOUT = true // contracts
-, DEBUG = true // debug build
-  , COLR = true
-  , INFO = true
-  , STEP = true
-  , TRACE = true
-  
-  , RESIZ = true // "resize", `ResizeObserver`
-  , INTRS = true // `IntersectionObserver`
-
-  , THEMESETTING = false
-  , EDITOR = true
-    , /** @deprecated */EDITOR_v = true // verbose
-  , PDFTS = true
-    , PDFTS_v = true // verbose
-      , PDFTS_vv = false // very verbose
-, /** @deprecated */APP = false // release build 
-, /** PeRFormance */PRF = true
-
-, TESTING = true
-, CYPRESS = false 
-
-, _COLR = DEBUG && COLR
-, _INFO = DEBUG && INFO
-, _STEP = DEBUG && STEP && !TESTING
-, _TRACE = DEBUG && TRACE && !TESTING
-
-/* Only in ./pdf/ */
-, PDFJSDev = true
-, GENERIC = true
-, CHROME = false
-, GECKOVIEW = false
-, LIB = false
-, SKIP_BABEL = true
-, IMAGE_DECODERS = false
-, COMPONENTS = false
-;
-/*80-------------------------------------------------------------------------*/
-
-const space_a_: (string | undefined)[] = [];
-export const space = (n_: uint) => {
-  if (space_a_[n_] === undefined) {
-    space_a_[n_] = new Array(n_).fill(" ").join("");
-  }
-  return space_a_[n_]!;
-};
-/*80-------------------------------------------------------------------------*/
 
 export const global = new class {
   /** @deprecated Use preprocessor */
@@ -71,25 +19,57 @@ export const global = new class {
   readonly LASTUPDATE_NOT = "2020-07-10 22:17:59 +0200";
   readonly LASTUPDATE_DATNI = "2020-07-24 01:59:51 +0200";
   readonly LASTUPDATE_DEV = "2021-05-22 05:04:21 +0200";
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  /** HTMLVCo */
-  vco?: unknown;
-  // holdindicatr?: [HoldIndicatr, HoldIndicatr, HoldIndicatr];
+  serveStatic = false;
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
+
+  //jjjj TOCLEANUP
+  // vco?: MainWindlBase;
+  // // holdindicatr?: [HoldIndicatr, HoldIndicatr, HoldIndicatr];
+
+  mwCap = Promise.withResolvers<HTMLVCo>();
+  /**
+   * This is actually of type `MainWindlBase | undefined`. Using `HTMLVCo` here
+   * is to prevent from importing `MainWindlBase`, which will further  import
+   * many "premsys codes", which is bad for subprojects like "commonmark.ts",
+   * "set.ts".
+   *
+   * This can be regarded as decoupling point between outer "premsys codes" and
+   * inner "buffer codes".
+   */
+  mw: HTMLVCo | undefined;
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
   /** @deprecated */
   has_ResizeObserver = false;
   /** @deprecated */
   can_touchstart = false;
+
   pointer = Pointer.none;
   anyPointer = Pointer.none;
+  #mockTouch: boolean | undefined;
   get can_touch() {
-    return (this.anyPointer === Pointer.coarse || "ontouchstart" in window) &&
-      navigator.maxTouchPoints > 0;
+    return this.#mockTouch ??
+      (navigator.maxTouchPoints > 0 &&
+        (this.anyPointer === Pointer.coarse || "ontouchstart" in globalThis));
   }
+
   hover = Hover.none;
   anyHover = Hover.none;
+  #mockHover: boolean | undefined;
   get can_hover() {
-    return this.anyHover === Hover.hover;
+    return this.#mockHover ??
+      this.anyHover === Hover.hover;
+  }
+
+  @out((self: typeof global) => {
+    assert(self.can_touch);
+    assert(!self.can_hover);
+  })
+  mockTouch() {
+    this.#mockTouch = true;
+    this.#mockHover = false;
   }
 
   // /* For testing only */
@@ -121,38 +101,69 @@ export const global = new class {
   //   }
   // }
   // /* ~ */
+  /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
-  readonly #tabsize = 4;
-  #dent = 0;
-  get dent() {
-    let ret;
-    if (this.#dent === 0) ret = "";
-    else ret = space(this.#dent);
-    return ret;
+  /** OPFS root directory handle */
+  opfs!: FileSystemDirectoryHandle;
+
+  locl: {
+    bk: "bk-dev" | "bk-dev-t";
+  } = {
+    bk: /*#static*/ CYPRESS ? "bk-dev-t" : "bk-dev",
+  };
+  /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
+
+  toJSON() {
+    return {
+      serveStatic: this.serveStatic,
+
+      can_touch: this.can_touch,
+      can_hover: this.can_hover,
+
+      locl: this.locl,
+    };
   }
-  get indent() {
-    const ret = this.dent;
-    this.#dent += this.#tabsize;
-    return ret;
-  }
-  get outdent() {
-    this.#dent -= this.#tabsize;
-    console.assert(this.#dent >= 0, "There are more outdent than indent!");
-    return this.#dent;
-  }
-  // inlog( s_x:string, c_x?:string )
-  // {
-  //   if( c_x === undefined )
-  //        console.log( `${this.indent}${s_x}` );
-  //   else console.log( `%c${this.indent}${s_x}`, `color:${c_x}` );
-  // }
-  // log( s_x:string, c_x?:string )
-  // {
-  //   if( c_x === undefined )
-  //        console.log( `${this.dent}${s_x}` );
-  //   else console.log( `%c${this.dent}${s_x}`, `color:${c_x}` );
-  // }
 }();
+
+global.mwCap.promise.then((mw) => global.mw = mw);
+/*80--------------------------------------------------------------------------*/
+
+//jjjj TOCLEANUP
+// // export const g_getRootVCo: () => HTMLVCo | undefined = () => global.vco as any;
+// export const g_getRootVCo = () => global.vco as HTMLVCo | undefined;
+
+export const g_onresize = () => {
+  /*#static*/ if (_TRACE && RESIZ) {
+    console.log(
+      `%c${trace.indent}>>>>>>> window.on("resize") >>>>>>>`,
+      "color:#ffcd4a",
+    );
+  }
+  /*#static*/ if (_TRACE && RESIZ) {
+    console.log(
+      `${trace.dent}w:${document.documentElement.clientWidth}, h:${document.documentElement.clientHeight}`,
+    );
+    trace.outdent;
+  }
+};
+
+export const g_onerror = (evt_x: ErrorEvent) => {
+  const mw_ = global.mw;
+  if (mw_) mw_.el.style.backgroundColor = "#61bed4";
+
+  /*#static*/ if (!AUTOTEST) {
+    mw_?.ci.reportError?.(evt_x.error);
+  }
+};
+
+export const g_onunhandledrejection = (evt_x: PromiseRejectionEvent) => {
+  const mw_ = global.mw;
+  if (mw_) mw_.el.style.backgroundColor = "#b6d361";
+
+  /*#static*/ if (!AUTOTEST) {
+    mw_?.ci.reportError?.(evt_x.reason);
+  }
+};
 /*80--------------------------------------------------------------------------*/
 
 /*

@@ -4,14 +4,14 @@
  ******************************************************************************/
 
 import type { lnum_t, loff_t, uint, uint8 } from "@fe-lib/alias.ts";
-import { assert } from "@fe-lib/util/trace.ts";
-import { INOUT } from "@fe-src/global.ts";
+import { assert } from "@fe-lib/util.ts";
+import { INOUT } from "@fe-src/preNs.ts";
 import type { Loc } from "../../Loc.ts";
 import type { SortedSnt_id } from "../../Snt.ts";
 import { MdextTk } from "../../Token.ts";
 import type { MdextLexr } from "../MdextLexr.ts";
 import { BlockCont } from "../alias.ts";
-import { _toHTML, gathrUnrelTk_$ } from "../util.ts";
+import { _toHTML_, gathrUnrelTk_$ } from "../util.ts";
 import { Inline } from "./Inline.ts";
 import { ILoc, InlineBlock } from "./InlineBlock.ts";
 import { Paragraph } from "./Paragraph.ts";
@@ -60,9 +60,9 @@ export abstract class Heading extends InlineBlock {
   // }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
+  override _toHTML_(lexr_x: MdextLexr): string {
     const level = this.level;
-    return `<h${level}>${_toHTML(lexr_x, this.snt_a_$)}</h${level}>`;
+    return `<h${level}>${_toHTML_(lexr_x, this.snt_a_$)}</h${level}>`;
   }
 }
 /*80--------------------------------------------------------------------------*/
@@ -188,9 +188,9 @@ export class ATXHeading extends Heading {
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  override _toHTML(lexr_x: MdextLexr): string {
+  override _toHTML_(lexr_x: MdextLexr): string {
     const level = this.level;
-    return `<h${level}>${_toHTML(lexr_x, this.snt_a_$)}</h${level}>`;
+    return `<h${level}>${_toHTML_(lexr_x, this.snt_a_$)}</h${level}>`;
   }
 }
 /*80--------------------------------------------------------------------------*/

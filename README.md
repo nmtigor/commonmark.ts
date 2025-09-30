@@ -4,11 +4,11 @@ This uses a compiling mechanism, i.e., compile while editing. It finds the
 smallest dirty node, and recompiles that node only, reusing unrelated nodes
 within the dirty node. So it is very efficient for editing.
 
-### unittest
+### Unittest
 
 ```bash
-cd /path_to/commonmark.ts/src/test
-# deno 2.3.6
+cd /path_to/commonmark.ts
+# deno 2.4.3
 deno test -RN # 1 passed (782 steps)
 ```
 

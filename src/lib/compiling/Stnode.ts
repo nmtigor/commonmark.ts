@@ -3,11 +3,10 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../../global.ts";
-import type { int } from "../alias.ts";
-import type { loff_t, TupleOf, uint } from "../alias.ts";
-import { type Less, SortedArray, SortedIdo } from "../util/SortedArray.ts";
-import { assert, fail, out } from "../util/trace.ts";
+import { INOUT } from "../../preNs.ts";
+import type { int, loff_t, TupleOf, uint } from "../alias.ts";
+import { assert, fail, out } from "../util.ts";
+import { type Less, SortedArray } from "../util/SortedArray.ts";
 import type { BaseTok } from "./BaseTok.ts";
 import type { Loc } from "./Loc.ts";
 import { type _OldInfo_, Snt, SortedSnt_id } from "./Snt.ts";

@@ -3,30 +3,31 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { DEBUG, INOUT, PRF } from "../../global.ts";
+import * as v from "@valibot/valibot";
+import { DEBUG, INOUT, PRF } from "../../preNs.ts";
 import type { lnum_t, loff_t, TupleOf, uint } from "../alias.ts";
-import { zUint } from "../alias.ts";
+import { vUint } from "../alias.ts";
+import { assert, out } from "../util.ts";
 import { g_count } from "../util/performance.ts";
-import { assert, out } from "../util/trace.ts";
+import type { Err, Tok } from "./alias.ts";
 import { BaseTok } from "./BaseTok.ts";
+import { HTMLTok } from "./html/HTMLTok.ts";
+import { JSLangTok } from "./jslang/JSLangTok.ts";
 import type { LexdInfo } from "./Lexr.ts";
 import { Lexr } from "./Lexr.ts";
 import type { Loc } from "./Loc.ts";
+import { MdextTok } from "./mdext/MdextTok.ts";
+import { PDFTok } from "./pdf/PDFTok.ts";
+import { PlainTok } from "./plain/PlainTok.ts";
+import { g_ran_fac } from "./RanFac.ts";
 import { Ranval } from "./Ranval.ts";
+import { RMLTok } from "./rml/RMLTok.ts";
+import { SetTok } from "./set/SetTok.ts";
 import { type _OldInfo_, Snt } from "./Snt.ts";
 import { Stnode } from "./Stnode.ts";
 import type { TokLine } from "./TokLine.ts";
 import type { TokRan } from "./TokRan.ts";
-import type { Err, Tok } from "./alias.ts";
-import { JSLangTok } from "./jslang/JSLangTok.ts";
-import { MdextTok } from "./mdext/MdextTok.ts";
-import { PDFTok } from "./pdf/PDFTok.ts";
-import { PlainTok } from "./plain/PlainTok.ts";
-import { RMLTok } from "./rml/RMLTok.ts";
-import { SetTok } from "./set/SetTok.ts";
 import { URITok } from "./uri/URITok.ts";
-import { HTMLTok } from "./html/HTMLTok.ts";
-import { g_ran_fac } from "./RanFac.ts";
 /*80--------------------------------------------------------------------------*/
 
 type NErr_ = 2;
@@ -193,8 +194,6 @@ export class Token<T extends Tok = BaseTok> extends Snt {
         : _x <= URITok._max
         ? URITok[_x]
         : _x <= MdextTok._max
-        ? MdextTok[_x]
-        : _x <= PDFTok._max
         ? MdextTok[_x]
         : _x <= PDFTok._max
         ? PDFTok[_x]
@@ -861,8 +860,8 @@ export class Token<T extends Tok = BaseTok> extends Snt {
 
   _Repr_(prevN_x?: uint, nextN_x?: uint): [string[], string, string[]] {
     /*#static*/ if (INOUT) {
-      if (prevN_x !== undefined) zUint.parse(prevN_x);
-      if (nextN_x !== undefined) zUint.parse(nextN_x);
+      if (prevN_x !== undefined) v.parse(vUint, prevN_x);
+      if (nextN_x !== undefined) v.parse(vUint, nextN_x);
     }
     const prev_a: string[] = [],
       next_a: string[] = [];

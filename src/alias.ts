@@ -4,8 +4,6 @@
  ******************************************************************************/
 
 import type { UChr } from "./lib/alias.ts";
-import { _TRACE, global, RESIZ, TESTING } from "./global.ts";
-import type { HTMLVCo } from "@fe-lib/cv.ts";
 /*80--------------------------------------------------------------------------*/
 
 export const D_db = "root_1";
@@ -30,6 +28,9 @@ export const D_ft_pdfts = `${D_fe_test}pdf.ts`;
 export const D_cy = `${D_fe}_ui-testing`;
 /*49-------------------------------------------*/
 
+export const D_wdio = `${D_fe}_touch`;
+/*49-------------------------------------------*/
+
 export const D_pdfts = "pdf.ts";
 /*49-------------------------------------------*/
 
@@ -40,6 +41,9 @@ export const D_cmts = "commonmark.ts";
 /*49-------------------------------------------*/
 
 export const D_sets = "set.ts";
+/*49-------------------------------------------*/
+
+export const D_7zts = "7z.ts";
 /*64----------------------------------------------------------*/
 /* Relative to `D_fe` */
 /*====================*/
@@ -66,43 +70,6 @@ export const D_gp_src = `${D_gen_pdf}/pdf.ts-src`;
 /*49-------------------------------------------*/
 
 export const D_tmp_pdf = "tmp/pdf";
-/*80--------------------------------------------------------------------------*/
-
-// export const g_getRootVCo: () => HTMLVCo | undefined = () => global.vco as any;
-export const g_getRootVCo = () => global.vco as HTMLVCo | undefined;
-
-export const g_onresize = () => {
-  /*#static*/ if (_TRACE && RESIZ) {
-    console.log(
-      `%c${global.indent}>>>>>>> window.on("resize") >>>>>>>`,
-      "color:#ffcd4a",
-    );
-  }
-  /*#static*/ if (_TRACE && RESIZ) {
-    console.log(
-      `${global.dent}w:${document.documentElement.clientWidth}, h:${document.documentElement.clientHeight}`,
-    );
-    global.outdent;
-  }
-};
-
-export const g_onerror = (evt_x: ErrorEvent) => {
-  const rootVCo = g_getRootVCo();
-  if (rootVCo) rootVCo.el.style.backgroundColor = "#61bed4";
-
-  /*#static*/ if (!TESTING) {
-    rootVCo?.ci.reportError?.(evt_x.error);
-  }
-};
-
-export const g_onunhandledrejection = (evt_x: PromiseRejectionEvent) => {
-  const rootVCo = g_getRootVCo();
-  if (rootVCo) rootVCo.el.style.backgroundColor = "#b6d361";
-
-  /*#static*/ if (!TESTING) {
-    rootVCo?.ci.reportError?.(evt_x.reason);
-  }
-};
 /*80--------------------------------------------------------------------------*/
 
 export const fontFamilyBase = [
@@ -134,6 +101,7 @@ https://bitsofco.de/the-new-system-font-stack/
 /* zIndex */
 
 /* Stacking context: Windl */
+export const NotPF_z = 9;
 export const ToolbarResizer_z = 8;
 export const SwipteNailLifting_z = 6;
 export const Popmenu_z = 5;
@@ -228,12 +196,14 @@ export const LOG_cssc = {
   xstate_transition: "#2196f3",
   xstate_entry: "#1ba39a",
   xstate_exit: "#506e6c",
-  intrs: "#f68e78",
   resiz: "#fdf717",
+  intrs: "#adfd17",
 
   performance: "#00ff00",
 
   runhere: "#ff0000",
+
+  testinfo: "#fffc62ff",
 };
 /*80--------------------------------------------------------------------------*/
 

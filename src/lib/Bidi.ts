@@ -10,11 +10,12 @@
  * @license MIT
  ******************************************************************************/
 
-import { _TRACE, global, INOUT } from "../global.ts";
-import type { BufrDir, Chr, id_t, loff_t, uint, uint8 } from "./alias.ts";
+import { _TRACE, INOUT } from "../preNs.ts";
+import type { BufrDir, Chr, id_t, loff_t, ts_t, uint, uint8 } from "./alias.ts";
 import { ChrTyp } from "./alias.ts";
 import { canonicalOf, chrTypOf, closingOf, openingOf } from "./loadBidi.ts";
-import { assert, out, traceOut } from "./util/trace.ts";
+import { assert, out } from "./util.ts";
+import { trace, traceOut } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
 const ISOLATE_INIT = ChrTyp.LRI | ChrTyp.RLI | ChrTyp.FSI;
@@ -1022,7 +1023,7 @@ export class Bidi {
   /* #embedLevels */
   #embedLevels: GetEmbeddingLevelsR_ | undefined;
   /**
-   * shared between `Line.bidi` and `ELineBase.bidi$`
+   * Shared between `Line.bidi` and `ELineBase.bidi$`
    * (@see {@linkcode ELineBase.setBidi$()})
    */
   get embedLevels() {
@@ -1176,6 +1177,16 @@ export class Bidi {
   }
   /*49|||||||||||||||||||||||||||||||||||||||||||*/
 
+  /* bidiLastCont_ts */
+  #lastCont_ts = 0 as ts_t;
+  get bidiLastCont_ts() {
+    return this.#lastCont_ts;
+  }
+  #updateLastContTs(): ts_t {
+    return this.#lastCont_ts = Date.now_1();
+  }
+  /* ~ */
+
   reset_Bidi(
     text_x: string,
     dir_x: BufrDir,
@@ -1191,6 +1202,8 @@ export class Bidi {
     this.#rowN = undefined;
     this.#visul_a = undefined;
     this.#logal_a = undefined;
+
+    this.#updateLastContTs();
     return this;
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
@@ -1199,7 +1212,7 @@ export class Bidi {
   @traceOut(_TRACE)
   validate(): this {
     /*#static*/ if (_TRACE) {
-      console.log(`${global.indent}>>>>>>> Bidi.validate() >>>>>>>`);
+      console.log(`${trace.indent}>>>>>>> Bidi.validate() >>>>>>>`);
     }
     if (this.valid) return this;
 
@@ -1230,14 +1243,14 @@ export class Bidi {
       }
     }
     // /*#static*/ if (_TRACE) {
-    //   console.log(`${global.dent}`, [...this.#text]);
-    //   console.log(`${global.dent}[${this.#wrap_a}]`);
+    //   console.log(`${trace.dent}`, [...this.#text]);
+    //   console.log(`${trace.dent}[${this.#wrap_a}]`);
     //   console.log(
-    //     `${global.dent}#embedLevels.levels = [${this.#embedLevels.levels}]`,
+    //     `${trace.dent}#embedLevels.levels = [${this.#embedLevels.levels}]`,
     //   );
-    //   console.log(`${global.dent}[${this._lr_a_}]`);
-    //   console.log(`${global.dent}#visul_a = [${this.#visul_a}]`);
-    //   console.log(`${global.dent}#logal_a = [${this.#logal_a}]`);
+    //   console.log(`${trace.dent}[${this._lr_a_}]`);
+    //   console.log(`${trace.dent}#visul_a = [${this.#visul_a}]`);
+    //   console.log(`${trace.dent}#logal_a = [${this.#logal_a}]`);
     // }
     return this;
   }

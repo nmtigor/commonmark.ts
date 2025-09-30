@@ -3,9 +3,10 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { _TRACE, global } from "../global.ts";
+import { _TRACE } from "../preNs.ts";
 import type { Chr, ChrTypName, UChr, uint } from "./alias.ts";
 import { ChrTyp } from "./alias.ts";
+import { trace } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
 
 const chrTyp_m_ = new Map<uint, ChrTyp>();
@@ -72,7 +73,7 @@ function parseCharacterMap(
  */
 export async function loadBidi() {
   /*#static*/ if (_TRACE) {
-    console.log(`${global.indent}>>>>>>> loadBidi() >>>>>>>`);
+    console.log(`${trace.indent}>>>>>>> loadBidi() >>>>>>>`);
   }
   try {
     const DATA = (await import("../data/bidi/bidiCharTypes.data.js")).default;
@@ -135,7 +136,7 @@ export async function loadBidi() {
   } catch (err) {
     console.error(err);
   }
-  /*#static*/ if (_TRACE) global.outdent;
+  /*#static*/ if (_TRACE) trace.outdent;
   return;
 }
 /*80--------------------------------------------------------------------------*/

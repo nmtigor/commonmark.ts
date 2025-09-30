@@ -3,11 +3,13 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { g_getRootVCo, LOG_cssc } from "../alias.ts";
-import { _TRACE, CYPRESS, DEBUG, global, INOUT, RESIZ } from "../global.ts";
+import { LOG_cssc } from "../alias.ts";
+import { global } from "../global.ts";
+import { _TRACE, INOUT, RESIZ } from "../preNs.ts";
 import { Moo } from "./Moo.ts";
 import type { BufrDir, id_t, SetLayoutP, unum } from "./alias.ts";
 import {
+  MouseButton,
   Scrobar_z,
   Scrod_z,
   scrollO,
@@ -19,9 +21,13 @@ import { Pale } from "./color/Pale.ts";
 import type { Cssc } from "./color/alias.ts";
 import type { Coo } from "./cv.ts";
 import { HTMLVuu } from "./cv.ts";
-import { div, MouseButton } from "./dom.ts";
-import { assert, bind, fail, traceOut } from "./util/trace.ts";
+import { div } from "./dom.ts";
+import { assert, bind, fail } from "./util.ts";
+import { trace, traceOut } from "./util/trace.ts";
 /*80--------------------------------------------------------------------------*/
+
+/** In milliseconds */
+const ScronrRefresh_to_ = 500;
 
 /** Scroll container */
 export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
@@ -224,8 +230,16 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
       contain: "size",
       isolation: "isolate", // to form a new stacking context
       // overflow: "hidden",
-      gridTemplateRows: `[row-frst] 1fr ${Scrod_.Thik}px [row-last]`,
-      gridTemplateColumns: `[col-frst] 1fr ${Scrod_.Thik}px [col-last]`,
+      gridTemplateRows:
+        `[row-frst] var(--t) [row-main-frst] 1fr [row-rod] ${Scrod_.Thik}px [row-main-last] var(--b) [row-last]`,
+      gridTemplateColumns:
+        `[col-frst] var(--l) [col-main-frst] 1fr [col-rod] ${Scrod_.Thik}px [col-main-last] var(--r) [col-last]`,
+    });
+    this.el$.style.assignPropo({
+      "--t": "0px",
+      "--b": "0px",
+      "--l": "0px",
+      "--r": "0px",
     });
 
     this.scrodB$ = new ScrodB_(this);
@@ -252,7 +266,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
       this.#setSlidrIStrt(this.#calcSlidrIStrt(n_y));
     });
 
-    this.#resizob.observe(this.el$);
+    this.resizob.observe(this.el$);
   }
 
   #scrolrInited = false;
@@ -276,7 +290,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 
     this.el$.append(scrolr_x.el);
 
-    // this.#resizob.observe(scrolr_x.el);
+    // this.resizob.observe(scrolr_x.el);
 
     this.el$.onWheel(this._onWheel);
     scrolr_x.on("scroll", this._onScroll_scrolr);
@@ -311,6 +325,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   }
 
   /**
+   * Use `scrollO`.
    * @const @param strt_x
    * @const @param horz_x
    */
@@ -350,6 +365,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   }
 
   /**
+   * Use `scrollO`.
    * @const @param strt_x
    * @const @param horz_x
    */
@@ -357,7 +373,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   scrollScrolrTo(strt_x: number, horz_x?: "horz") {
     // /*#static*/ if (_TRACE) {
     //   console.log(
-    //     `${global.indent}>>>>>>> `,
+    //     `${trace.indent}>>>>>>> `,
     //     `${this._type_id_}.scrollScrolrTo( ${strt_x.fixTo(2)}, ${horz_x})`,
     //     `>>>>>>>`,
     //   );
@@ -396,6 +412,42 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     this.#scrolr.el.scrollTo(scrollO);
   }
 
+  /**
+   * Assume "threshold: 1".\
+   * Use `scrollO`.
+   * @const @param tgt_x
+   * @const @param ins_x inset
+   */
+  // @traceOut(_TRACE)
+  scrollScrolrContain(tgt_x: DOMRectReadOnly, ins_x = 0) {
+    // /*#static*/ if (_TRACE) {
+    //   console.log(
+    //     `${trace.indent}>>>>>>> `,
+    //     `${this._type_id_}.scrollScrolrContain( , ${ins_x})`,
+    //     `>>>>>>>`,
+    //   );
+    // }
+    const b_0 = this.#scrolr.bcr_1;
+    const tgtTop = tgt_x.top - b_0.top;
+    const tgtLeft = tgt_x.left - b_0.left;
+    const el_ = this.#scrolr.el;
+
+    scrollO.top = tgtTop + tgt_x.height - (el_.clientHeight - ins_x);
+    if (scrollO.top <= 0) {
+      scrollO.top = tgtTop - ins_x;
+      if (scrollO.top > 0) scrollO.top = 0;
+    }
+
+    scrollO.left = tgtLeft + tgt_x.width - (el_.clientWidth - ins_x);
+    if (scrollO.left <= 0) {
+      scrollO.left = tgtLeft - ins_x;
+      if (scrollO.left > 0) scrollO.left = 0;
+    }
+
+    // console.log(`${trace.dent}`, scrollO);
+    el_.scrollBy(scrollO);
+  }
+
   /** @param bstrt_x block-start value */
   #setSlidrBStrt(bstrt_x: unum) {
     this.scrodB$.scrodicatr.el.style.insetBlockStart =
@@ -420,7 +472,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 
     /*#static*/ if (_TRACE) {
       console.log(
-        `${global.indent}>>>>>>> ${this._type_id_}.refresh_Scronr() >>>>>>>`,
+        `${trace.indent}>>>>>>> ${this._type_id_}.refresh_Scronr() >>>>>>>`,
       );
     }
     const wm_ = this.writingMode;
@@ -494,7 +546,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
       this.scrobarI$.hide();
     }
 
-    /*#static*/ if (_TRACE) global.outdent;
+    /*#static*/ if (_TRACE) trace.outdent;
     return;
   }
 
@@ -503,16 +555,17 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     if (this.#refresh_to !== undefined) {
       clearTimeout(this.#refresh_to);
     }
-    this.#refresh_to = setTimeout(this.refresh_Scronr, 500);
+    this.#refresh_to = window
+      .setTimeout(this.refresh_Scronr, ScronrRefresh_to_);
   }
 
-  readonly #resizob = new ResizeObserver(this._onResiz);
+  readonly resizob = new ResizeObserver(this._onResiz);
   @bind
   @traceOut(_TRACE && RESIZ)
   private _onResiz() {
     /*#static*/ if (_TRACE && RESIZ) {
       console.log(
-        `%c${global.indent}>>>>>>> ${this._type_id_}._onResiz() >>>>>>>`,
+        `%c${trace.indent}>>>>>>> ${this._type_id_}._onResiz() >>>>>>>`,
         `color:${LOG_cssc.resiz}`,
       );
     }
@@ -521,13 +574,13 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     this.refresh_Scronr();
   }
 
-  /** `in( this.#scrolrInited )` */
+  /** `in( this.#scrolrInited)` */
   @bind
   // @traceOut(_TRACE)
   private _onScroll_scrolr(_evt_x: Event) {
     // /*#static*/ if (_TRACE) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type}._onScroll_scrolr() >>>>>>>`,
+    //     `${trace.indent}>>>>>>> ${this._type_}._onScroll_scrolr() >>>>>>>`,
     //   );
     // }
     const scrollLeft = this.#scrolr.el.scrollLeft;
@@ -577,7 +630,7 @@ export abstract class Scronr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   private _onWheel(evt_x: WheelEvent) {
     // /*#static*/ if (_TRACE) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id_}._onWheel(`,
+    //     `${trace.indent}>>>>>>> ${this._type_id_}._onWheel(`,
     //     evt_x._repr_,
     //     `) >>>>>>>`,
     //   );
@@ -606,12 +659,12 @@ export abstract class Scrolr<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     super(host_x.coo, div());
     this.host = host_x;
 
-    // /*#static*/ if (CYPRESS) {
-    //   this.el$.cyName = this._type_id_;
+    // /*#static*/ if (CYPRESS || DEBUG) {
+    //   this.el$.hint = this._type_id_;
     // }
     this.assignStylo({
       // position: "relative",
-      gridArea: "row-frst / col-frst / row-last / col-last",
+      gridArea: "row-main-frst / col-main-frst / row-main-last / col-main-last",
     });
   }
 }
@@ -653,8 +706,8 @@ abstract class Scrod_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     super(host_x.coo, div());
     this.host = host_x;
 
-    // /*#static*/ if (CYPRESS) {
-    //   this.el$.cyName = this._type_id_;
+    // /*#static*/ if (CYPRESS || DEBUG) {
+    //   this.el$.hint = this._type_id_;
     // }
     this.assignStylo({
       position: "relative",
@@ -679,7 +732,7 @@ class ScrodB_<C extends Coo> extends Scrod_<C> {
     super(host_x);
 
     this.assignStylo({
-      gridArea: "row-frst / 2 / row-last / col-last",
+      gridArea: "row-main-frst / col-rod / row-main-last / col-main-last",
     });
 
     this.scrodicatr = new ScrodicatrB_(this);
@@ -703,7 +756,7 @@ class ScrodI_<C extends Coo> extends Scrod_<C> {
     super(host_x);
 
     this.assignStylo({
-      gridArea: "2 / col-frst / row-last / col-last",
+      gridArea: "row-rod / col-main-frst / row-main-last / col-main-last",
     });
 
     this.scrodicatr = new ScrodicatrI_(this);
@@ -759,7 +812,7 @@ class ScrodicatrI_<C extends Coo> extends Scrodicatr_<C> {
 /*64----------------------------------------------------------*/
 
 /** In milliseconds */
-export const ScrobarHide_to = 500;
+export const ScrobarHide_to = 2_000;
 
 /** Scrollbar */
 abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
@@ -781,7 +834,7 @@ abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   strtMax = 0;
   protected abstract setStrtMax$(): void;
 
-  /* shown$ */
+  /* show */
   protected shown$ = false;
   /** @final */
   get shown() {
@@ -790,9 +843,11 @@ abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 
   /** @final */
   show() {
-    clearTimeout(this.hide_to$);
+    //jjjj TOCLEANUP
+    // clearTimeout(this.hide_to$);
     // console.log(`%crun here: setTimeout`, `color:${LOG_cssc.runhere}`);
     // this.hide_to$ = setTimeout(this.hide, ScrobarHide_to * 2);
+    this.toHide();
 
     if (this.shown$) return;
 
@@ -804,14 +859,24 @@ abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     this.shown$ = true;
   }
 
-  protected hide_to$: number | undefined;
-  get hide_to() {
-    return this.hide_to$;
-  }
+  /* hide */
   readonly hide = () => {
     this.el$.style.display = "none";
     this.shown$ = false;
   };
+
+  /* hide_to$ */
+  protected hide_to$: number | undefined;
+  get hide_to() {
+    return this.hide_to$;
+  }
+
+  toHide() {
+    if (this.hide_to$ !== undefined) {
+      clearTimeout(this.hide_to$);
+    }
+    this.hide_to$ = window.setTimeout(this.hide, ScrobarHide_to);
+  }
   /* ~ */
 
   abstract readonly slidr: Slidr_<C>;
@@ -824,8 +889,8 @@ abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
     super(host_x.coo, div());
     this.host = host_x;
 
-    // /*#static*/ if (CYPRESS) {
-    //   this.el$.cyName = this._type_id_;
+    // /*#static*/ if (CYPRESS || DEBUG) {
+    //   this.el$.hint = this._type_id_;
     // }
     this.assignStylo({
       display: "none",
@@ -835,22 +900,22 @@ abstract class Scrobar_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
       backgroundColor: host_x.scrobar_cp.cssc,
     });
 
-    if (global.can_hover) {
-      this.on("pointerenter", this.onPointerEnter);
-      this.on("pointerleave", this.onPointerLeave);
-    }
+    //jjjj TOCLEANUP
+    // if (global.can_hover) {
+    //   this.on("pointerenter", this.onPointerEnter);
+    //   this.on("pointerleave", this.onPointerLeave);
+    // }
   }
   /*64||||||||||||||||||||||||||||||||||||||||||||||||||||||||||*/
 
-  readonly onPointerEnter = () => {
-    // console.log(`%crun here: clearTimeout`, `color:${LOG_cssc.runhere}`);
-    clearTimeout(this.hide_to$);
-  };
-  readonly onPointerLeave = () => {
-    clearTimeout(this.hide_to$);
-    // console.log(`%crun here: setTimeout`, `color:${LOG_cssc.runhere}`);
-    this.hide_to$ = setTimeout(this.hide, ScrobarHide_to);
-  };
+  //jjjj TOCLEANUP
+  // readonly onPointerEnter = () => {
+  //   // console.log(`%crun here: clearTimeout`, `color:${LOG_cssc.runhere}`);
+  //   clearTimeout(this.hide_to$);
+  // };
+  // readonly onPointerLeave = () => {
+  //   this.toHide();
+  // };
 }
 
 /**
@@ -879,6 +944,8 @@ class ScrobarB_<C extends Coo> extends Scrobar_<C> {
     super(host_x);
 
     this.assignStylo({
+      gridRow: "row-main-frst / row-main-last",
+
       blockSize: "100%",
       inlineSize: "min(32px,70%)",
     });
@@ -920,6 +987,8 @@ class ScrobarI_<C extends Coo> extends Scrobar_<C> {
     super(host_x);
 
     this.assignStylo({
+      gridColumn: "col-main-frst / col-main-last",
+
       blockSize: "min(32px,70%)",
       inlineSize: "100%",
     });
@@ -985,16 +1054,19 @@ abstract class Slidr_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
 
       // console.log(`%crun here: clearTimeout`, `color:${LOG_cssc.runhere}`);
       // clearTimeout(this.host$.hide_to);
-      g_getRootVCo()?.on("pointermove", this.#onPointerMove);
-      g_getRootVCo()?.on("pointerup", this.#onPointerUp);
-      if (global.can_hover) {
-        this.host$.off("pointerenter", this.host$.onPointerEnter);
-        this.host$.off("pointerleave", this.host$.onPointerLeave);
-      }
+      global.mw?.on("pointermove", this.#onPointerMove);
+      global.mw?.on("pointerup", this.#onPointerUp);
+      //jjjj TOCLEANUP
+      // if (global.can_hover) {
+      //   this.host$.off("pointerenter", this.host$.onPointerEnter);
+      //   this.host$.off("pointerleave", this.host$.onPointerLeave);
+      // }
     }
   };
 
   #onPointerMove = (evt_x: PointerEvent) => {
+    this.host$.toHide();
+
     const dtX = evt_x.clientX - this.#clientX;
     const dtY = evt_x.clientY - this.#clientY;
     this.apply_0$(
@@ -1021,12 +1093,13 @@ abstract class Slidr_<C extends Coo> extends HTMLVuu<C, HTMLDivElement> {
   #onPointerUp = (evt_x: PointerEvent) => {
     evt_x.stopPropagation();
 
-    g_getRootVCo()?.off("pointermove", this.#onPointerMove);
-    g_getRootVCo()?.off("pointerup", this.#onPointerUp);
-    if (global.can_hover) {
-      this.host$.on("pointerenter", this.host$.onPointerEnter);
-      this.host$.on("pointerleave", this.host$.onPointerLeave);
-    }
+    global.mw?.off("pointermove", this.#onPointerMove);
+    global.mw?.off("pointerup", this.#onPointerUp);
+    //jjjj TOCLEANUP
+    // if (global.can_hover) {
+    //   this.host$.on("pointerenter", this.host$.onPointerEnter);
+    //   this.host$.on("pointerleave", this.host$.onPointerLeave);
+    // }
   };
 }
 
@@ -1078,7 +1151,7 @@ class SlidrB_<C extends Coo> extends Slidr_<C> {
   protected apply_0$(dtB_x: number, dtI_x: number): void {
     // /*#static*/ if (_TRACE) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id_}.apply_0$( ${dtB_x}, ${dtI_x}) >>>>>>>`,
+    //     `${trace.indent}>>>>>>> ${this._type_id_}.apply_0$( ${dtB_x}, ${dtI_x}) >>>>>>>`,
     //   );
     // }
     this.host$.slidrStrt_mo.val = this.#bStrt_0 + dtB_x;
@@ -1143,7 +1216,7 @@ class SlidrI_<C extends Coo> extends Slidr_<C> {
   protected apply_0$(dtB_x: number, dtI_x: number) {
     // /*#static*/ if (_TRACE) {
     //   console.log(
-    //     `${global.indent}>>>>>>> ${this._type_id_}.apply_0$( ${dtB_x}, ${dtI_x}) >>>>>>>`,
+    //     `${trace.indent}>>>>>>> ${this._type_id_}.apply_0$( ${dtB_x}, ${dtI_x}) >>>>>>>`,
     //   );
     // }
     this.host$.slidrStrt_mo.val = this.#iStrt_0 + dtI_x;

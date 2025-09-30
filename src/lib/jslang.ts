@@ -3,17 +3,20 @@
  * @license BSD-3-Clause
  ******************************************************************************/
 
-import { INOUT } from "../global.ts";
-import type { Brand, int, ts_t } from "./alias.ts";
-import type { FloatArray, IntegerArray } from "./alias.ts";
+import { INOUT } from "../preNs.ts";
 import type {
   AbstractConstructor,
   Constructor,
+  FloatArray,
   Func,
+  int,
+  IntegerArray,
+  ts_t,
   uint,
+  uint64,
   uint8,
 } from "./alias.ts";
-import { assert } from "./util/trace.ts";
+import { assert } from "./util.ts";
 import * as Is from "./util/is.ts";
 /*80--------------------------------------------------------------------------*/
 /* Object */
@@ -165,25 +168,38 @@ declare global {
     swap(i_x: uint, j_x: uint): this;
   }
 
-  // interface ArrayConstructor {
-  //   /**
-  //    * Creates an array from an async iterable, iterable, or array-like object.
-  //    * @param iterable An async iterable, iterable, or array-like object to convert to an array.
-  //    */
-  //   fromAsync<T>(iterable: AsyncIterable<T> | Iterable<T> | ArrayLike<T>): T[];
+  interface ArrayConstructor {
+    // /**
+    //  * Creates an array from an async iterable, iterable, or array-like object.
+    //  * @param iterable An async iterable, iterable, or array-like object to convert to an array.
+    //  */
+    // fromAsync<T>(iterable: AsyncIterable<T> | Iterable<T> | ArrayLike<T>): T[];
 
-  //   /**
-  //    * Creates an array from an async iterable, iterable, or array-like object.
-  //    * @param iterable An async iterable, iterable, or array-like object to convert to an array.
-  //    * @param mapfn A mapping function to call on every element of the array.
-  //    * @param thisArg Value of 'this' used to invoke the mapfn.
-  //    */
-  //   fromAsync<T, U>(
-  //     iterable: AsyncIterable<T> | Iterable<T> | ArrayLike<T>,
-  //     mapfn: (v: T, k: number) => U,
-  //     thisArg?: any,
-  //   ): U[];
-  // }
+    // /**
+    //  * Creates an array from an async iterable, iterable, or array-like object.
+    //  * @param iterable An async iterable, iterable, or array-like object to convert to an array.
+    //  * @param mapfn A mapping function to call on every element of the array.
+    //  * @param thisArg Value of 'this' used to invoke the mapfn.
+    //  */
+    // fromAsync<T, U>(
+    //   iterable: AsyncIterable<T> | Iterable<T> | ArrayLike<T>,
+    //   mapfn: (v: T, k: number) => U,
+    //   thisArg?: any,
+    // ): U[];
+
+    /**
+     * Initialize array with specified length and default value
+     *
+     * This is MUCH faster than "new Array(len)" in newer versions of v8
+     * (starting with Node.js 0.11.15, which uses v8 3.28.73).
+     *
+     * Ref. `initArray()` in [[lzma1]/src/utils.ts](https://github.com/xseman/lzma1/blob/master/src/utils.ts)
+     *
+     * @const @param len_x
+     * @const @param val_x
+     */
+    mock<T extends {} | null>(len_x: uint64, val_x?: T): T[];
+  }
 }
 
 Reflect.defineProperty(Array.prototype, "become_Array", {
@@ -205,7 +221,7 @@ Reflect.defineProperty(Array.prototype, "fillArray", {
     /*#static*/ if (INOUT) {
       assert(ary_x.length <= this.length);
     }
-    for (let i = 0, LEN = this.length; i < LEN; ++i) {
+    for (let i = 0, LEN = ary_x.length; i < LEN; ++i) {
       this[i] = ary_x[i];
     }
     return this;
@@ -231,6 +247,13 @@ Reflect.defineProperty(Array.prototype, "swap", {
     return this;
   },
 });
+
+Array.mock = (len_x, val_x) => {
+  const a_ = [];
+  a_[len_x - 1] = undefined as any;
+  if (val_x !== undefined) a_.fill(val_x);
+  return a_;
+};
 /*80--------------------------------------------------------------------------*/
 /* String */
 
@@ -493,7 +516,8 @@ Reflect.defineProperty(Float64Array.prototype, "eql", {
 //#region Stringified_<>
 /* Ref. https://youtu.be/z7pDvyVhUnE */
 
-type Stringified_<T> = Brand<string, T>;
+declare const $brand_: unique symbol;
+type Stringified_<T> = string & { [$brand_]: T };
 
 type JsonifiedValue_<T> = T extends string | number | boolean | null ? T
   : T extends { toJSON(): infer R } ? R
@@ -682,9 +706,9 @@ Date.setFullYear = (refdate, year, month, date) => {
 
 Date.now_1 = () => {
   let ts_ = Date.now();
-  if (ts_ <= Date._lastNow) ts_ += .01;
+  if (ts_ <= Date._lastNow) ts_ = Date._lastNow + 1;
   // console.log(
-  //   `%c${global.dent}>>>>>>>>>>>>> Date.now_1(): ${ts_}`,
+  //   `%c${trace.dent}>>>>>>>>>>>>> Date.now_1(): ${ts_}`,
   //   "color:red",
   // );
   return Date._lastNow = ts_ as ts_t;
